@@ -1,167 +1,58 @@
 /**
- * Category taxonomy.
+ * Navigation tree.
  *
- * The market-data API returns a FLAT list of leaf categories whose `name` is
- * already two-level: "Politics › Global Elections", "Bitcoin › Daily". That
- * gives us a natural sub-category axis, but the raw top halves are uneven for
- * navigation — Bitcoin/Ethereum/Solana/XRP each surface as their own group,
- * and every football league gets one too, so a flat chip row would be ~17 chips
- * with no hierarchy.
+ * Mirrors the bot's `topics` table exactly — same nodes, same nesting, same
+ * order. The tree is genuinely up to four levels deep
+ * (Sports > Football > Premier League > Matches; Crypto > Bitcoin > Daily), so
+ * the GUI drills down rather than flattening to two rows of chips.
  *
- * So we fold API groups into a curated set of SECTIONS (the top chip row) and
- * let the API groups/leaves become the sub-chips. Anything the map doesn't know
- * about still shows up — it becomes its own section — so a category added to
- * the indexer later appears in the UI without a deploy here.
+ * An earlier version derived a two-level model from `/markets/categories`,
+ * whose "parent › leaf" labels silently dropped the upper tiers — "Premier
+ * League › Champion 2026-27" with no Sports and no Football above it. That is
+ * why this now comes from `/topics` instead.
  */
 
-export type ApiCategory = {
+export type Topic = {
+  /** Topic slug — pass to `snapshot?category=` (matches the node + descendants). */
   id: string;
   name: string;
+  name_fa: string | null;
+  emoji: string | null;
+  /** How the bot renders this node: section, match_list, binary_list, outcome_list. */
+  layout: string;
+  /** Markets attached directly to this node (0 for a pure section). */
+  own_markets: number;
+  /** Markets in this node and everything beneath it. */
   active_markets: number;
+  children: Topic[];
 };
 
-/** A leaf category as the UI consumes it. */
-export type Leaf = {
-  /** API category id — what you pass to `snapshot?category=`. */
-  id: string;
-  /** "Global Elections" — the part after "›". */
-  label: string;
-  /** "Politics" — the part before "›", as the API spells it. */
-  group: string;
-  count: number;
-};
+/** A node plus the path taken to reach it, for breadcrumbs and back. */
+export type TopicPath = Topic[];
 
-export type Section = {
-  /** Stable slug used in the URL / chip state. */
-  key: string;
-  label: string;
-  count: number;
-  /** Sub-chips. Grouped by API group when a section spans several. */
-  leaves: Leaf[];
-};
-
-/**
- * API group name → section key. Groups absent here become their own section
- * (see `sectionForGroup`), which is the "new category appears automatically"
- * escape hatch.
- */
-const GROUP_TO_SECTION: Record<string, string> = {
-  Bitcoin: "crypto",
-  Ethereum: "crypto",
-  Solana: "crypto",
-  XRP: "crypto",
-  Crypto: "crypto",
-
-  "Champions League": "football",
-  Football: "football",
-  "Premier League": "football",
-  "La Liga": "football",
-  "Serie A": "football",
-  Bundesliga: "football",
-  "Ligue 1": "football",
-
-  Sports: "sports",
-  "Combat Sports": "sports",
-
-  Politics: "politics",
-  "US Midterms 2026": "politics",
-  Iran: "politics",
-
-  Economy: "economy",
-};
-
-/** Display labels + ordering for the curated sections. */
-const SECTION_META: { key: string; label: string }[] = [
-  { key: "crypto", label: "Crypto" },
-  { key: "football", label: "Football" },
-  { key: "sports", label: "Sports" },
-  { key: "politics", label: "Politics" },
-  { key: "economy", label: "Economy" },
-];
-
-const slugify = (s: string) =>
-  s
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-|-$/g, "");
-
-function splitName(name: string): { group: string; label: string } {
-  // The API uses "›" (U+203A). Fall back to the whole string when a category
-  // has no sub-level, so `label` is never empty.
-  const [group, ...rest] = name.split("›").map((p) => p.trim());
-  const label = rest.join(" › ");
-  return { group, label: label || group };
-}
-
-function sectionForGroup(group: string): { key: string; label: string } {
-  const mapped = GROUP_TO_SECTION[group];
-  if (mapped) {
-    const meta = SECTION_META.find((s) => s.key === mapped);
-    return { key: mapped, label: meta?.label ?? group };
+/** Depth-first lookup by slug, returning the full path to the node. */
+export function findPath(roots: Topic[], id: string): TopicPath | null {
+  for (const node of roots) {
+    if (node.id === id) return [node];
+    const below = findPath(node.children, id);
+    if (below) return [node, ...below];
   }
-  return { key: slugify(group), label: group };
+  return null;
 }
 
 /**
- * Build the two-level chip model from the API's flat category list.
- * Sections are ordered by the curated list first, then by market count.
- * Leaves are ordered by count so the busiest sub-category leads.
+ * Chips to show for the current position.
+ *
+ * At the root that's the top-level sections; inside a node it's its children.
+ * A node whose children are all leaves still drills — that is what keeps the
+ * GUI aligned with the bot instead of guessing which tiers matter.
  */
-export function buildSections(categories: ApiCategory[]): Section[] {
-  const bySection = new Map<string, Section>();
-
-  for (const c of categories) {
-    if (!c.active_markets) continue;
-    const { group, label } = splitName(c.name);
-    const sec = sectionForGroup(group);
-
-    let entry = bySection.get(sec.key);
-    if (!entry) {
-      entry = { key: sec.key, label: sec.label, count: 0, leaves: [] };
-      bySection.set(sec.key, entry);
-    }
-    entry.count += c.active_markets;
-    entry.leaves.push({
-      id: c.id,
-      // When a section folds several API groups together (Crypto ← Bitcoin,
-      // Ethereum, …) the bare sub-label "Daily" is ambiguous, so qualify it
-      // with the group. Within a single-group section the sub-label stands
-      // alone — "Inflation", not "Economy Inflation".
-      label,
-      group,
-      count: c.active_markets,
-    });
-  }
-
-  const sections = [...bySection.values()];
-
-  for (const s of sections) {
-    // Qualify a leaf with its group ONLY when the bare label collides inside
-    // this section: "Daily" appears under Bitcoin, Ethereum, Solana and XRP, so
-    // those become "Bitcoin · Daily". "NBA" is unique within Sports and reads
-    // worse as "Sports · NBA", so it stays bare.
-    const seen = new Map<string, number>();
-    for (const leaf of s.leaves) {
-      seen.set(leaf.label, (seen.get(leaf.label) ?? 0) + 1);
-    }
-    for (const leaf of s.leaves) {
-      if ((seen.get(leaf.label) ?? 0) > 1 && leaf.label !== leaf.group) {
-        leaf.label = `${leaf.group} · ${leaf.label}`;
-      }
-    }
-    s.leaves.sort((a, b) => b.count - a.count);
-  }
-
-  const order = new Map(SECTION_META.map((s, i) => [s.key, i]));
-  sections.sort((a, b) => {
-    const ia = order.get(a.key) ?? Infinity;
-    const ib = order.get(b.key) ?? Infinity;
-    if (ia !== ib) return ia - ib;
-    return b.count - a.count;
-  });
-
-  return sections;
+export function childrenOf(roots: Topic[], path: TopicPath): Topic[] {
+  if (path.length === 0) return roots;
+  return path[path.length - 1].children;
 }
 
-/** The "All" pseudo-section that leads the top chip row. */
-export const ALL_SECTION_KEY = "all";
+/** Total live markets across the tree, for the "All" chip. */
+export function totalMarkets(roots: Topic[]): number {
+  return roots.reduce((sum, n) => sum + n.active_markets, 0);
+}

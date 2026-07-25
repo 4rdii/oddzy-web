@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { MiniApp } from "@/components/app/MiniApp";
-import { getMarkets, getSections } from "@/lib/api";
+import { getMarkets, getTopics } from "@/lib/api";
 
 export const metadata: Metadata = {
   title: "Markets",
@@ -15,10 +15,10 @@ export const revalidate = 300;
 export default async function AppPage() {
   // Server-render the first paint so the feed has markets before hydration —
   // inside Telegram this is a cold webview on mobile data.
-  const [sections, snapshot] = await Promise.all([
-    getSections().catch(() => []),
+  const [topics, snapshot] = await Promise.all([
+    getTopics().catch(() => []),
     getMarkets({ limit: 40 }).catch(() => ({ markets: [] as never[] })),
   ]);
 
-  return <MiniApp sections={sections} initialMarkets={snapshot.markets} />;
+  return <MiniApp topics={topics} initialMarkets={snapshot.markets} />;
 }

@@ -1,6 +1,6 @@
 import "server-only";
 
-import { buildSections, type ApiCategory, type Section } from "./taxonomy";
+import type { Topic } from "./taxonomy";
 
 /**
  * Server-side client for the Oddzy market-data API (app.oddzy.xyz/api).
@@ -63,10 +63,13 @@ async function get<T>(path: string, revalidate: number): Promise<T> {
   return (await res.json()) as T;
 }
 
-/** Live category tree, folded into the two-level section model. */
-export async function getSections(): Promise<Section[]> {
-  const data = await get<{ categories: ApiCategory[] }>("/markets/categories", 900);
-  return buildSections(data.categories);
+/**
+ * The navigation tree, exactly as the bot models it (see /topics upstream).
+ * Cached for 15 min — the shape changes when topics are added, not per-request.
+ */
+export async function getTopics(): Promise<Topic[]> {
+  const data = await get<{ topics: Topic[] }>("/topics", 900);
+  return data.topics;
 }
 
 /**

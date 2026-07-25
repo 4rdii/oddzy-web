@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Script from "next/script";
 import type { Market } from "@/lib/api";
-import type { Section } from "@/lib/taxonomy";
+import type { Topic } from "@/lib/taxonomy";
 import { useTelegram, botLink } from "@/lib/telegram";
 import { authedGet } from "@/lib/client-api";
 import { MarketsFeed } from "./MarketsFeed";
@@ -28,10 +28,10 @@ type Screen =
  * web-only surface.
  */
 export function MiniApp({
-  sections,
+  topics,
   initialMarkets,
 }: {
-  sections: Section[];
+  topics: Topic[];
   initialMarkets: Market[];
 }) {
   const [screen, setScreen] = useState<Screen>({ name: "feed" });
@@ -44,7 +44,7 @@ export function MiniApp({
   useEffect(() => {
     if (inTelegram !== true) return;
     const ctrl = new AbortController();
-    authedGet<{ balance: number }>("/api/v1/me", ctrl.signal)
+    authedGet<{ balance: number }>("/webapp/v1/me", ctrl.signal)
       .then((d) => setBalance(d.balance))
       .catch(() => {
         /* Balance is an affordance, not a gate — the server re-checks funds. */
@@ -82,7 +82,7 @@ export function MiniApp({
 
         {screen.name === "feed" && (
           <MarketsFeed
-            sections={sections}
+            topics={topics}
             initialMarkets={initialMarkets}
             onOpen={(m) => setScreen({ name: "detail", market: m })}
           />

@@ -101,7 +101,7 @@ function Failure({ kind }: { kind: ApiFailure }) {
 
 export function PositionsScreen() {
   const [tab, setTab] = useState<"open" | "settled">("open");
-  const state = useAuthed<{ positions: Position[] }>("/api/v1/positions");
+  const state = useAuthed<{ positions: Position[] }>("/webapp/v1/positions");
 
   if (state.status === "loading")
     return <p className="px-4 py-12 text-center text-[var(--mute)]">Loading…</p>;
@@ -188,7 +188,7 @@ export function PositionsScreen() {
 }
 
 export function WalletScreen() {
-  const state = useAuthed<Account>("/api/v1/me");
+  const state = useAuthed<Account>("/webapp/v1/me");
   const [copied, setCopied] = useState(false);
 
   if (state.status === "loading")

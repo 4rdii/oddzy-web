@@ -2,41 +2,42 @@
 
 import { useEffect, useState } from "react";
 import type { Market } from "@/lib/api";
-import type { Section } from "@/lib/taxonomy";
-import { ALL_SECTION_KEY } from "@/lib/taxonomy";
+import type { Topic, TopicPath } from "@/lib/taxonomy";
+import { childrenOf, totalMarkets } from "@/lib/taxonomy";
 import { compactUsd, pct, untilClose } from "@/lib/format";
 
 /**
  * Markets feed — the mini app's home screen.
  *
- * Two chip rows, because the live taxonomy is genuinely two-level
- * (Group › Sub): sections on top, the selected section's leaf categories
- * below. Picking a section shows its busiest leaves; picking a leaf filters
- * the feed to that category id.
+ * Navigation is a drill-down over the bot's own topic tree, which runs up to
+ * four levels deep (Sports > Football > Premier League > Matches). Tapping a
+ * chip descends; a breadcrumb walks back. Every level is filterable, because
+ * the upstream matches a topic slug plus all of its descendants — so "Sports"
+ * shows all 1,560 sports markets rather than nothing.
  */
 export function MarketsFeed({
-  sections,
+  topics,
   initialMarkets,
   onOpen,
 }: {
-  sections: Section[];
+  topics: Topic[];
   initialMarkets: Market[];
   onOpen: (m: Market) => void;
 }) {
-  const [section, setSection] = useState<string>(ALL_SECTION_KEY);
-  const [leaf, setLeaf] = useState<string | null>(null);
+  const [path, setPath] = useState<TopicPath>([]);
   const [markets, setMarkets] = useState<Market[]>(initialMarkets);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const active = sections.find((s) => s.key === section);
+  const current = path.length ? path[path.length - 1] : null;
+  const chips = childrenOf(topics, path);
 
   useEffect(() => {
-    // The unfiltered feed is server-rendered into initialMarkets, so skip the
-    // redundant refetch on mount.
-    if (section === ALL_SECTION_KEY && !leaf) {
+    // The unfiltered feed is server-rendered, so skip the redundant refetch.
+    if (!current) {
       setMarkets(initialMarkets);
       setError(null);
+      setLoading(false);
       return;
     }
 
@@ -44,12 +45,9 @@ export function MarketsFeed({
     setLoading(true);
     setError(null);
 
-    // With a section but no leaf chosen, show the section as a whole by
-    // querying its highest-volume leaf — the upstream filters by leaf id only.
-    const category = leaf ?? active?.leaves[0]?.id;
-    const url = category ? `/api/markets?category=${encodeURIComponent(category)}&limit=40` : "/api/markets?limit=40";
-
-    fetch(url, { signal: ctrl.signal })
+    fetch(`/api/markets?category=${encodeURIComponent(current.id)}&limit=40`, {
+      signal: ctrl.signal,
+    })
       .then((r) => {
         if (!r.ok) throw new Error(String(r.status));
         return r.json();
@@ -57,72 +55,96 @@ export function MarketsFeed({
       .then((d: { markets: Market[] }) => setMarkets(d.markets ?? []))
       .catch((e) => {
         if (e.name === "AbortError") return;
-        setError("Couldn't load markets. Pull to retry.");
+        setError("Couldn't load markets.");
       })
       .finally(() => setLoading(false));
 
     return () => ctrl.abort();
-  }, [section, leaf, active, initialMarkets]);
+  }, [current, initialMarkets]);
 
   return (
     <div>
-      {/* Section chips */}
-      <div className="flex gap-2 overflow-x-auto px-4 py-3" role="tablist" aria-label="Market sections">
-        <Chip
-          active={section === ALL_SECTION_KEY}
-          onClick={() => {
-            setSection(ALL_SECTION_KEY);
-            setLeaf(null);
-          }}
+      {/* Breadcrumb — only once we've descended, so the root stays clean. */}
+      {path.length > 0 && (
+        <nav
+          className="flex flex-wrap items-center gap-1 px-4 pt-3 font-mono text-[11px]"
+          aria-label="Category path"
         >
-          All
-        </Chip>
-        {sections.map((s) => (
-          <Chip
-            key={s.key}
-            active={section === s.key}
-            onClick={() => {
-              setSection(s.key);
-              setLeaf(null);
-            }}
+          <button
+            type="button"
+            onClick={() => setPath([])}
+            className="text-[var(--accent)]"
           >
-            {s.label}
+            All
+          </button>
+          {path.map((node, i) => (
+            <span key={node.id} className="flex items-center gap-1">
+              <span className="text-[var(--faint)]" aria-hidden>
+                ›
+              </span>
+              {i === path.length - 1 ? (
+                <span className="font-semibold text-[var(--ink)]">{node.name}</span>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setPath(path.slice(0, i + 1))}
+                  className="text-[var(--accent)]"
+                >
+                  {node.name}
+                </button>
+              )}
+            </span>
+          ))}
+        </nav>
+      )}
+
+      {/* Chips for the current level. */}
+      <div
+        className="flex gap-2 overflow-x-auto px-4 py-3"
+        role="tablist"
+        aria-label={current ? `${current.name} categories` : "Market categories"}
+      >
+        {path.length === 0 ? (
+          <Chip active onClick={() => setPath([])} count={totalMarkets(topics)}>
+            All
+          </Chip>
+        ) : (
+          <Chip active={false} onClick={() => setPath(path.slice(0, -1))}>
+            ← Back
+          </Chip>
+        )}
+
+        {chips.map((node) => (
+          <Chip
+            key={node.id}
+            active={false}
+            count={node.active_markets}
+            onClick={() => setPath([...path, node])}
+          >
+            {node.emoji ? `${node.emoji} ` : ""}
+            {node.name}
+            {node.children.length > 0 && (
+              <span className="ms-1 opacity-50" aria-hidden>
+                ›
+              </span>
+            )}
           </Chip>
         ))}
       </div>
 
-      {/* Sub-category chips for the selected section */}
-      {active && active.leaves.length > 0 && (
-        <div
-          className="flex gap-2 overflow-x-auto px-4 pb-3"
-          role="tablist"
-          aria-label={`${active.label} categories`}
-        >
-          <SubChip active={leaf === null} onClick={() => setLeaf(null)}>
-            All {active.label}
-          </SubChip>
-          {active.leaves.map((l) => (
-            <SubChip key={l.id} active={leaf === l.id} onClick={() => setLeaf(l.id)}>
-              {l.label}
-              <span className="ms-1.5 font-mono text-[10px] opacity-60">{l.count}</span>
-            </SubChip>
-          ))}
-        </div>
-      )}
-
       <div className="flex items-center justify-between px-4 pb-2">
         <span className="font-mono text-[10px] tracking-[0.06em] text-[var(--faint)]">
-          {loading ? "LOADING…" : `${markets.length} MARKETS · BY 24H VOLUME`}
+          {loading
+            ? "LOADING…"
+            : `${markets.length} MARKET${markets.length === 1 ? "" : "S"} · BY 24H VOLUME`}
         </span>
       </div>
 
-      {error && (
-        <p className="px-4 py-6 text-center text-sm text-[var(--down)]">{error}</p>
-      )}
+      {error && <p className="px-4 py-6 text-center text-sm text-[var(--down)]">{error}</p>}
 
       {!error && !loading && markets.length === 0 && (
         <p className="px-4 py-10 text-center text-sm text-[var(--mute)]">
-          No live markets in this category right now.
+          No live markets here right now.
         </p>
       )}
 
@@ -140,10 +162,12 @@ export function MarketsFeed({
 function Chip({
   active,
   onClick,
+  count,
   children,
 }: {
   active: boolean;
   onClick: () => void;
+  count?: number;
   children: React.ReactNode;
 }) {
   return (
@@ -152,39 +176,16 @@ function Chip({
       role="tab"
       aria-selected={active}
       onClick={onClick}
-      className={`min-h-[40px] shrink-0 rounded-full border px-4 text-[13px] font-semibold whitespace-nowrap transition-colors ${
+      className={`flex min-h-[40px] shrink-0 items-center rounded-full border px-4 text-[13px] font-semibold whitespace-nowrap transition-colors ${
         active
           ? "border-transparent bg-[var(--ink)] text-[var(--on-ink)]"
           : "border-[var(--line)] bg-[var(--btn)] text-[var(--mute)]"
       }`}
     >
       {children}
-    </button>
-  );
-}
-
-function SubChip({
-  active,
-  onClick,
-  children,
-}: {
-  active: boolean;
-  onClick: () => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <button
-      type="button"
-      role="tab"
-      aria-selected={active}
-      onClick={onClick}
-      className={`min-h-[32px] shrink-0 rounded-full border px-3 font-mono text-[11px] tracking-[0.02em] whitespace-nowrap transition-colors ${
-        active
-          ? "border-[var(--accent)] bg-[color-mix(in_srgb,var(--accent)_12%,transparent)] text-[var(--accent)]"
-          : "border-[var(--line)] bg-transparent text-[var(--faint)]"
-      }`}
-    >
-      {children}
+      {count != null && (
+        <span className="ms-1.5 font-mono text-[10px] opacity-55">{count}</span>
+      )}
     </button>
   );
 }

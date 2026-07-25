@@ -1,15 +1,15 @@
 import { NextResponse } from "next/server";
-import { getSections } from "@/lib/api";
+import { getTopics } from "@/lib/api";
 
 /**
- * Two-level category tree for the markets chip rows.
+ * Navigation tree for the markets drill-down.
  * Proxies the token-authenticated upstream so the browser never sees it.
  */
 export async function GET() {
   try {
-    const sections = await getSections();
+    const topics = await getTopics();
     return NextResponse.json(
-      { sections },
+      { topics },
       { headers: { "Cache-Control": "public, s-maxage=900, stale-while-revalidate=3600" } },
     );
   } catch (e) {
