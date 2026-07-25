@@ -1,10 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import QRCode from "qrcode";
 import { usd } from "@/lib/format";
 import { authedGet, ApiCallError, type ApiFailure } from "@/lib/client-api";
 import { botLink, useTelegram } from "@/lib/telegram";
 import { SignInButton } from "./SignInButton";
+import { WithdrawSheet, type WithdrawSent } from "./WithdrawSheet";
 
 export type Position = {
   marketId: string;
@@ -36,8 +38,10 @@ type State<T> =
   | { status: "ready"; data: T }
   | { status: "failed"; kind: ApiFailure };
 
-function useAuthed<T>(path: string): State<T> {
+/** Bumping this re-runs the fetch — used to re-read the balance after a withdrawal. */
+function useAuthed<T>(path: string): State<T> & { reload: () => void } {
   const [state, setState] = useState<State<T>>({ status: "loading" });
+  const [nonce, setNonce] = useState(0);
 
   useEffect(() => {
     const ctrl = new AbortController();
@@ -51,9 +55,9 @@ function useAuthed<T>(path: string): State<T> {
         });
       });
     return () => ctrl.abort();
-  }, [path]);
+  }, [path, nonce]);
 
-  return state;
+  return { ...state, reload: () => setNonce((n) => n + 1) };
 }
 
 /** Every non-ready state gets a message that says what to actually do next. */
@@ -209,6 +213,8 @@ export function PositionsScreen() {
 export function WalletScreen() {
   const state = useAuthed<Account>("/webapp/v1/me");
   const [copied, setCopied] = useState(false);
+  const [sheet, setSheet] = useState<"deposit" | "withdraw" | null>(null);
+  const [sent, setSent] = useState<WithdrawSent | null>(null);
 
   if (state.status === "loading")
     return <p className="px-4 py-12 text-center text-[var(--mute)]">Loading…</p>;
@@ -230,15 +236,27 @@ export function WalletScreen() {
           USDC on Polygon · self-custodial via Privy
         </p>
 
-        {/* Deposit and withdraw stay in the bot for now: both are money flows
-            with their own locks and confirmations, and duplicating them here
-            would mean a second path to get wrong. */}
-        <a
-          href={botLink()}
-          className="mt-4 flex min-h-[48px] items-center justify-center rounded-xl bg-[var(--ink)] font-semibold text-[var(--on-ink)]"
-        >
-          Deposit or withdraw in Telegram
-        </a>
+        {/* Both actions live here now. Withdrawal used to point at the bot,
+            which is a dead end for anyone who signed up with Google or a
+            wallet — they have no Telegram chat, so they could fund an account
+            and bet from it but never get the money back out. */}
+        <div className="mt-4 flex gap-2">
+          <button
+            type="button"
+            onClick={() => setSheet("deposit")}
+            className="min-h-[48px] flex-1 rounded-xl bg-[var(--ink)] font-semibold text-[var(--on-ink)]"
+          >
+            Deposit
+          </button>
+          <button
+            type="button"
+            onClick={() => setSheet("withdraw")}
+            disabled={data.balance <= 0}
+            className="min-h-[48px] flex-1 rounded-xl border border-[var(--line)] bg-[var(--btn)] font-semibold text-[var(--ink)] disabled:opacity-40"
+          >
+            Withdraw
+          </button>
+        </div>
       </div>
 
       {addr && (
@@ -265,7 +283,117 @@ export function WalletScreen() {
           </p>
         </div>
       )}
+
+      {sheet === "deposit" && addr && (
+        <DepositSheet address={addr} onClose={() => setSheet(null)} />
+      )}
+
+      {sheet === "withdraw" && (
+        <WithdrawSheet
+          balance={data.balance}
+          onClose={() => setSheet(null)}
+          onSent={(s) => {
+            setSheet(null);
+            setSent(s);
+            // The balance on screen is now stale by exactly the amount sent.
+            // Re-read rather than subtracting locally: the chain is the truth,
+            // and a local guess would disagree the moment a bet settles.
+            state.reload();
+          }}
+        />
+      )}
+
+      {sent && (
+        <div className="fixed inset-x-0 bottom-20 z-50 mx-auto max-w-md px-4">
+          <div className="rounded-xl bg-[var(--ink)] px-4 py-3 text-[13px] text-[var(--on-ink)]">
+            <div className="font-semibold">Sent {usd(sent.amountUsdc)}</div>
+            <div className="mt-0.5 font-mono text-[10px] opacity-70">
+              {sent.txHash ? `${sent.txHash.slice(0, 10)}…` : "Confirming on-chain"}
+            </div>
+            <button
+              type="button"
+              onClick={() => setSent(null)}
+              className="mt-1 text-[11px] underline opacity-70"
+            >
+              Dismiss
+            </button>
+          </div>
+        </div>
+      )}
     </div>
+  );
+}
+
+/** Deposit: the address, a QR for phone-to-phone, and the network warning. */
+function DepositSheet({ address, onClose }: { address: string; onClose: () => void }) {
+  const [copied, setCopied] = useState(false);
+  const [qr, setQr] = useState<string | null>(null);
+
+  // Generated in the browser rather than by an image service: handing a user's
+  // deposit address to a third-party host to render would leak exactly the thing
+  // the sheet exists to protect.
+  useEffect(() => {
+    let live = true;
+    QRCode.toDataURL(address, { width: 360, margin: 1 })
+      .then((url) => {
+        if (live) setQr(url);
+      })
+      .catch(() => {
+        // The address and copy button below are the real affordance; a missing
+        // QR is a downgrade, not a failure.
+      });
+    return () => {
+      live = false;
+    };
+  }, [address]);
+
+  return (
+    <>
+      <div className="fixed inset-0 z-40 bg-black/40" onClick={onClose} aria-hidden />
+      <div
+        className="oz-sheet fixed inset-x-0 bottom-0 z-50 rounded-t-3xl border-t border-[var(--line)] bg-[var(--paper)] p-5 pb-8"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Deposit"
+      >
+        <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-[var(--handle)]" />
+        <div className="mx-auto max-w-md text-center">
+          <h2 className="text-[18px] font-bold tracking-[-0.02em]">Deposit USDC</h2>
+          <p className="mt-1 text-[12px] text-[var(--mute)]">Polygon network only</p>
+
+          {qr && (
+            /* eslint-disable-next-line @next/next/no-img-element */
+            <img
+              src={qr}
+              alt={`QR code for deposit address ${address}`}
+              width={180}
+              height={180}
+              className="mx-auto mt-4 h-[180px] w-[180px] rounded-xl bg-white p-2"
+            />
+          )}
+
+          <code className="mt-4 block font-mono text-[12px] break-all">{address}</code>
+
+          <button
+            type="button"
+            onClick={() => {
+              navigator.clipboard?.writeText(address);
+              setCopied(true);
+              setTimeout(() => setCopied(false), 1600);
+            }}
+            className="mt-4 min-h-[48px] w-full rounded-2xl bg-[var(--ink)] font-semibold text-[var(--on-ink)]"
+          >
+            {copied ? "Copied" : "Copy address"}
+          </button>
+
+          <p className="mt-3 text-[11px] leading-relaxed text-[var(--faint)]">
+            Send USDC on Polygon only. Anything sent on another network, or a
+            different token, cannot be recovered. Funds appear here once the
+            transfer confirms.
+          </p>
+        </div>
+      </div>
+    </>
   );
 }
 
