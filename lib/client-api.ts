@@ -33,6 +33,42 @@ export class ApiCallError extends Error {
   }
 }
 
+/** POST with the same auth + error mapping as authedGet. */
+export async function authedPost<T>(path: string, body: unknown): Promise<T> {
+  const initData = getWebApp()?.initData ?? "";
+  if (!initData) throw new ApiCallError("unauthenticated");
+
+  let res: Response;
+  try {
+    res = await fetch(`${API_BASE}${path}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Telegram-Init-Data": initData,
+      },
+      body: JSON.stringify(body),
+    });
+  } catch {
+    throw new ApiCallError("unavailable");
+  }
+
+  const data = await res.json().catch(() => ({}));
+  if (res.ok) return data as T;
+
+  // Placement failures carry a user-facing message from the server; surface it
+  // rather than a generic string, because "the price moved, nothing was
+  // placed" and "finish wallet setup" need very different reactions.
+  const err = new ApiCallError(
+    res.status === 401 ? "unauthenticated"
+    : res.status === 403 ? "blocked"
+    : res.status === 429 ? "rate_limited"
+    : "unavailable",
+  );
+  (err as ApiCallError & { serverMessage?: string }).serverMessage =
+    typeof data?.message === "string" ? data.message : undefined;
+  throw err;
+}
+
 export async function authedGet<T>(path: string, signal?: AbortSignal): Promise<T> {
   const initData = getWebApp()?.initData ?? "";
   if (!initData) throw new ApiCallError("unauthenticated");

@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import type { Market, MarketEvent } from "@/lib/api";
+import type { EventMarket, Market, MarketEvent } from "@/lib/api";
 import { compactUsd, pct } from "@/lib/format";
+import { groupByKind } from "@/lib/market-kinds";
 
 /**
  * One event, rendered the way the bot renders a fixture: the match name and
@@ -82,22 +83,16 @@ export function EventCard({
           </button>
 
           {showExtra && (
-            <ul className="mt-1 flex flex-col gap-1.5">
-              {event.extra.map((m) => (
-                <li key={m.id}>
-                  <button
-                    type="button"
-                    onClick={() => onOpen(m)}
-                    className="flex min-h-[44px] w-full items-center justify-between gap-3 rounded-lg border border-[var(--line)] px-3 text-start"
-                  >
-                    <span className="flex-1 text-[13px] leading-snug">{m.title}</span>
-                    <span className="shrink-0 font-mono text-[13px] font-bold text-[var(--up)]">
-                      {pct(m.probability.yes)}%
-                    </span>
-                  </button>
-                </li>
+            <div className="mt-1 flex flex-col gap-3">
+              {groupByKind(event.extra).map((group) => (
+                <ExtraGroup
+                  key={group.key}
+                  label={group.label}
+                  markets={group.markets}
+                  onOpen={onOpen}
+                />
               ))}
-            </ul>
+            </div>
           )}
         </>
       )}
@@ -112,6 +107,61 @@ export function EventCard({
         )}
       </div>
     </article>
+  );
+}
+
+/**
+ * One derivative subcategory (Totals, Spreads, BTTS…), collapsed by default.
+ *
+ * A fixture can carry 20+ totals alone, so opening "Extra markets" must not
+ * dump every row at once — the bot splits these into the same subcategories.
+ */
+function ExtraGroup({
+  label,
+  markets,
+  onOpen,
+}: {
+  label: string;
+  markets: EventMarket[];
+  onOpen: (m: Market) => void;
+}) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <section>
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        className="flex min-h-[34px] w-full items-center justify-between rounded-lg bg-[var(--btn)] px-3 text-start"
+      >
+        <span className="font-mono text-[10px] tracking-[0.06em] text-[var(--mute)] uppercase">
+          {label}
+        </span>
+        <span className="font-mono text-[10px] text-[var(--faint)]">
+          {markets.length} {open ? "▴" : "▾"}
+        </span>
+      </button>
+
+      {open && (
+        <ul className="mt-1.5 flex flex-col gap-1.5">
+          {markets.map((m) => (
+            <li key={m.id}>
+              <button
+                type="button"
+                onClick={() => onOpen(m)}
+                className="flex min-h-[44px] w-full items-center justify-between gap-3 rounded-lg border border-[var(--line)] px-3 text-start"
+              >
+                <span className="flex-1 text-[13px] leading-snug">{m.title}</span>
+                <span className="shrink-0 font-mono text-[13px] font-bold text-[var(--up)]">
+                  {pct(m.probability.yes)}%
+                </span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
   );
 }
 

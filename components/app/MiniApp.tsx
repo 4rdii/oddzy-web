@@ -8,6 +8,7 @@ import { useTelegram, botLink } from "@/lib/telegram";
 import { authedGet } from "@/lib/client-api";
 import { MarketsFeed } from "./MarketsFeed";
 import { BrowseScreen } from "./BrowseScreen";
+import { ThemeToggle } from "../site/ThemeToggle";
 import { MarketDetail, type PlacedBet } from "./MarketDetail";
 import { Receipt } from "./Receipt";
 import { PositionsScreen, WalletScreen } from "./AccountScreens";
@@ -81,14 +82,17 @@ export function MiniApp({
             <span className="text-[15px] font-bold tracking-[-0.02em]">Oddzy</span>
           </div>
 
-          {inTelegram === false && (
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            {inTelegram === false && (
             <a
               href={botLink()}
               className="min-h-[36px] rounded-lg bg-[var(--ink)] px-3 py-2 text-[12px] font-semibold text-[var(--on-ink)]"
             >
               Open in Telegram
             </a>
-          )}
+            )}
+          </div>
         </header>
 
         {screen.name === "feed" && (

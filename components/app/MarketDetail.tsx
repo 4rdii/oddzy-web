@@ -3,6 +3,7 @@
 import { useState } from "react";
 import type { Market } from "@/lib/api";
 import { cents, compactUsd, pct, payoutFor, shortDate, usd } from "@/lib/format";
+import { authedPost, ApiCallError } from "@/lib/client-api";
 
 const STAKE_CHIPS = [10, 25, 50, 100];
 
@@ -21,9 +22,13 @@ export type PlacedBet = {
  * Market detail + bet slip.
  *
  * The slip is a bottom sheet, per the prototype: pick side → stake → live
- * payout preview → confirm. Placement goes through /api/bet, which fronts the
- * bot's order-signing path; until that endpoint ships it answers 501 and we
- * surface that plainly rather than faking a receipt.
+ * payout preview → confirm. Placement POSTs to the bot's /webapp/v1/bet, which
+ * runs the same placeBetCore the chat flow uses.
+ *
+ * The price shown here is the cached snapshot probability, which is fine for a
+ * preview but is NOT what the order is capped against — the server re-quotes
+ * the executable price at placement time and returns the actual fill, so the
+ * receipt reflects what really happened rather than what we predicted.
  */
 export function MarketDetail({
   market,
@@ -53,36 +58,31 @@ export function MarketDetail({
     setSubmitting(true);
     setError(null);
     try {
-      const res = await fetch("/api/bet", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          marketId: market.id,
-          slug: market.slug,
-          side,
-          sizeUsdc: stake,
-          quotedPrice: price,
-        }),
-      });
-      const data = await res.json().catch(() => ({}));
-
-      if (!res.ok) {
-        setError(data?.message ?? data?.error ?? "Couldn't place that bet.");
-        return;
-      }
+      const data = await authedPost<{
+        filledShares: number;
+        costUsd: number;
+        avgPrice: number;
+        orderId: string | null;
+        txHash: string | null;
+      }>("/webapp/v1/bet", { marketId: market.id, side, sizeUsdc: stake });
 
       onPlaced({
         market,
         side,
-        stake,
-        price: data.avgPrice ?? price,
-        shares: data.filledShares ?? shares,
-        payout: payoutFor(stake, data.avgPrice ?? price),
-        txHash: data.txHash ?? null,
-        orderId: data.orderId ?? null,
+        stake: data.costUsd,
+        price: data.avgPrice,
+        shares: data.filledShares,
+        payout: data.filledShares,
+        txHash: data.txHash,
+        orderId: data.orderId,
       });
-    } catch {
-      setError("Network error — your bet was not placed.");
+    } catch (e) {
+      const server = (e as ApiCallError & { serverMessage?: string })?.serverMessage;
+      if (e instanceof ApiCallError && e.kind === "unauthenticated") {
+        setError("Open Oddzy inside Telegram to place bets.");
+      } else {
+        setError(server ?? "Couldn't place that bet.");
+      }
     } finally {
       setSubmitting(false);
     }
