@@ -7,11 +7,16 @@ import { childrenOf } from "@/lib/taxonomy";
 /**
  * Browse — the category tab.
  *
- * A list-style drill-down over the bot's topic tree, per the design: tapping a
- * name opens that category's markets, tapping the chevron goes a level deeper.
- * Those are deliberately two different targets, so a node that both holds
- * markets and has children (Champions League: 509 markets, 2 sub-topics) can be
- * opened or explored without one action stealing the other.
+ * A list-style drill-down over the bot's topic tree. One tap target per row,
+ * and the row does the only thing that makes sense for that node: if it has
+ * subcategories, go deeper; if it doesn't, open its markets. Splitting the row
+ * into name-vs-chevron targets (the earlier design) made the common case — a
+ * leaf, where both halves did the same thing — feel like a coin flip.
+ *
+ * A node can have both children AND its own markets (Champions League: 509
+ * markets, 2 sub-topics). Drilling into it wins, and its own markets are reached
+ * from the "All … markets" row at the top of the level below, so nothing becomes
+ * unreachable.
  */
 export function BrowseScreen({
   topics,
@@ -23,6 +28,7 @@ export function BrowseScreen({
 }) {
   const [path, setPath] = useState<Topic[]>([]);
   const rows = childrenOf(topics, path);
+  const current = path.length > 0 ? path[path.length - 1] : null;
 
   return (
     <div className="pb-28">
@@ -44,22 +50,40 @@ export function BrowseScreen({
         ))}
       </nav>
 
-      <p className="px-4 pb-3 text-[11px] text-[var(--faint)]">
-        Tap a name to see its markets · tap › to go deeper
-      </p>
-
       <ul className="flex flex-col gap-2 px-4">
+        {/* The current category's OWN markets. Only meaningful once we've drilled
+            in, and only when it actually holds markets of its own rather than
+            just aggregating its children's. */}
+        {current && current.own_markets > 0 && (
+          <li className="overflow-hidden rounded-2xl border border-[var(--line)] bg-[var(--card)]">
+            <button
+              type="button"
+              onClick={() => onPick(current)}
+              className="flex min-h-[56px] w-full items-center gap-3 px-4 text-start"
+            >
+              <span className="flex-1">
+                <span className="block text-[15px] font-semibold text-[var(--accent)]">
+                  All {current.name} markets
+                </span>
+                <span className="block font-mono text-[10px] tracking-[0.04em] text-[var(--faint)]">
+                  {current.own_markets} MARKET{current.own_markets === 1 ? "" : "S"}
+                </span>
+              </span>
+            </button>
+          </li>
+        )}
+
         {rows.map((node) => {
           const hasKids = node.children.length > 0;
           return (
             <li
               key={node.id}
-              className="flex items-stretch overflow-hidden rounded-2xl border border-[var(--line)] bg-[var(--card)]"
+              className="overflow-hidden rounded-2xl border border-[var(--line)] bg-[var(--card)]"
             >
               <button
                 type="button"
-                onClick={() => onPick(node)}
-                className="flex min-h-[56px] flex-1 items-center gap-3 px-4 text-start"
+                onClick={() => (hasKids ? setPath([...path, node]) : onPick(node))}
+                className="flex min-h-[56px] w-full items-center gap-3 px-4 text-start"
               >
                 {node.emoji && (
                   <span className="text-[16px]" aria-hidden>
@@ -75,18 +99,12 @@ export function BrowseScreen({
                     {hasKids && ` · ${node.children.length} SUB`}
                   </span>
                 </span>
+                {hasKids && (
+                  <span className="text-[18px] text-[var(--mute)]" aria-hidden>
+                    ›
+                  </span>
+                )}
               </button>
-
-              {hasKids && (
-                <button
-                  type="button"
-                  onClick={() => setPath([...path, node])}
-                  aria-label={`Open ${node.name} subcategories`}
-                  className="flex w-12 shrink-0 items-center justify-center border-s border-[var(--line)] text-[18px] text-[var(--mute)]"
-                >
-                  ›
-                </button>
-              )}
             </li>
           );
         })}

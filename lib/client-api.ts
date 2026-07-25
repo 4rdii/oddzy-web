@@ -1,5 +1,6 @@
 "use client";
 
+import { getAccessToken } from "@privy-io/react-auth";
 import { getWebApp } from "./telegram";
 
 /**
@@ -10,17 +11,38 @@ import { getWebApp } from "./telegram";
  * origins for CORS. The market feed is the opposite case — that one proxies
  * through Next because it needs a bearer token that must stay server-side.
  *
- * Auth is the Telegram Mini App initData, which is only present inside
- * Telegram. Outside it every call fails `unauthorized` by design until the
- * Privy web-login milestone lands.
+ * Two credentials, matching the server's `authenticate`:
+ *   - Telegram Mini App initData, when running inside Telegram.
+ *   - A Privy access token, for browsers on oddzy.xyz.
+ *
+ * initData is preferred when present, mirroring the server's precedence, so the
+ * two never disagree about who the caller is.
  */
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? "https://app.oddzy.xyz";
 
+/**
+ * Build the auth header for a request, or throw if the caller has neither
+ * credential.
+ *
+ * getAccessToken() is the standalone form rather than the hook, so this stays
+ * callable from plain functions. It refreshes the token when near expiry, which
+ * is why it is called per-request instead of being cached.
+ */
+async function authHeaders(): Promise<Record<string, string>> {
+  const initData = getWebApp()?.initData ?? "";
+  if (initData) return { "X-Telegram-Init-Data": initData };
+
+  const token = await getAccessToken().catch(() => null);
+  if (token) return { Authorization: `Bearer ${token}` };
+
+  throw new ApiCallError("unauthenticated");
+}
+
 export type ApiFailure =
-  /** No initData — a plain browser visitor, or a cloned Telegram client. */
+  /** Neither credential: a logged-out visitor, or a cloned Telegram client. */
   | "unauthenticated"
-  /** Valid Telegram user with no wallet yet — send them to onboarding. */
+  /** Authenticated but no wallet yet — send them to onboarding, not to login. */
   | "no_account"
   | "blocked"
   | "rate_limited"
@@ -35,17 +57,13 @@ export class ApiCallError extends Error {
 
 /** POST with the same auth + error mapping as authedGet. */
 export async function authedPost<T>(path: string, body: unknown): Promise<T> {
-  const initData = getWebApp()?.initData ?? "";
-  if (!initData) throw new ApiCallError("unauthenticated");
+  const auth = await authHeaders();
 
   let res: Response;
   try {
     res = await fetch(`${API_BASE}${path}`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Telegram-Init-Data": initData,
-      },
+      headers: { "Content-Type": "application/json", ...auth },
       body: JSON.stringify(body),
     });
   } catch {
@@ -61,6 +79,7 @@ export async function authedPost<T>(path: string, body: unknown): Promise<T> {
   const err = new ApiCallError(
     res.status === 401 ? "unauthenticated"
     : res.status === 403 ? "blocked"
+    : res.status === 404 ? "no_account"
     : res.status === 429 ? "rate_limited"
     : "unavailable",
   );
@@ -70,15 +89,11 @@ export async function authedPost<T>(path: string, body: unknown): Promise<T> {
 }
 
 export async function authedGet<T>(path: string, signal?: AbortSignal): Promise<T> {
-  const initData = getWebApp()?.initData ?? "";
-  if (!initData) throw new ApiCallError("unauthenticated");
+  const auth = await authHeaders();
 
   let res: Response;
   try {
-    res = await fetch(`${API_BASE}${path}`, {
-      signal,
-      headers: { "X-Telegram-Init-Data": initData },
-    });
+    res = await fetch(`${API_BASE}${path}`, { signal, headers: auth });
   } catch (e) {
     // Preserve aborts so callers can distinguish an unmount from a failure.
     if ((e as Error)?.name === "AbortError") throw e;

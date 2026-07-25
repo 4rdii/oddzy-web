@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Script from "next/script";
 import type { Market } from "@/lib/api";
 import type { Topic } from "@/lib/taxonomy";
@@ -12,6 +12,8 @@ import { ThemeToggle } from "../site/ThemeToggle";
 import { MarketDetail, type PlacedBet } from "./MarketDetail";
 import { Receipt } from "./Receipt";
 import { PositionsScreen, WalletScreen } from "./AccountScreens";
+import { WebLogin } from "./WebLogin";
+import { PRIVY_ENABLED } from "./PrivyRoot";
 
 type Screen =
   | { name: "feed" }
@@ -47,16 +49,37 @@ export function MiniApp({
   // than claiming a fake $0 and blocking the stake as insufficient.
   const [balance, setBalance] = useState<number | null>(null);
 
-  useEffect(() => {
-    if (inTelegram !== true) return;
+  // Web visitors only. "unknown" until /me answers, so we never flash a login
+  // screen at someone who is already signed in.
+  const [webAuth, setWebAuth] = useState<"unknown" | "ok" | "needed">("unknown");
+
+  const loadMe = useCallback(() => {
     const ctrl = new AbortController();
     authedGet<{ balance: number }>("/webapp/v1/me", ctrl.signal)
-      .then((d) => setBalance(d.balance))
-      .catch(() => {
-        /* Balance is an affordance, not a gate — the server re-checks funds. */
+      .then((d) => {
+        setBalance(d.balance);
+        setWebAuth("ok");
+      })
+      .catch((e: unknown) => {
+        // Inside Telegram a failure is not an auth problem — initData is always
+        // present, so this is a network blip or an incomplete onboarding, and
+        // the existing "open the bot" affordances already cover it. Balance is
+        // an affordance, not a gate; the server re-checks funds either way.
+        if ((e as Error)?.name === "AbortError") return;
+        if (!inTelegram) setWebAuth("needed");
       });
     return () => ctrl.abort();
   }, [inTelegram]);
+
+  useEffect(() => {
+    if (inTelegram === null) return;
+    return loadMe();
+  }, [inTelegram, loadMe]);
+
+  // Screens that can't render anything meaningful without an account.
+  const gated =
+    screen.name === "detail" || screen.name === "positions" || screen.name === "wallet";
+  const needsLogin = inTelegram === false && PRIVY_ENABLED && webAuth === "needed";
 
   const tab =
     screen.name === "positions"
@@ -115,14 +138,27 @@ export function MiniApp({
           />
         )}
 
-        {screen.name === "detail" && (
-          <MarketDetail
-            market={screen.market}
-            balance={balance}
-            onBack={() => setScreen({ name: "feed" })}
-            onPlaced={(bet) => setScreen({ name: "done", bet })}
+        {/* Browsing and search stay open to everyone — that's the whole point of
+            a crawlable market feed. Only the screens that need an account are
+            gated, and only for web visitors: inside Telegram initData already
+            answers for them. */}
+        {gated && needsLogin ? (
+          <WebLogin
+            onReady={() => {
+              setWebAuth("ok");
+              loadMe();
+            }}
           />
-        )}
+        ) : (
+          <>
+            {screen.name === "detail" && (
+              <MarketDetail
+                market={screen.market}
+                balance={balance}
+                onBack={() => setScreen({ name: "feed" })}
+                onPlaced={(bet) => setScreen({ name: "done", bet })}
+              />
+            )}
 
         {screen.name === "done" && (
           <Receipt
@@ -132,8 +168,10 @@ export function MiniApp({
           />
         )}
 
-        {screen.name === "positions" && <PositionsScreen />}
-        {screen.name === "wallet" && <WalletScreen />}
+            {screen.name === "positions" && <PositionsScreen />}
+            {screen.name === "wallet" && <WalletScreen />}
+          </>
+        )}
 
         <nav
           className="fixed inset-x-0 bottom-0 z-40 mx-auto flex max-w-md border-t border-[var(--line)] bg-[var(--paper)]"

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { MiniApp } from "@/components/app/MiniApp";
+import { PrivyRoot } from "@/components/app/PrivyRoot";
 import { getMarkets, getTopics } from "@/lib/api";
 
 export const metadata: Metadata = {
@@ -20,5 +21,11 @@ export default async function AppPage() {
     getMarkets({ limit: 40 }).catch(() => ({ markets: [] as never[] })),
   ]);
 
-  return <MiniApp topics={topics} initialMarkets={snapshot.markets} />;
+  // The provider wraps /app only — the marketing pages and the blog stay free of
+  // the auth SDK so they keep rendering as plain cacheable HTML.
+  return (
+    <PrivyRoot>
+      <MiniApp topics={topics} initialMarkets={snapshot.markets} />
+    </PrivyRoot>
+  );
 }
