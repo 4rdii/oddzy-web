@@ -4,6 +4,7 @@ import { useState } from "react";
 import type { Market } from "@/lib/api";
 import { cents, compactUsd, pct, payoutFor, shortDate, usd } from "@/lib/format";
 import { authedPost, ApiCallError } from "@/lib/client-api";
+import { useTelegram } from "@/lib/telegram";
 
 const STAKE_CHIPS = [10, 25, 50, 100];
 
@@ -41,6 +42,7 @@ export function MarketDetail({
   onPlaced: (bet: PlacedBet) => void;
   balance: number | null;
 }) {
+  const { inTelegram } = useTelegram();
   const [side, setSide] = useState<"YES" | "NO">("YES");
   const [stake, setStake] = useState(25);
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -79,7 +81,13 @@ export function MarketDetail({
     } catch (e) {
       const server = (e as ApiCallError & { serverMessage?: string })?.serverMessage;
       if (e instanceof ApiCallError && e.kind === "unauthenticated") {
-        setError("Open Oddzy inside Telegram to place bets.");
+        // The gate normally stops a signed-out visitor long before here, so in
+        // practice this is a session that expired mid-slip.
+        setError(
+          inTelegram
+            ? "We couldn't verify your Telegram session. Reopen Oddzy from the bot."
+            : "Your session expired. Sign in again to place bets.",
+        );
       } else {
         setError(server ?? "Couldn't place that bet.");
       }

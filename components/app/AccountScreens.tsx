@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import { usd } from "@/lib/format";
 import { authedGet, ApiCallError, type ApiFailure } from "@/lib/client-api";
-import { botLink } from "@/lib/telegram";
+import { botLink, useTelegram } from "@/lib/telegram";
+import { SignInButton } from "./SignInButton";
 
 export type Position = {
   marketId: string;
@@ -57,18 +58,36 @@ function useAuthed<T>(path: string): State<T> {
 
 /** Every non-ready state gets a message that says what to actually do next. */
 function Failure({ kind }: { kind: ApiFailure }) {
+  const { inTelegram } = useTelegram();
+
   if (kind === "unauthenticated") {
+    // Two different failures wear this label. On the web it means "not signed
+    // in", and signing in fixes it. Inside Telegram it means initData was
+    // missing or rejected — the known cloned-client problem — and no amount of
+    // signing in helps, so those users still get pointed at the bot.
+    if (inTelegram) {
+      return (
+        <div className="px-4 py-12 text-center">
+          <p className="text-[14px] text-[var(--mute)]">
+            We couldn&apos;t verify your Telegram session. Reopen Oddzy from the bot.
+          </p>
+          <a
+            href={botLink()}
+            className="mt-4 inline-block min-h-[46px] rounded-xl bg-[var(--ink)] px-5 py-3 text-[14px] font-semibold text-[var(--on-ink)]"
+          >
+            Open in Telegram
+          </a>
+        </div>
+      );
+    }
     return (
       <div className="px-4 py-12 text-center">
         <p className="text-[14px] text-[var(--mute)]">
-          Open Oddzy inside Telegram to see your wallet and positions.
+          Sign in to see your wallet and positions.
         </p>
-        <a
-          href={botLink()}
-          className="mt-4 inline-block min-h-[46px] rounded-xl bg-[var(--ink)] px-5 py-3 text-[14px] font-semibold text-[var(--on-ink)]"
-        >
-          Open in Telegram
-        </a>
+        <div className="mt-4">
+          <SignInButton className="inline-block min-h-[46px] rounded-xl bg-[var(--ink)] px-5 py-3 text-[14px] font-semibold text-[var(--on-ink)]" />
+        </div>
       </div>
     );
   }

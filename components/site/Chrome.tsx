@@ -2,8 +2,6 @@ import Link from "next/link";
 import { ThemeToggle } from "./ThemeToggle";
 import { TelegramRedirect } from "./TelegramRedirect";
 
-const BOT = process.env.NEXT_PUBLIC_TG_BOT ?? "poly_sport_bet_bot";
-
 /**
  * Marketing-site chrome. Wraps every crawlable page.
  *
@@ -33,12 +31,16 @@ export function SiteChrome({ children }: { children: React.ReactNode }) {
 
             <div className="flex items-center gap-2">
               <ThemeToggle />
-              <a
-                href={`https://t.me/${BOT}`}
+              {/* Links into /app rather than calling Privy directly: this
+                  chrome wraps the crawlable pages and sits outside the provider,
+                  and loading an auth SDK on the blog would be a poor trade for a
+                  button most visitors never press. /app presents the login. */}
+              <Link
+                href="/app"
                 className="min-h-[38px] rounded-lg bg-[var(--ink)] px-3.5 py-2 text-[13px] font-semibold text-[var(--on-ink)]"
               >
-                Open in Telegram
-              </a>
+                Sign in
+              </Link>
             </div>
           </div>
         </header>

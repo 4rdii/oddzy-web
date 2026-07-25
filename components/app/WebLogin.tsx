@@ -45,6 +45,8 @@ export function WebLogin({ onReady }: { onReady: () => void }) {
   const started = useRef(false);
 
   const embedded = wallets.find((w) => w.walletClientType === "privy");
+  // Derived, not stored — see the effect below.
+  const shown: Phase = phase === "login" && authenticated && !embedded ? "wallet" : phase;
 
   const fail = useCallback((msg: string) => {
     setError(msg);
@@ -56,7 +58,9 @@ export function WebLogin({ onReady }: { onReady: () => void }) {
     if (started.current) return;
 
     if (!embedded) {
-      setPhase("wallet");
+      // No setPhase here: "waiting for the wallet" is derivable from the fact
+      // that we're authenticated without one, and setting it synchronously in an
+      // effect just triggers a second render to say what the first already knew.
       const t = setTimeout(
         () =>
           fail(
@@ -124,7 +128,7 @@ export function WebLogin({ onReady }: { onReady: () => void }) {
     );
   }
 
-  if (phase === "error") {
+  if (shown === "error") {
     return (
       <Centered>
         <p className="max-w-xs text-[14px] leading-relaxed text-[var(--down)]">{error}</p>
@@ -154,9 +158,9 @@ export function WebLogin({ onReady }: { onReady: () => void }) {
     <Centered>
       <div className="h-8 w-8 animate-spin rounded-full border-2 border-[var(--line)] border-t-[var(--accent)]" />
       <p className="mt-4 text-[14px] text-[var(--mute)]">
-        {phase === "wallet"
+        {shown === "wallet"
           ? "Creating your wallet…"
-          : phase === "granting"
+          : shown === "granting"
             ? "Authorizing trading…"
             : "Setting up your account…"}
       </p>

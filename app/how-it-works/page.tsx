@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { SiteChrome } from "@/components/site/Chrome";
 
 export const metadata: Metadata = {
@@ -75,12 +76,20 @@ export default function HowItWorksPage() {
           </p>
         </div>
 
-        <a
-          href={`https://t.me/${BOT}`}
-          className="mt-8 inline-block min-h-[50px] rounded-xl bg-[var(--ink)] px-6 py-3.5 font-semibold text-[var(--on-ink)]"
-        >
-          Open in Telegram
-        </a>
+        <div className="mt-8 flex flex-wrap gap-3">
+          <Link
+            href="/app"
+            className="min-h-[50px] rounded-xl bg-[var(--ink)] px-6 py-3.5 font-semibold text-[var(--on-ink)]"
+          >
+            Start trading
+          </Link>
+          <a
+            href={`https://t.me/${BOT}`}
+            className="min-h-[50px] rounded-xl border border-[var(--line)] bg-[var(--btn)] px-6 py-3.5 font-semibold text-[var(--ink)]"
+          >
+            Open in Telegram
+          </a>
+        </div>
       </div>
     </SiteChrome>
   );

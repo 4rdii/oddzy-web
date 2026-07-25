@@ -73,19 +73,22 @@ export default async function HomePage() {
           right here — your wallet is self-custodial, and every position settles on-chain.
         </p>
 
+        {/* Trading on the web is now the primary path, so the primary CTA leads
+            there. Telegram stays as the second button rather than disappearing:
+            it is still where most existing users live. */}
         <div className="mt-7 flex flex-wrap gap-3">
+          <Link
+            href="/app"
+            className="min-h-[50px] rounded-xl bg-[var(--ink)] px-6 py-3.5 font-semibold text-[var(--on-ink)]"
+          >
+            Start trading
+          </Link>
           <a
             href={`https://t.me/${BOT}`}
-            className="min-h-[50px] rounded-xl bg-[var(--ink)] px-6 py-3.5 font-semibold text-[var(--on-ink)]"
+            className="min-h-[50px] rounded-xl border border-[var(--line)] bg-[var(--btn)] px-6 py-3.5 font-semibold text-[var(--ink)]"
           >
             Open in Telegram
           </a>
-          <Link
-            href="/app"
-            className="min-h-[50px] rounded-xl border border-[var(--line)] bg-[var(--btn)] px-6 py-3.5 font-semibold text-[var(--ink)]"
-          >
-            Browse markets
-          </Link>
         </div>
       </section>
 

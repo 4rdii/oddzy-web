@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import Script from "next/script";
 import type { Market } from "@/lib/api";
 import type { Topic } from "@/lib/taxonomy";
-import { useTelegram, botLink } from "@/lib/telegram";
+import { useTelegram } from "@/lib/telegram";
 import { authedGet } from "@/lib/client-api";
 import { MarketsFeed } from "./MarketsFeed";
 import { BrowseScreen } from "./BrowseScreen";
@@ -13,6 +13,7 @@ import { MarketDetail, type PlacedBet } from "./MarketDetail";
 import { Receipt } from "./Receipt";
 import { PositionsScreen, WalletScreen } from "./AccountScreens";
 import { WebLogin } from "./WebLogin";
+import { SignInButton } from "./SignInButton";
 import { PRIVY_ENABLED } from "./PrivyRoot";
 
 type Screen =
@@ -27,10 +28,9 @@ type Screen =
  * The trading surface.
  *
  * Rendered at /app for everyone — inside Telegram it's the Mini App, in a
- * browser it's the same screens with a "continue in Telegram" affordance where
- * an authenticated action is required. The marketing site and blog live on the
- * other routes and are never rendered here, which is what keeps the blog a
- * web-only surface.
+ * browser it's the same screens with a sign-in gate on the ones that need an
+ * account. The marketing site and blog live on the other routes and are never
+ * rendered here, which is what keeps the blog a web-only surface.
  */
 export function MiniApp({
   topics,
@@ -108,12 +108,7 @@ export function MiniApp({
           <div className="flex items-center gap-2">
             <ThemeToggle />
             {inTelegram === false && (
-            <a
-              href={botLink()}
-              className="min-h-[36px] rounded-lg bg-[var(--ink)] px-3 py-2 text-[12px] font-semibold text-[var(--on-ink)]"
-            >
-              Open in Telegram
-            </a>
+              <SignInButton className="min-h-[36px] rounded-lg bg-[var(--ink)] px-3 py-2 text-[12px] font-semibold text-[var(--on-ink)]" />
             )}
           </div>
         </header>
@@ -160,13 +155,13 @@ export function MiniApp({
               />
             )}
 
-        {screen.name === "done" && (
-          <Receipt
-            bet={screen.bet}
-            onPositions={() => setScreen({ name: "positions" })}
-            onNext={() => setScreen({ name: "feed" })}
-          />
-        )}
+            {screen.name === "done" && (
+              <Receipt
+                bet={screen.bet}
+                onPositions={() => setScreen({ name: "positions" })}
+                onNext={() => setScreen({ name: "feed" })}
+              />
+            )}
 
             {screen.name === "positions" && <PositionsScreen />}
             {screen.name === "wallet" && <WalletScreen />}
