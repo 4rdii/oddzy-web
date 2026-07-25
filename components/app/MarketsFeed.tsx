@@ -1,41 +1,60 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import type { Market } from "@/lib/api";
-import type { Topic, TopicPath } from "@/lib/taxonomy";
-import { childrenOf, totalMarkets } from "@/lib/taxonomy";
+import { useEffect, useRef, useState } from "react";
+import type { Market, MarketEvent } from "@/lib/api";
+import type { Topic } from "@/lib/taxonomy";
 import { compactUsd, pct, untilClose } from "@/lib/format";
+import { EventCard } from "./EventCard";
 
 /**
- * Markets feed — the mini app's home screen.
+ * Markets feed.
  *
- * Navigation is a drill-down over the bot's own topic tree, which runs up to
- * four levels deep (Sports > Football > Premier League > Matches). Tapping a
- * chip descends; a breadcrumb walks back. Every level is filterable, because
- * the upstream matches a topic slug plus all of its descendants — so "Sports"
- * shows all 1,560 sports markets rather than nothing.
+ * Three modes, in priority order:
+ *  1. Search — a title query, flat results, category ignored.
+ *  2. Event-grouped — for fixture-style topics (layout `match_list`), so a
+ *     football match renders as one card with its moneyline and extras rather
+ *     than 37 loose binaries.
+ *  3. Flat — everything else.
+ *
+ * Category selection lives in the Browse tab; this screen shows whatever was
+ * picked there, with the active filter shown as a removable pill.
  */
 export function MarketsFeed({
-  topics,
+  topic,
   initialMarkets,
   onOpen,
+  onClearTopic,
+  onBrowse,
 }: {
-  topics: Topic[];
+  /** Active category, or null for the cross-category feed. */
+  topic: Topic | null;
   initialMarkets: Market[];
   onOpen: (m: Market) => void;
+  onClearTopic: () => void;
+  onBrowse: () => void;
 }) {
-  const [path, setPath] = useState<TopicPath>([]);
+  const [query, setQuery] = useState("");
+  const [debounced, setDebounced] = useState("");
   const [markets, setMarkets] = useState<Market[]>(initialMarkets);
+  const [events, setEvents] = useState<MarketEvent[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
-  const current = path.length ? path[path.length - 1] : null;
-  const chips = childrenOf(topics, path);
+  // Debounce so a typed query is one request, not one per keystroke.
+  useEffect(() => {
+    const id = setTimeout(() => setDebounced(query.trim()), 280);
+    return () => clearTimeout(id);
+  }, [query]);
+
+  const searching = debounced.length > 0;
+  const grouped = !searching && topic?.layout === "match_list";
 
   useEffect(() => {
-    // The unfiltered feed is server-rendered, so skip the redundant refetch.
-    if (!current) {
+    // Cross-category feed with no search is server-rendered already.
+    if (!searching && !topic) {
       setMarkets(initialMarkets);
+      setEvents([]);
       setError(null);
       setLoading(false);
       return;
@@ -45,14 +64,21 @@ export function MarketsFeed({
     setLoading(true);
     setError(null);
 
-    fetch(`/api/markets?category=${encodeURIComponent(current.id)}&limit=40`, {
-      signal: ctrl.signal,
-    })
+    const url = searching
+      ? `/api/markets?q=${encodeURIComponent(debounced)}&limit=40`
+      : grouped
+        ? `/api/events?category=${encodeURIComponent(topic!.id)}&limit=25`
+        : `/api/markets?category=${encodeURIComponent(topic!.id)}&limit=40`;
+
+    fetch(url, { signal: ctrl.signal })
       .then((r) => {
         if (!r.ok) throw new Error(String(r.status));
         return r.json();
       })
-      .then((d: { markets: Market[] }) => setMarkets(d.markets ?? []))
+      .then((d: { markets?: Market[]; events?: MarketEvent[] }) => {
+        setMarkets(d.markets ?? []);
+        setEvents(d.events ?? []);
+      })
       .catch((e) => {
         if (e.name === "AbortError") return;
         setError("Couldn't load markets.");
@@ -60,133 +86,92 @@ export function MarketsFeed({
       .finally(() => setLoading(false));
 
     return () => ctrl.abort();
-  }, [current, initialMarkets]);
+  }, [searching, debounced, grouped, topic, initialMarkets]);
+
+  const count = grouped ? events.length : markets.length;
 
   return (
     <div>
-      {/* Breadcrumb — only once we've descended, so the root stays clean. */}
-      {path.length > 0 && (
-        <nav
-          className="flex flex-wrap items-center gap-1 px-4 pt-3 font-mono text-[11px]"
-          aria-label="Category path"
+      <div className="flex gap-2 px-4 pt-3">
+        <div className="relative flex-1">
+          <input
+            ref={inputRef}
+            type="search"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search markets"
+            aria-label="Search markets"
+            className="min-h-[42px] w-full rounded-xl border border-[var(--line)] bg-[var(--card)] ps-9 pe-3 text-[14px] text-[var(--ink)] placeholder:text-[var(--faint)]"
+          />
+          <span
+            className="pointer-events-none absolute inset-y-0 start-3 flex items-center text-[13px] text-[var(--faint)]"
+            aria-hidden
+          >
+            ⌕
+          </span>
+        </div>
+        <button
+          type="button"
+          onClick={onBrowse}
+          className="min-h-[42px] shrink-0 rounded-xl border border-[var(--line)] bg-[var(--btn)] px-3.5 text-[13px] font-semibold text-[var(--mute)]"
         >
-          <button
-            type="button"
-            onClick={() => setPath([])}
-            className="text-[var(--accent)]"
-          >
-            All
-          </button>
-          {path.map((node, i) => (
-            <span key={node.id} className="flex items-center gap-1">
-              <span className="text-[var(--faint)]" aria-hidden>
-                ›
-              </span>
-              {i === path.length - 1 ? (
-                <span className="font-semibold text-[var(--ink)]">{node.name}</span>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => setPath(path.slice(0, i + 1))}
-                  className="text-[var(--accent)]"
-                >
-                  {node.name}
-                </button>
-              )}
-            </span>
-          ))}
-        </nav>
-      )}
-
-      {/* Chips for the current level. */}
-      <div
-        className="flex gap-2 overflow-x-auto px-4 py-3"
-        role="tablist"
-        aria-label={current ? `${current.name} categories` : "Market categories"}
-      >
-        {path.length === 0 ? (
-          <Chip active onClick={() => setPath([])} count={totalMarkets(topics)}>
-            All
-          </Chip>
-        ) : (
-          <Chip active={false} onClick={() => setPath(path.slice(0, -1))}>
-            ← Back
-          </Chip>
-        )}
-
-        {chips.map((node) => (
-          <Chip
-            key={node.id}
-            active={false}
-            count={node.active_markets}
-            onClick={() => setPath([...path, node])}
-          >
-            {node.emoji ? `${node.emoji} ` : ""}
-            {node.name}
-            {node.children.length > 0 && (
-              <span className="ms-1 opacity-50" aria-hidden>
-                ›
-              </span>
-            )}
-          </Chip>
-        ))}
+          ☰ Browse
+        </button>
       </div>
 
-      <div className="flex items-center justify-between px-4 pb-2">
+      {/* Active category pill — the filter comes from Browse, so it has to be
+          visible and removable from here. */}
+      {topic && !searching && (
+        <div className="flex items-center gap-2 px-4 pt-3">
+          <span className="flex min-h-[30px] items-center gap-1.5 rounded-full border border-[var(--accent)] px-3 text-[12px] font-semibold text-[var(--accent)]">
+            {topic.emoji ? `${topic.emoji} ` : ""}
+            {topic.name}
+            <button
+              type="button"
+              onClick={onClearTopic}
+              aria-label={`Clear ${topic.name} filter`}
+              className="ms-0.5 text-[14px] leading-none"
+            >
+              ×
+            </button>
+          </span>
+        </div>
+      )}
+
+      <div className="flex items-center justify-between px-4 pt-3 pb-2">
         <span className="font-mono text-[10px] tracking-[0.06em] text-[var(--faint)]">
           {loading
             ? "LOADING…"
-            : `${markets.length} MARKET${markets.length === 1 ? "" : "S"} · BY 24H VOLUME`}
+            : searching
+              ? `${count} RESULT${count === 1 ? "" : "S"}`
+              : grouped
+                ? `${count} EVENT${count === 1 ? "" : "S"} · BY KICK-OFF`
+                : `${count} MARKET${count === 1 ? "" : "S"} · BY 24H VOLUME`}
         </span>
       </div>
 
       {error && <p className="px-4 py-6 text-center text-sm text-[var(--down)]">{error}</p>}
 
-      {!error && !loading && markets.length === 0 && (
+      {!error && !loading && count === 0 && (
         <p className="px-4 py-10 text-center text-sm text-[var(--mute)]">
-          No live markets here right now.
+          {searching ? `Nothing matches “${debounced}”.` : "No live markets here right now."}
         </p>
       )}
 
       <ul className="flex flex-col gap-2.5 px-4 pb-4">
-        {markets.map((m) => (
-          <li key={m.id}>
-            <MarketCard market={m} onOpen={() => onOpen(m)} />
-          </li>
-        ))}
+        {grouped
+          ? events.map((e) => (
+              <li key={e.id}>
+                <EventCard event={e} onOpen={onOpen} />
+              </li>
+            ))
+          : markets.map((m) => (
+              <li key={m.id}>
+                <MarketCard market={m} onOpen={() => onOpen(m)} />
+              </li>
+            ))}
       </ul>
     </div>
-  );
-}
-
-function Chip({
-  active,
-  onClick,
-  count,
-  children,
-}: {
-  active: boolean;
-  onClick: () => void;
-  count?: number;
-  children: React.ReactNode;
-}) {
-  return (
-    <button
-      type="button"
-      role="tab"
-      aria-selected={active}
-      onClick={onClick}
-      className={`flex min-h-[40px] shrink-0 items-center rounded-full border px-4 text-[13px] font-semibold whitespace-nowrap transition-colors ${
-        active
-          ? "border-transparent bg-[var(--ink)] text-[var(--on-ink)]"
-          : "border-[var(--line)] bg-[var(--btn)] text-[var(--mute)]"
-      }`}
-    >
-      {children}
-      {count != null && (
-        <span className="ms-1.5 font-mono text-[10px] opacity-55">{count}</span>
-      )}
-    </button>
   );
 }
 

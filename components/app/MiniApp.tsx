@@ -7,12 +7,14 @@ import type { Topic } from "@/lib/taxonomy";
 import { useTelegram, botLink } from "@/lib/telegram";
 import { authedGet } from "@/lib/client-api";
 import { MarketsFeed } from "./MarketsFeed";
+import { BrowseScreen } from "./BrowseScreen";
 import { MarketDetail, type PlacedBet } from "./MarketDetail";
 import { Receipt } from "./Receipt";
 import { PositionsScreen, WalletScreen } from "./AccountScreens";
 
 type Screen =
   | { name: "feed" }
+  | { name: "browse" }
   | { name: "detail"; market: Market }
   | { name: "done"; bet: PlacedBet }
   | { name: "positions" }
@@ -35,6 +37,9 @@ export function MiniApp({
   initialMarkets: Market[];
 }) {
   const [screen, setScreen] = useState<Screen>({ name: "feed" });
+  // The category picked in Browse; the feed reads it. Kept here so switching
+  // tabs doesn't lose the filter.
+  const [topic, setTopic] = useState<Topic | null>(null);
   const { inTelegram } = useTelegram();
 
   // null means "unknown", which renders the slip without a balance line rather
@@ -53,7 +58,13 @@ export function MiniApp({
   }, [inTelegram]);
 
   const tab =
-    screen.name === "positions" ? "positions" : screen.name === "wallet" ? "wallet" : "markets";
+    screen.name === "positions"
+      ? "positions"
+      : screen.name === "wallet"
+        ? "wallet"
+        : screen.name === "browse"
+          ? "browse"
+          : "markets";
 
   return (
     <>
@@ -82,9 +93,21 @@ export function MiniApp({
 
         {screen.name === "feed" && (
           <MarketsFeed
-            topics={topics}
+            topic={topic}
             initialMarkets={initialMarkets}
             onOpen={(m) => setScreen({ name: "detail", market: m })}
+            onClearTopic={() => setTopic(null)}
+            onBrowse={() => setScreen({ name: "browse" })}
+          />
+        )}
+
+        {screen.name === "browse" && (
+          <BrowseScreen
+            topics={topics}
+            onPick={(t) => {
+              setTopic(t);
+              setScreen({ name: "feed" });
+            }}
           />
         )}
 
@@ -117,6 +140,12 @@ export function MiniApp({
             icon="◈"
             label="Markets"
             onClick={() => setScreen({ name: "feed" })}
+          />
+          <TabButton
+            active={tab === "browse"}
+            icon="☰"
+            label="Browse"
+            onClick={() => setScreen({ name: "browse" })}
           />
           <TabButton
             active={tab === "positions"}
