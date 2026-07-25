@@ -1,0 +1,274 @@
+@import "tailwindcss";
+
+/* ──────────────────────────────────────────────────────────────────────────
+   Design tokens — ported verbatim from the Oddzy prototype (Oddzy.dc.html).
+   `day` is the default. `night` applies via [data-theme="night"] on <html>,
+   and also via prefers-color-scheme so the first paint (before the theme
+   script runs) already lands on the right palette.
+   ────────────────────────────────────────────────────────────────────────── */
+
+:root {
+  --page: #efede6;
+  --paper: #faf9f6;
+  --card: #ffffff;
+  --line: #e3e1da;
+  --mute: #77756e;
+  --faint: #8b8981;
+  --text2: #57554f;
+  --ink: #16171a;
+  --on-ink: #faf9f6;
+  --on-ink-dim: #96948c;
+  --on-ink-line: #3a3b3e;
+  --btn: #f2efe7;
+  --seg: #e4e1d8;
+  --segline: #d6d3c9;
+  --stripe1: #efece3;
+  --stripe2: #e7e4db;
+  --bar: #edeae1;
+  --handle: #dad7ce;
+  --dots: #c9c6bc;
+  --up: #1f9d6b;
+  --down: #d2544a;
+  --accent: #2d5bff;
+  --accent-hover: #1b41cc;
+}
+
+/* Explicit night selection. */
+:root[data-theme="night"] {
+  --page: #121317;
+  --paper: #17191d;
+  --card: #1e2126;
+  --line: #2b2f36;
+  --mute: #9da2ab;
+  --faint: #7c818a;
+  --text2: #b9bec7;
+  --ink: #eceae4;
+  --on-ink: #17191d;
+  --on-ink-dim: #666b74;
+  --on-ink-line: #d3d0c7;
+  --btn: #262a31;
+  --seg: #1b1e23;
+  --segline: #2b2f36;
+  --stripe1: #23262c;
+  --stripe2: #1e2126;
+  --bar: #2b2f36;
+  --handle: #3c414a;
+  --dots: #3c414a;
+  --up: #4cc38a;
+  --down: #f07a6a;
+}
+
+/* System preference, unless the user explicitly chose day. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="day"]) {
+    --page: #121317;
+    --paper: #17191d;
+    --card: #1e2126;
+    --line: #2b2f36;
+    --mute: #9da2ab;
+    --faint: #7c818a;
+    --text2: #b9bec7;
+    --ink: #eceae4;
+    --on-ink: #17191d;
+    --on-ink-dim: #666b74;
+    --on-ink-line: #d3d0c7;
+    --btn: #262a31;
+    --seg: #1b1e23;
+    --segline: #2b2f36;
+    --stripe1: #23262c;
+    --stripe2: #1e2126;
+    --bar: #2b2f36;
+    --handle: #3c414a;
+    --dots: #3c414a;
+    --up: #4cc38a;
+    --down: #f07a6a;
+  }
+}
+
+@theme inline {
+  --color-page: var(--page);
+  --color-paper: var(--paper);
+  --color-card: var(--card);
+  --color-line: var(--line);
+  --color-mute: var(--mute);
+  --color-faint: var(--faint);
+  --color-text2: var(--text2);
+  --color-ink: var(--ink);
+  --color-on-ink: var(--on-ink);
+  --color-on-ink-dim: var(--on-ink-dim);
+  --color-on-ink-line: var(--on-ink-line);
+  --color-btn: var(--btn);
+  --color-seg: var(--seg);
+  --color-segline: var(--segline);
+  --color-bar: var(--bar);
+  --color-handle: var(--handle);
+  --color-dots: var(--dots);
+  --color-up: var(--up);
+  --color-down: var(--down);
+  --color-accent: var(--accent);
+  --font-sans: var(--font-grotesk), system-ui, sans-serif;
+  --font-mono: var(--font-plex), ui-monospace, monospace;
+}
+
+/* These MUST live in @layer base. Tailwind v4 puts utilities in a cascade
+   layer, and unlayered CSS beats layered CSS regardless of specificity — an
+   unlayered `a { color }` would override every text-* utility on a link,
+   turning buttons and card headings accent-blue. */
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+
+  html,
+  body {
+    margin: 0;
+    padding: 0;
+  }
+
+  body {
+    background: var(--page);
+    color: var(--ink);
+    font-family: var(--font-grotesk), system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  a {
+    color: var(--accent);
+    text-decoration: none;
+  }
+
+  a:hover {
+    color: var(--accent-hover);
+  }
+}
+
+/* The prototype hides scrollbars — the app is a phone surface. */
+::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
+}
+
+* {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+/* Visible focus for keyboard users — the prototype has none, and the app is
+   full of custom buttons that would otherwise be untraversable. */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+@keyframes ozRise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes ozSheet {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: none;
+  }
+}
+
+@keyframes ozPop {
+  from {
+    opacity: 0;
+    transform: scale(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.oz-rise {
+  animation: ozRise 0.32s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+.oz-sheet {
+  animation: ozSheet 0.3s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+.oz-pop {
+  animation: ozPop 0.28s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+/* Decorative motion only — a bottom sheet flying up is exactly what triggers
+   vestibular discomfort, so drop it when the OS asks. */
+@media (prefers-reduced-motion: reduce) {
+  .oz-rise,
+  .oz-sheet,
+  .oz-pop {
+    animation: none;
+  }
+  * {
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Long-form article typography (blog — web-only surface). */
+.oz-prose {
+  color: var(--text2);
+  font-size: 17px;
+  line-height: 1.75;
+}
+.oz-prose > * + * {
+  margin-top: 1.15em;
+}
+.oz-prose h2 {
+  color: var(--ink);
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin-top: 2em;
+}
+.oz-prose h3 {
+  color: var(--ink);
+  font-size: 18px;
+  font-weight: 700;
+  margin-top: 1.6em;
+}
+.oz-prose ul,
+.oz-prose ol {
+  padding-inline-start: 1.25em;
+}
+.oz-prose ul {
+  list-style: disc;
+}
+.oz-prose ol {
+  list-style: decimal;
+}
+.oz-prose li + li {
+  margin-top: 0.4em;
+}
+.oz-prose blockquote {
+  border-inline-start: 3px solid var(--accent);
+  padding-inline-start: 1em;
+  color: var(--mute);
+  font-style: italic;
+}
+.oz-prose code {
+  font-family: var(--font-plex), ui-monospace, monospace;
+  font-size: 0.9em;
+  background: var(--btn);
+  padding: 0.15em 0.4em;
+  border-radius: 5px;
+}
+.oz-prose strong {
+  color: var(--ink);
+  font-weight: 600;
+}
+.oz-prose a {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
