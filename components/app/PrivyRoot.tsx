@@ -38,11 +38,9 @@ export function PrivyRoot({ children }: { children: React.ReactNode }) {
       config={{
         loginMethods: ["telegram", "google", "wallet"],
         embeddedWallets: { ethereum: { createOnLogin: "all-users" } },
-        appearance: {
-          theme: "dark",
-          accentColor: "#2d5bff",
-          logo: "https://oddzy.xyz/icon.png",
-        },
+        // No `logo`: there is no icon asset in public/, and pointing at a
+        // missing file only bought a 404 in the login modal.
+        appearance: { theme: "dark", accentColor: "#2d5bff" },
       }}
     >
       {children}

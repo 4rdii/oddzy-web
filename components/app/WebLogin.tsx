@@ -36,7 +36,7 @@ type Phase = "login" | "wallet" | "granting" | "registering" | "ready" | "error"
 export function WebLogin({ onReady }: { onReady: () => void }) {
   const { ready, authenticated, login, logout, user } = usePrivy();
   const { wallets } = useWallets();
-  const { addSigners } = useSigners();
+  const { addSigners, removeSigners } = useSigners();
 
   const [phase, setPhase] = useState<Phase>("login");
   const [error, setError] = useState<string | null>(null);
@@ -44,9 +44,12 @@ export function WebLogin({ onReady }: { onReady: () => void }) {
   // may run this effect twice in dev. One attempt per mount.
   const started = useRef(false);
 
-  const embedded = wallets.find((w) => w.walletClientType === "privy");
+  // Only the ADDRESS crosses into the effect below. The wallet object gets a
+  // new identity on every render, so depending on it re-runs the effect
+  // continuously; a plain string compares by value and settles.
+  const address = wallets.find((w) => w.walletClientType === "privy")?.address;
   // Derived, not stored — see the effect below.
-  const shown: Phase = phase === "login" && authenticated && !embedded ? "wallet" : phase;
+  const shown: Phase = phase === "login" && authenticated && !address ? "wallet" : phase;
 
   const fail = useCallback((msg: string) => {
     setError(msg);
@@ -57,7 +60,7 @@ export function WebLogin({ onReady }: { onReady: () => void }) {
     if (!ready || !authenticated) return;
     if (started.current) return;
 
-    if (!embedded) {
+    if (!address) {
       // No setPhase here: "waiting for the wallet" is derivable from the fact
       // that we're authenticated without one, and setting it synchronously in an
       // effect just triggers a second render to say what the first already knew.
@@ -73,11 +76,16 @@ export function WebLogin({ onReady }: { onReady: () => void }) {
     }
 
     started.current = true;
-    const address = embedded.address;
 
     (async () => {
       try {
         setPhase("granting");
+        // Revoke first, then grant — the same order the Telegram onboarding uses.
+        // Granting on a wallet that already carries a signer is rejected with a
+        // 400, which is exactly what a returning user hits.
+        await removeSigners({ address }).catch(() => {
+          // Nothing to revoke on a fresh wallet; that is the normal case.
+        });
         await Promise.race([
           addSigners({
             address,
@@ -96,12 +104,18 @@ export function WebLogin({ onReady }: { onReady: () => void }) {
         setPhase("ready");
         onReady();
       } catch (e) {
-        started.current = false;
+        // Deliberately NOT clearing started.current. Doing so re-armed this
+        // effect, and because `embedded` is a fresh object on every render the
+        // effect re-ran immediately — an unbounded retry loop that hammered
+        // Privy and locked the tab in a render storm. Retrying is the user's
+        // call, via the button below, which clears the flag explicitly.
         const server = (e as { serverMessage?: string })?.serverMessage;
-        fail(server ?? "Couldn't finish setting up your wallet. Try again.");
+        const detail = e instanceof Error ? e.message : String(e);
+        console.error("[WebLogin] setup failed:", e);
+        fail(server ?? `Couldn't finish setting up your wallet. (${detail})`);
       }
     })();
-  }, [ready, authenticated, embedded, addSigners, onReady, fail]);
+  }, [ready, authenticated, address, addSigners, removeSigners, onReady, fail]);
 
   if (!ready) {
     return <Centered>Loading…</Centered>;
