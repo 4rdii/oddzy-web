@@ -6,10 +6,11 @@ import { getWebApp } from "./telegram";
 /**
  * Browser-side client for the bot server's authenticated API.
  *
- * Calls go straight to app.oddzy.xyz rather than hopping through a Next route
- * handler: it's one less network leg, and the bot already allow-lists our
- * origins for CORS. The market feed is the opposite case — that one proxies
- * through Next because it needs a bearer token that must stay server-side.
+ * Calls go to a SAME-ORIGIN path, proxied to the bot by app/api/webapp/[...path].
+ * They used to hit app.oddzy.xyz directly, which required the user's network to
+ * reach the VPS as well as Vercel — and a network that could do one but not the
+ * other produced a site that browsed fine and then failed at sign-in. See the
+ * route handler for the full reasoning.
  *
  * Two credentials, matching the server's `authenticate`:
  *   - Telegram Mini App initData, when running inside Telegram.
@@ -19,7 +20,12 @@ import { getWebApp } from "./telegram";
  * two never disagree about who the caller is.
  */
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? "https://app.oddzy.xyz";
+/**
+ * Same-origin by default. Paths below are written as the bot mounts them
+ * (`/webapp/v1/...`), and the proxy re-attaches that prefix upstream, so callers
+ * read the same as the server routes they hit.
+ */
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? "/api";
 
 /**
  * Build the auth header for a request, or throw if the caller has neither
