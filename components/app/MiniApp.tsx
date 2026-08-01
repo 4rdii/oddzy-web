@@ -19,7 +19,7 @@ import { PRIVY_ENABLED } from "./PrivyRoot";
 type Screen =
   | { name: "feed" }
   | { name: "browse" }
-  | { name: "detail"; market: Market }
+  | { name: "detail"; market: Market; from?: "feed" | "positions" }
   | { name: "done"; bet: PlacedBet }
   | { name: "positions" }
   | { name: "wallet" };
@@ -75,6 +75,17 @@ export function MiniApp({
     if (inTelegram === null) return;
     return loadMe();
   }, [inTelegram, loadMe]);
+
+  // Open a market from a position/history row. The row only carries a slug, so
+  // fetch the full market (DB row + live Gamma pricing) before switching to the
+  // detail screen — whose bet slip doubles as "add to position".
+  const openMarketBySlug = useCallback((slug: string) => {
+    authedGet<Market>(`/webapp/v1/market?slug=${encodeURIComponent(slug)}`)
+      .then((m) => setScreen({ name: "detail", market: m, from: "positions" }))
+      .catch(() => {
+        // Non-fatal: leave the user on the positions list rather than a dead end.
+      });
+  }, []);
 
   // Screens that can't render anything meaningful without an account.
   const gated =
@@ -150,7 +161,9 @@ export function MiniApp({
               <MarketDetail
                 market={screen.market}
                 balance={balance}
-                onBack={() => setScreen({ name: "feed" })}
+                onBack={() =>
+                  setScreen(screen.from === "positions" ? { name: "positions" } : { name: "feed" })
+                }
                 onPlaced={(bet) => setScreen({ name: "done", bet })}
               />
             )}
@@ -163,7 +176,7 @@ export function MiniApp({
               />
             )}
 
-            {screen.name === "positions" && <PositionsScreen />}
+            {screen.name === "positions" && <PositionsScreen onOpenMarket={openMarketBySlug} />}
             {screen.name === "wallet" && <WalletScreen />}
           </>
         )}
