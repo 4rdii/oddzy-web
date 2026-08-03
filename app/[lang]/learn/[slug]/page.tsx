@@ -3,19 +3,23 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { SiteChrome } from "@/components/site/Chrome";
 import { getAllPosts, getPost } from "@/lib/posts";
+import { brandFor, isLocale, LOCALES } from "@/lib/i18n";
+import { getDict } from "@/lib/dict";
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://oddzy.xyz";
-
-/** Pre-render every article at build time — this is the SEO surface. */
+/** Pre-render every article, per locale — this is the SEO surface. */
 export async function generateStaticParams() {
   const posts = await getAllPosts();
-  return posts.map((p) => ({ slug: p.slug }));
+  return LOCALES.flatMap((lang) => posts.map((p) => ({ lang, slug: p.slug })));
 }
 
-export async function generateMetadata(props: PageProps<"/learn/[slug]">): Promise<Metadata> {
-  const { slug } = await props.params;
+type ArticleParams = { params: Promise<{ lang: string; slug: string }> };
+
+export async function generateMetadata(props: ArticleParams): Promise<Metadata> {
+  const { lang, slug } = await props.params;
+  if (!isLocale(lang)) return {};
   const post = await getPost(slug);
   if (!post) return {};
+  const siteUrl = brandFor(lang).siteUrl;
   return {
     title: post.title,
     description: post.description,
@@ -26,15 +30,19 @@ export async function generateMetadata(props: PageProps<"/learn/[slug]">): Promi
       description: post.description,
       publishedTime: post.publishedAt,
       modifiedTime: post.updatedAt ?? post.publishedAt,
-      url: `${SITE_URL}/learn/${post.slug}`,
+      url: `${siteUrl}/learn/${post.slug}`,
     },
   };
 }
 
-export default async function ArticlePage(props: PageProps<"/learn/[slug]">) {
-  const { slug } = await props.params;
+export default async function ArticlePage(props: ArticleParams) {
+  const { lang, slug } = await props.params;
+  if (!isLocale(lang)) notFound();
   const post = await getPost(slug);
   if (!post) notFound();
+
+  const brand = brandFor(lang);
+  const t = getDict(lang);
 
   // Dynamic import of the MDX body — the loader compiles it to a component.
   const { default: Body } = await import(`@/content/posts/${slug}.mdx`);
@@ -46,20 +54,29 @@ export default async function ArticlePage(props: PageProps<"/learn/[slug]">) {
     description: post.description,
     datePublished: post.publishedAt,
     dateModified: post.updatedAt ?? post.publishedAt,
-    author: { "@type": "Organization", name: "Oddzy" },
-    publisher: { "@type": "Organization", name: "Oddzy" },
-    mainEntityOfPage: `${SITE_URL}/learn/${post.slug}`,
+    author: { "@type": "Organization", name: brand.name },
+    publisher: { "@type": "Organization", name: brand.name },
+    mainEntityOfPage: `${brand.siteUrl}/learn/${post.slug}`,
+    inLanguage: brand.htmlLang,
   };
 
+  // fa-IR resolves to the Jalali calendar and Persian-Indic digits, so a post
+  // dated 2026-07-20 reads "۲۹ تیر ۱۴۰۵" rather than a Gregorian date in a
+  // Persian sentence.
+  const published = new Date(post.publishedAt).toLocaleDateString(
+    lang === "fa" ? "fa-IR" : "en-US",
+    { month: "long", day: "numeric", year: "numeric", timeZone: "UTC" },
+  );
+
   return (
-    <SiteChrome>
+    <SiteChrome lang={lang}>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
       <article className="mx-auto max-w-2xl px-5 pt-10 pb-8">
         <Link href="/learn" className="font-mono text-[11px] text-[var(--mute)]">
-          ← All articles
+          {t.learn.backToAll}
         </Link>
 
         <span className="mt-6 block font-mono text-[10px] tracking-[0.1em] text-[var(--accent)]">
@@ -69,16 +86,9 @@ export default async function ArticlePage(props: PageProps<"/learn/[slug]">) {
           {post.title}
         </h1>
         <p className="mt-3 font-mono text-[11px] tracking-[0.06em] text-[var(--faint)]">
-          <time dateTime={post.publishedAt}>
-            {new Date(post.publishedAt).toLocaleDateString("en-US", {
-              month: "long",
-              day: "numeric",
-              year: "numeric",
-              timeZone: "UTC",
-            })}
-          </time>
+          <time dateTime={post.publishedAt}>{published}</time>
           {" · "}
-          {post.readingMinutes} MIN READ
+          {post.readingMinutes} {t.learn.minRead}
         </p>
 
         <p className="mt-6 border-s-2 border-[var(--accent)] ps-4 text-[17px] leading-relaxed text-[var(--ink)]">

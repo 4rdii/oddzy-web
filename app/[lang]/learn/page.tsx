@@ -1,25 +1,45 @@
 import Link from "next/link";
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 import { SiteChrome } from "@/components/site/Chrome";
 import { getAllPosts } from "@/lib/posts";
+import { isLocale } from "@/lib/i18n";
+import { getDict } from "@/lib/dict";
 
-export const metadata: Metadata = {
-  title: "Learn — prediction markets explained",
-  description:
-    "Guides and analysis on prediction markets: how prices become probabilities, how they differ from sportsbooks, and how to trade them from Telegram.",
-  alternates: { canonical: "/learn" },
-};
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ lang: string }>;
+}): Promise<Metadata> {
+  const { lang } = await params;
+  if (!isLocale(lang)) return {};
+  const t = getDict(lang);
+  return {
+    title: t.learn.metaTitle,
+    description: t.learn.metaDescription,
+    alternates: { canonical: "/learn" },
+  };
+}
 
-export default async function LearnPage() {
+export default async function LearnPage({
+  params,
+}: {
+  params: Promise<{ lang: string }>;
+}) {
+  const { lang } = await params;
+  if (!isLocale(lang)) notFound();
+  const t = getDict(lang);
+
   const posts = await getAllPosts();
 
   return (
-    <SiteChrome>
+    <SiteChrome lang={lang}>
       <div className="mx-auto max-w-5xl px-5 pt-14 pb-6">
-        <h1 className="text-[clamp(28px,5vw,44px)] font-bold tracking-[-0.03em]">Learn</h1>
+        <h1 className="text-[clamp(28px,5vw,44px)] font-bold tracking-[-0.03em]">
+          {t.learn.h1}
+        </h1>
         <p className="mt-4 max-w-xl text-[16px] leading-relaxed text-[var(--text2)]">
-          How prediction markets work, what the prices actually mean, and how to trade them
-          without getting the basics wrong.
+          {t.learn.lead}
         </p>
       </div>
 
@@ -38,7 +58,7 @@ export default async function LearnPage() {
               </h2>
               <p className="mt-3 text-[14px] leading-relaxed text-[var(--text2)]">{p.lead}</p>
               <span className="mt-4 block font-mono text-[10px] tracking-[0.08em] text-[var(--faint)]">
-                {p.readingMinutes} MIN READ
+                {p.readingMinutes} {t.learn.minRead}
               </span>
             </Link>
           </li>

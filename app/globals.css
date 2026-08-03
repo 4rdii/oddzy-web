@@ -106,8 +106,48 @@
   --color-up: var(--up);
   --color-down: var(--down);
   --color-accent: var(--accent);
-  --font-sans: var(--font-grotesk), system-ui, sans-serif;
-  --font-mono: var(--font-plex), ui-monospace, monospace;
+  --font-sans: var(--font-ui), system-ui, sans-serif;
+  --font-mono: var(--font-num), ui-monospace, monospace;
+}
+
+/* Font + accent are indirected through --font-ui/--font-num/--accent so a brand
+   can be swapped by re-pointing three variables instead of touching components.
+   `data-locale` is stamped on <html> by app/[lang]/layout.tsx. */
+:root {
+  --font-ui: var(--font-grotesk);
+  --font-num: var(--font-plex);
+}
+
+[data-locale="fa"] {
+  --font-ui: var(--font-vazir);
+  /* PolyBaaz uses no webfont for figures — the system mono stack carries the
+     latin-digit currency values, matching the design prototype. */
+  --font-num: ui-monospace;
+  /* PolyBaaz is gold-on-dark rather than Oddzy's blue. */
+  --accent: #f0b429;
+  --accent-ink: #14161a;
+}
+
+/* Persian does not take the heavy negative tracking the latin display face is
+   tuned for, and needs looser leading to keep diacritics legible. */
+[data-locale="fa"] h1,
+[data-locale="fa"] h2,
+[data-locale="fa"] h3 {
+  letter-spacing: -0.02em;
+}
+
+[data-locale="fa"] body {
+  letter-spacing: -0.01em;
+  line-height: 1.75;
+}
+
+/* Latin-in-RTL leaves: addresses, tx hashes, currency amounts. Without an
+   explicit isolate these reorder against surrounding Persian text — a "$25.00"
+   next to a Persian label renders as "00.25$". */
+[data-locale="fa"] .ltr-num {
+  direction: ltr;
+  unicode-bidi: isolate;
+  display: inline-block;
 }
 
 /* These MUST live in @layer base. Tailwind v4 puts utilities in a cascade
@@ -128,7 +168,7 @@
   body {
     background: var(--page);
     color: var(--ink);
-    font-family: var(--font-grotesk), system-ui, sans-serif;
+    font-family: var(--font-ui), system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
   }
 

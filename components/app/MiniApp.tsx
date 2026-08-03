@@ -9,6 +9,7 @@ import { authedGet } from "@/lib/client-api";
 import { MarketsFeed } from "./MarketsFeed";
 import { BrowseScreen } from "./BrowseScreen";
 import { ThemeToggle } from "../site/ThemeToggle";
+import { useLocale } from "./LocaleProvider";
 import { MarketDetail, type PlacedBet } from "./MarketDetail";
 import { Receipt } from "./Receipt";
 import { PositionsScreen, WalletScreen } from "./AccountScreens";
@@ -39,6 +40,7 @@ export function MiniApp({
   topics: Topic[];
   initialMarkets: Market[];
 }) {
+  const { brand, t, rtl } = useLocale();
   const [screen, setScreen] = useState<Screen>({ name: "feed" });
   // The category picked in Browse; the feed reads it. Kept here so switching
   // tabs doesn't lose the filter.
@@ -110,14 +112,20 @@ export function MiniApp({
       <div className="mx-auto min-h-screen max-w-md bg-[var(--page)] pb-16">
         <header className="sticky top-0 z-30 flex items-center justify-between border-b border-[var(--line)] bg-[color-mix(in_srgb,var(--page)_90%,transparent)] px-4 py-3 backdrop-blur-md">
           <div className="flex items-center gap-2.5">
-            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-[var(--ink)] text-[13px] font-bold text-[var(--on-ink)]">
-              O
+            <div
+              className={
+                rtl
+                  ? "flex h-7 w-7 items-center justify-center rounded-[9px] bg-[var(--accent)] text-[13px] font-extrabold text-[var(--accent-ink)]"
+                  : "flex h-7 w-7 items-center justify-center rounded-full bg-[var(--ink)] text-[13px] font-bold text-[var(--on-ink)]"
+              }
+            >
+              {brand.glyph}
             </div>
-            <span className="text-[15px] font-bold tracking-[-0.02em]">Oddzy</span>
+            <span className="text-[15px] font-bold tracking-[-0.02em]">{brand.name}</span>
           </div>
 
           <div className="flex items-center gap-2">
-            <ThemeToggle />
+            <ThemeToggle labels={t.theme} />
             {inTelegram === false && (
               <SignInButton className="min-h-[36px] rounded-lg bg-[var(--ink)] px-3 py-2 text-[12px] font-semibold text-[var(--on-ink)]" />
             )}

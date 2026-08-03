@@ -91,9 +91,17 @@ export function useTelegram(): TelegramState {
   return state;
 }
 
-/** Deep link into the bot for web visitors who need to finish in Telegram. */
-export function botLink(startParam?: string): string {
-  const bot = process.env.NEXT_PUBLIC_TG_BOT ?? "poly_sport_bet_bot";
+/**
+ * Deep link into the bot for web visitors who need to finish in Telegram.
+ *
+ * `bot` should come from `brandFor(locale).tgBot` — each brand has its own bot
+ * (@poly_sport_bet_bot for Oddzy, @PolyBaaz_Bot for PolyBaaz), and sending a
+ * Persian visitor to the English bot would drop them into the wrong locale with
+ * no way back. The env default is kept only for callers that predate the second
+ * brand.
+ */
+export function botLink(startParam?: string, bot?: string): string {
+  bot ??= process.env.NEXT_PUBLIC_TG_BOT ?? "poly_sport_bet_bot";
   return startParam
     ? `https://t.me/${bot}?start=${encodeURIComponent(startParam)}`
     : `https://t.me/${bot}`;

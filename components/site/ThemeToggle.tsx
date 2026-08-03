@@ -3,7 +3,11 @@
 import { useEffect, useState } from "react";
 
 /** Day/night toggle. Persists to localStorage; ThemeScript applies it pre-paint. */
-export function ThemeToggle() {
+export function ThemeToggle({
+  labels,
+}: {
+  labels: { toLight: string; toDark: string };
+}) {
   const [theme, setTheme] = useState<"day" | "night" | null>(null);
 
   useEffect(() => {
@@ -29,7 +33,7 @@ export function ThemeToggle() {
       type="button"
       onClick={toggle}
       className="flex h-[38px] w-[38px] items-center justify-center rounded-lg border border-[var(--line)] bg-[var(--btn)] text-[var(--mute)]"
-      aria-label={theme === "night" ? "Switch to light theme" : "Switch to dark theme"}
+      aria-label={theme === "night" ? labels.toLight : labels.toDark}
     >
       {/* Render nothing until mounted: the server can't know the theme, and a
           guessed icon would flip on hydration. */}

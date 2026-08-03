@@ -1,8 +1,12 @@
 import type { MetadataRoute } from "next";
+import { headers } from "next/headers";
+import { brandFor, localeForHost } from "@/lib/i18n";
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://oddzy.xyz";
+/** Per-host robots, for the same canonical reason as sitemap.ts. */
+export default async function robots(): Promise<MetadataRoute.Robots> {
+  const host = (await headers()).get("host");
+  const siteUrl = brandFor(localeForHost(host)).siteUrl;
 
-export default function robots(): MetadataRoute.Robots {
   return {
     rules: {
       userAgent: "*",
@@ -10,6 +14,6 @@ export default function robots(): MetadataRoute.Robots {
       // The trading surface and our API proxies carry no search value.
       disallow: ["/app", "/api/"],
     },
-    sitemap: `${SITE_URL}/sitemap.xml`,
+    sitemap: `${siteUrl}/sitemap.xml`,
   };
 }
