@@ -138,6 +138,262 @@ export const en = {
     toLight: "Switch to light theme",
     toDark: "Switch to dark theme",
   },
+
+  /**
+   * The trading surface (`components/app/*`). Grouped by screen rather than by
+   * string kind so a translator can work a screen at a time.
+   *
+   * Interpolated copy is a `{placeholder}` template rather than a function:
+   * this dictionary is handed to client components as a prop, so it has to stay
+   * serializable. `tf`/`tn` from LocaleProvider fill them in. Count-dependent
+   * strings carry both plural forms, because English pluralisation ("1 MARKET" /
+   * "2 MARKETS") is a per-locale rule that Persian does not share — keeping both
+   * forms here stops an English "S" from leaking into every translation.
+   *
+   * Money and addresses are deliberately NOT interpolated into these strings.
+   * They are rendered as separate `.ltr-num` spans so bidi can't reorder them
+   * inside Persian text, which means the dictionary only carries the words
+   * around them (e.g. `balance` = "Balance", not "Balance {amount}").
+   */
+  app: {
+    nav: {
+      main: "Main",
+      markets: "Markets",
+      browse: "Browse",
+      positions: "Positions",
+      wallet: "Wallet",
+    },
+
+    feed: {
+      searchPlaceholder: "Search markets",
+      searchLabel: "Search markets",
+      browse: "Browse",
+      clearFilter: "Clear {name} filter",
+      loading: "LOADING…",
+      results: { one: "{n} RESULT", other: "{n} RESULTS" },
+      events: { one: "{n} EVENT · BY KICK-OFF", other: "{n} EVENTS · BY KICK-OFF" },
+      markets: { one: "{n} MARKET · BY 24H VOLUME", other: "{n} MARKETS · BY 24H VOLUME" },
+      loadError: "Couldn't load markets.",
+      noMatch: "Nothing matches “{query}”.",
+      empty: "No live markets here right now.",
+      yes: "YES",
+      no: "NO",
+      buyYes: "Buy Yes at {percent} percent",
+      buyNo: "Buy No at {percent} percent",
+      vol: "VOL",
+      /** Resolution countdown on a market card — see `untilClose` in lib/format. */
+      closes: {
+        unknown: "—",
+        closed: "closed",
+        days: "in {n} days",
+        hours: "in {n}h",
+        soon: "under 1h",
+      },
+    },
+
+    browse: {
+      title: "Browse",
+      pathLabel: "Category path",
+      all: "All",
+      allMarkets: "All {name} markets",
+      marketCount: { one: "{n} MARKET", other: "{n} MARKETS" },
+      /** Appended after the market count; carries its own separator. */
+      subCount: " · {n} SUB",
+      /** Drill-in chevron. Mirrored in RTL. */
+      chevron: "›",
+      empty: "Nothing below this category.",
+    },
+
+    event: {
+      hide: "Hide",
+      extra: "Extra markets",
+      vol: "VOL",
+      draw: "DRAW",
+    },
+
+    /** Derivative market groupings, keyed by `KIND_GROUPS[].key`. */
+    kinds: {
+      total: "Totals (over/under)",
+      spread: "Spreads",
+      btts: "Both teams to score",
+      halftime: "Halftime",
+      corners: "Corners",
+      advance: "To advance",
+      h2h: "Head to head",
+      prop: "Player props",
+      other: "Other markets",
+    },
+
+    detail: {
+      back: "← Back",
+      volume: "VOLUME",
+      h24: "24H",
+      resolves: "RESOLVES",
+      resolutionTitle: "RESOLUTION",
+      resolutionBody:
+        "Settles on-chain via Polymarket at close. Final outcome is determined by the market's oracle; where an outcome is disputed, the UMA optimistic oracle decides.",
+      viewOnPolymarket: "View on Polymarket ↗",
+      risk: "Prediction markets carry risk of loss. 18+. Oddzy is an interface to Polymarket — it never holds your funds.",
+    },
+
+    bet: {
+      sheetLabel: "Place bet",
+      yes: "YES",
+      no: "NO",
+      stake: "STAKE",
+      customStakeLabel: "Custom stake in dollars",
+      customStakePlaceholder: "Custom amount",
+      payoutIfCorrect: "Payout if correct",
+      shares: "shares",
+      /** Sits between the share count and the price. */
+      at: "@",
+      balance: "Balance",
+      insufficient: "Stake is more than your available balance.",
+      placing: "Placing…",
+      /** `side` is the localised YES/NO label; the amount follows as its own span. */
+      place: "Place {side} bet",
+      signedOnChain: "SIGNED ON-CHAIN · NON-REVERSIBLE",
+      sessionExpired: "Your session expired. Sign in again to place bets.",
+      failed: "Couldn't place that bet.",
+    },
+
+    receipt: {
+      title: "Bet placed",
+      subtitle: "Receipt settled to chain",
+      header: "ODDZY RECEIPT",
+      side: "Side",
+      stake: "Stake",
+      price: "Price",
+      shares: "Shares",
+      payout: "Payout if correct",
+      resolves: "Resolves",
+      txHash: "TX HASH",
+      confirming: "Confirming on-chain — appears in Positions shortly.",
+      viewPosition: "View position",
+      nextMarket: "Next market",
+    },
+
+    positions: {
+      title: "Positions",
+      loading: "Loading…",
+      openValue: "OPEN VALUE",
+      unrealized: "UNREALIZED P&L",
+      tabOpen: "open",
+      tabSettled: "settled",
+      emptyOpen: "No open positions yet.",
+      shares: "shares",
+      cost: "cost",
+      worth: "worth",
+      viewAdd: "View · Add",
+      claimWinnings: "Claim winnings",
+      reduceClose: "Reduce · Close",
+      filterAll: "All",
+      filterWon: "Won",
+      filterLost: "Lost",
+      sortRecent: "🕑 Recent",
+      sortBiggest: "💰 Biggest",
+      emptySettled: "No settled bets match this filter.",
+      settledCount: "{n} settled",
+      net: "net",
+      staked: "staked",
+      closeSheetLabel: "Close position",
+      reduceTitle: "Reduce position",
+      all: "All",
+      pctChip: "{p}%",
+      redeemsFor: "Redeems for",
+      sellApprox: "Sell {shares} shares ≈",
+      estimateNote:
+        "Estimate at the current price; the fill is quoted server-side and may differ.",
+      closeError: "Couldn't close that position. Nothing changed — try again shortly.",
+      processing: "Processing…",
+      /** Followed by the amount as its own span. */
+      claim: "Claim",
+      sellAll: "Sell all",
+      sellPct: "Sell {p}%",
+    },
+
+    wallet: {
+      title: "Wallet",
+      availableBalance: "AVAILABLE BALANCE",
+      custody: "USDC on Polygon · self-custodial via Privy",
+      deposit: "Deposit",
+      withdraw: "Withdraw",
+      accounts: "YOUR ACCOUNTS",
+      polymarketLabel: "🟣 POLYMARKET ACCOUNT · POLYGON",
+      polymarketSub:
+        "Deposit USDC on Polygon to this address. Polygon only — funds sent on another network can't be recovered.",
+      viewOnPolymarket: "View on Polymarket ↗",
+      privyLabel: "🔑 PRIVY WALLET · SIGNER",
+      privySub:
+        "⚠️ Don't deposit here — this is your signing wallet. Add funds to the Polymarket address above (or use Deposit).",
+      /** Followed by the amount as its own span. */
+      sent: "Sent",
+      confirming: "Confirming on-chain",
+      dismiss: "Dismiss",
+      copy: "Copy",
+      copied: "Copied",
+      depositTitle: "Deposit USDC",
+      depositNetwork: "Polygon network only",
+      qrAlt: "QR code for deposit address {address}",
+      copyAddress: "Copy address",
+      depositWarning:
+        "Send USDC on Polygon only. Anything sent on another network, or a different token, cannot be recovered. Funds appear here once the transfer confirms.",
+    },
+
+    withdraw: {
+      sheetLabel: "Withdraw",
+      title: "Withdraw",
+      /** Wraps the balance: "Available {amount} · USDC on Polygon". */
+      available: "Available",
+      onPolygon: "· USDC on Polygon",
+      toAddress: "TO ADDRESS",
+      addressPlaceholder: "0x…",
+      amountLabel: "AMOUNT (USDC)",
+      amountPlaceholder: "0.00",
+      max: "MAX",
+      pctChip: "{p}%",
+      tooMuch: "That's more than your available balance.",
+      positive: "Enter an amount greater than zero.",
+      review: "Review",
+      confirmTitle: "Confirm withdrawal",
+      amount: "Amount",
+      to: "TO",
+      note: "Sends on Polygon. On-chain transfers cannot be reversed — check the address.",
+      failed: "The withdrawal failed. Nothing was sent.",
+      sending: "Sending…",
+      /** Followed by the amount as its own span. */
+      send: "Send",
+      back: "Back",
+    },
+
+    login: {
+      signIn: "Sign in",
+      signOut: "Sign out",
+      openTelegram: "Open in Telegram",
+      loading: "Loading…",
+      title: "Trade prediction markets",
+      lead: "Sign in to place bets. Your wallet is yours — we never hold your funds.",
+      methods: "TELEGRAM · GOOGLE · WALLET",
+      tryAgain: "Try again",
+      creatingWallet: "Creating your wallet…",
+      authorizing: "Authorizing trading…",
+      settingUp: "Setting up your account…",
+      walletTimeout:
+        "Your wallet didn't finish loading. This is usually a desktop browser issue — try again on mobile or in Chrome.",
+      setupFailed: "Couldn't finish setting up your wallet. ({detail})",
+    },
+
+    errors: {
+      telegramSession: "We couldn't verify your Telegram session. Reopen Oddzy from the bot.",
+      openTelegram: "Open in Telegram",
+      signInPrompt: "Sign in to see your wallet and positions.",
+      noWallet: "You don't have a wallet yet.",
+      setUpWallet: "Set up your wallet",
+      blocked: "This account can't access Oddzy.",
+      rateLimited: "Too many requests — give it a minute.",
+      unavailable: "Couldn't reach the server. Try again shortly.",
+    },
+  },
 };
 
 /**

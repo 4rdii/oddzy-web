@@ -3,6 +3,7 @@
 import { useState } from "react";
 import type { Topic } from "@/lib/taxonomy";
 import { childrenOf } from "@/lib/taxonomy";
+import { useLocale } from "./LocaleProvider";
 
 /**
  * Browse — the category tab.
@@ -26,18 +27,19 @@ export function BrowseScreen({
   /** Show this topic's markets in the feed. */
   onPick: (topic: Topic) => void;
 }) {
+  const { t, tf, tn } = useLocale();
   const [path, setPath] = useState<Topic[]>([]);
   const rows = childrenOf(topics, path);
   const current = path.length > 0 ? path[path.length - 1] : null;
 
   return (
     <div className="pb-28">
-      <h1 className="px-4 py-4 text-[20px] font-bold tracking-[-0.02em]">Browse</h1>
+      <h1 className="px-4 py-4 text-[20px] font-bold tracking-[-0.02em]">{t.app.browse.title}</h1>
 
       {/* Breadcrumbs */}
-      <nav className="flex flex-wrap gap-1.5 px-4 pb-3" aria-label="Category path">
+      <nav className="flex flex-wrap gap-1.5 px-4 pb-3" aria-label={t.app.browse.pathLabel}>
         <Crumb active={path.length === 0} onClick={() => setPath([])}>
-          All
+          {t.app.browse.all}
         </Crumb>
         {path.map((node, i) => (
           <Crumb
@@ -63,10 +65,10 @@ export function BrowseScreen({
             >
               <span className="flex-1">
                 <span className="block text-[15px] font-semibold text-[var(--accent)]">
-                  All {current.name} markets
+                  {tf(t.app.browse.allMarkets, { name: current.name })}
                 </span>
                 <span className="block font-mono text-[10px] tracking-[0.04em] text-[var(--faint)]">
-                  {current.own_markets} MARKET{current.own_markets === 1 ? "" : "S"}
+                  {tn(t.app.browse.marketCount, current.own_markets)}
                 </span>
               </span>
             </button>
@@ -95,13 +97,13 @@ export function BrowseScreen({
                     {node.name}
                   </span>
                   <span className="block font-mono text-[10px] tracking-[0.04em] text-[var(--faint)]">
-                    {node.active_markets} MARKET{node.active_markets === 1 ? "" : "S"}
-                    {hasKids && ` · ${node.children.length} SUB`}
+                    {tn(t.app.browse.marketCount, node.active_markets)}
+                    {hasKids && tf(t.app.browse.subCount, { n: node.children.length })}
                   </span>
                 </span>
                 {hasKids && (
                   <span className="text-[18px] text-[var(--mute)]" aria-hidden>
-                    ›
+                    {t.app.browse.chevron}
                   </span>
                 )}
               </button>
@@ -112,7 +114,7 @@ export function BrowseScreen({
 
       {rows.length === 0 && (
         <p className="px-4 py-10 text-center text-[14px] text-[var(--mute)]">
-          Nothing below this category.
+          {t.app.browse.empty}
         </p>
       )}
     </div>

@@ -49,18 +49,41 @@ export function shortDate(iso: string | null | undefined): string {
   });
 }
 
+/**
+ * Wording for the countdown below. Supplied by the caller from the active
+ * dictionary — the thresholds are shared, the phrasing is not.
+ */
+export type UntilCloseLabels = {
+  unknown: string;
+  closed: string;
+  days: (n: number) => string;
+  hours: (n: number) => string;
+  soon: string;
+};
+
+const EN_UNTIL_CLOSE: UntilCloseLabels = {
+  unknown: "—",
+  closed: "closed",
+  days: (n) => `in ${n} days`,
+  hours: (n) => `in ${n}h`,
+  soon: "under 1h",
+};
+
 /** "in 4 days" / "closed" — for the market card's resolution hint. */
-export function untilClose(iso: string | null | undefined): string {
-  if (!iso) return "—";
+export function untilClose(
+  iso: string | null | undefined,
+  labels: UntilCloseLabels = EN_UNTIL_CLOSE,
+): string {
+  if (!iso) return labels.unknown;
   const d = new Date(iso).getTime();
-  if (Number.isNaN(d)) return "—";
+  if (Number.isNaN(d)) return labels.unknown;
   const ms = d - Date.now();
-  if (ms <= 0) return "closed";
+  if (ms <= 0) return labels.closed;
   const days = Math.floor(ms / 86_400_000);
-  if (days >= 2) return `in ${days} days`;
+  if (days >= 2) return labels.days(days);
   const hours = Math.floor(ms / 3_600_000);
-  if (hours >= 1) return `in ${hours}h`;
-  return "under 1h";
+  if (hours >= 1) return labels.hours(hours);
+  return labels.soon;
 }
 
 /**

@@ -7,6 +7,7 @@ import { authedGet, authedPost, ApiCallError, type ApiFailure } from "@/lib/clie
 import { botLink, useTelegram } from "@/lib/telegram";
 import { SignInButton } from "./SignInButton";
 import { WithdrawSheet, type WithdrawSent } from "./WithdrawSheet";
+import { useLocale } from "./LocaleProvider";
 
 export type Position = {
   marketId: string;
@@ -62,6 +63,7 @@ function useAuthed<T>(path: string): State<T> & { reload: () => void } {
 
 /** Every non-ready state gets a message that says what to actually do next. */
 function Failure({ kind }: { kind: ApiFailure }) {
+  const { t } = useLocale();
   const { inTelegram } = useTelegram();
 
   if (kind === "unauthenticated") {
@@ -72,23 +74,19 @@ function Failure({ kind }: { kind: ApiFailure }) {
     if (inTelegram) {
       return (
         <div className="px-4 py-12 text-center">
-          <p className="text-[14px] text-[var(--mute)]">
-            We couldn&apos;t verify your Telegram session. Reopen Oddzy from the bot.
-          </p>
+          <p className="text-[14px] text-[var(--mute)]">{t.app.errors.telegramSession}</p>
           <a
             href={botLink()}
             className="mt-4 inline-block min-h-[46px] rounded-xl bg-[var(--ink)] px-5 py-3 text-[14px] font-semibold text-[var(--on-ink)]"
           >
-            Open in Telegram
+            {t.app.errors.openTelegram}
           </a>
         </div>
       );
     }
     return (
       <div className="px-4 py-12 text-center">
-        <p className="text-[14px] text-[var(--mute)]">
-          Sign in to see your wallet and positions.
-        </p>
+        <p className="text-[14px] text-[var(--mute)]">{t.app.errors.signInPrompt}</p>
         <div className="mt-4">
           <SignInButton className="inline-block min-h-[46px] rounded-xl bg-[var(--ink)] px-5 py-3 text-[14px] font-semibold text-[var(--on-ink)]" />
         </div>
@@ -99,14 +97,12 @@ function Failure({ kind }: { kind: ApiFailure }) {
   if (kind === "no_account") {
     return (
       <div className="px-4 py-12 text-center">
-        <p className="text-[14px] text-[var(--mute)]">
-          You don&apos;t have a wallet yet.
-        </p>
+        <p className="text-[14px] text-[var(--mute)]">{t.app.errors.noWallet}</p>
         <a
           href={botLink()}
           className="mt-4 inline-block min-h-[46px] rounded-xl bg-[var(--ink)] px-5 py-3 text-[14px] font-semibold text-[var(--on-ink)]"
         >
-          Set up your wallet
+          {t.app.errors.setUpWallet}
         </a>
       </div>
     );
@@ -114,10 +110,10 @@ function Failure({ kind }: { kind: ApiFailure }) {
 
   const message =
     kind === "blocked"
-      ? "This account can't access Oddzy."
+      ? t.app.errors.blocked
       : kind === "rate_limited"
-        ? "Too many requests — give it a minute."
-        : "Couldn't reach the server. Try again shortly.";
+        ? t.app.errors.rateLimited
+        : t.app.errors.unavailable;
 
   return <p className="px-4 py-12 text-center text-[14px] text-[var(--down)]">{message}</p>;
 }
@@ -138,12 +134,13 @@ export type HistoryRow = {
 };
 
 export function PositionsScreen({ onOpenMarket }: { onOpenMarket: (slug: string) => void }) {
+  const { t } = useLocale();
   const [tab, setTab] = useState<"open" | "settled">("open");
   const state = useAuthed<{ positions: Position[] }>("/webapp/v1/positions");
   const [manage, setManage] = useState<Position | null>(null);
 
   if (state.status === "loading")
-    return <p className="px-4 py-12 text-center text-[var(--mute)]">Loading…</p>;
+    return <p className="px-4 py-12 text-center text-[var(--mute)]">{t.app.positions.loading}</p>;
   if (state.status === "failed") return <Failure kind={state.kind} />;
 
   // "Open" = everything currently held on-chain (including a redeemable winner
@@ -155,39 +152,41 @@ export function PositionsScreen({ onOpenMarket }: { onOpenMarket: (slug: string)
 
   return (
     <div className="px-4 pb-28">
-      <h1 className="py-4 text-[20px] font-bold tracking-[-0.02em]">Positions</h1>
+      <h1 className="py-4 text-[20px] font-bold tracking-[-0.02em]">{t.app.positions.title}</h1>
 
       <div className="flex gap-3">
-        <Tile label="OPEN VALUE" value={usd(openValue)} />
+        <Tile label={t.app.positions.openValue} value={usd(openValue)} />
         <Tile
-          label="UNREALIZED P&L"
+          label={t.app.positions.unrealized}
           value={`${unrealized >= 0 ? "+" : "−"}${usd(Math.abs(unrealized))}`}
           color={unrealized >= 0 ? "var(--up)" : "var(--down)"}
         />
       </div>
 
       <div className="mt-4 flex gap-2" role="tablist">
-        {(["open", "settled"] as const).map((t) => (
+        {(["open", "settled"] as const).map((key) => (
           <button
-            key={t}
+            key={key}
             type="button"
             role="tab"
-            aria-selected={tab === t}
-            onClick={() => setTab(t)}
+            aria-selected={tab === key}
+            onClick={() => setTab(key)}
             className={`min-h-[44px] flex-1 rounded-xl font-mono text-[12px] tracking-[0.04em] uppercase ${
-              tab === t
+              tab === key
                 ? "bg-[var(--ink)] text-[var(--on-ink)]"
                 : "border border-[var(--line)] bg-[var(--btn)] text-[var(--mute)]"
             }`}
           >
-            {t}
+            {key === "open" ? t.app.positions.tabOpen : t.app.positions.tabSettled}
           </button>
         ))}
       </div>
 
       {tab === "open" ? (
         held.length === 0 ? (
-          <p className="py-12 text-center text-[14px] text-[var(--mute)]">No open positions yet.</p>
+          <p className="py-12 text-center text-[14px] text-[var(--mute)]">
+            {t.app.positions.emptyOpen}
+          </p>
         ) : (
           <ul className="mt-4 flex flex-col gap-2.5">
             {held.map((p) => (
@@ -230,6 +229,7 @@ function PositionCard({
   onOpen: () => void;
   onManage: () => void;
 }) {
+  const { t } = useLocale();
   const claimable = p.settled && p.won;
   return (
     <li className="rounded-2xl border border-[var(--line)] bg-[var(--card)] p-4">
@@ -237,16 +237,21 @@ function PositionCard({
         <h2 className="text-[14px] leading-snug font-semibold">{p.title}</h2>
         <div className="mt-2 flex items-center justify-between font-mono text-[12px]">
           <span className="text-[var(--mute)]">
-            {p.side} · {p.shares.toFixed(1)} shares
+            {p.side} · <span className="ltr-num">{p.shares.toFixed(1)}</span>{" "}
+            {t.app.positions.shares}
           </span>
-          <span style={{ color: p.pnl >= 0 ? "var(--up)" : "var(--down)" }}>
+          <span className="ltr-num" style={{ color: p.pnl >= 0 ? "var(--up)" : "var(--down)" }}>
             {p.pnl >= 0 ? "+" : "−"}
             {usd(Math.abs(p.pnl))}
           </span>
         </div>
         <div className="mt-1 flex items-center justify-between font-mono text-[11px] text-[var(--faint)]">
-          <span>cost {usd(p.stake)}</span>
-          <span>worth {usd(p.value)}</span>
+          <span>
+            {t.app.positions.cost} <span className="ltr-num">{usd(p.stake)}</span>
+          </span>
+          <span>
+            {t.app.positions.worth} <span className="ltr-num">{usd(p.value)}</span>
+          </span>
         </div>
         <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-[var(--bar)]">
           <div
@@ -264,7 +269,7 @@ function PositionCard({
           onClick={onOpen}
           className="min-h-[40px] flex-1 rounded-xl border border-[var(--line)] bg-[var(--btn)] text-[13px] font-semibold text-[var(--ink)]"
         >
-          View · Add
+          {t.app.positions.viewAdd}
         </button>
         <button
           type="button"
@@ -272,7 +277,7 @@ function PositionCard({
           className="min-h-[40px] flex-1 rounded-xl border border-[var(--line)] bg-[var(--btn)] text-[13px] font-semibold"
           style={{ color: claimable ? "var(--up)" : "var(--ink)" }}
         >
-          {claimable ? "Claim winnings" : "Reduce · Close"}
+          {claimable ? t.app.positions.claimWinnings : t.app.positions.reduceClose}
         </button>
       </div>
     </li>
@@ -282,12 +287,13 @@ function PositionCard({
 /** The "Settled" tab: closed/resolved results from history, with won/lost
  *  filters and recent/biggest sorting. */
 function SettledList({ onOpenMarket }: { onOpenMarket: (slug: string) => void }) {
+  const { t, tf } = useLocale();
   const state = useAuthed<{ history: HistoryRow[] }>("/webapp/v1/history");
   const [filter, setFilter] = useState<"all" | "won" | "lost">("all");
   const [sort, setSort] = useState<"date" | "pnl">("date");
 
   if (state.status === "loading")
-    return <p className="py-12 text-center text-[var(--mute)]">Loading…</p>;
+    return <p className="py-12 text-center text-[var(--mute)]">{t.app.positions.loading}</p>;
   if (state.status === "failed") return <Failure kind={state.kind} />;
 
   let rows = state.data.history.filter((r) =>
@@ -316,24 +322,29 @@ function SettledList({ onOpenMarket }: { onOpenMarket: (slug: string) => void })
   return (
     <div className="mt-4">
       <div className="flex gap-2">
-        {pill(filter === "all", "All", () => setFilter("all"))}
-        {pill(filter === "won", "Won", () => setFilter("won"))}
-        {pill(filter === "lost", "Lost", () => setFilter("lost"))}
+        {pill(filter === "all", t.app.positions.filterAll, () => setFilter("all"))}
+        {pill(filter === "won", t.app.positions.filterWon, () => setFilter("won"))}
+        {pill(filter === "lost", t.app.positions.filterLost, () => setFilter("lost"))}
       </div>
       <div className="mt-2 flex gap-2">
-        {pill(sort === "date", "🕑 Recent", () => setSort("date"))}
-        {pill(sort === "pnl", "💰 Biggest", () => setSort("pnl"))}
+        {pill(sort === "date", t.app.positions.sortRecent, () => setSort("date"))}
+        {pill(sort === "pnl", t.app.positions.sortBiggest, () => setSort("pnl"))}
       </div>
 
       {rows.length === 0 ? (
-        <p className="py-12 text-center text-[14px] text-[var(--mute)]">No settled bets match this filter.</p>
+        <p className="py-12 text-center text-[14px] text-[var(--mute)]">
+          {t.app.positions.emptySettled}
+        </p>
       ) : (
         <>
           <p className="mt-4 flex items-center justify-between font-mono text-[11px] text-[var(--faint)]">
-            <span>{rows.length} settled</span>
+            <span>{tf(t.app.positions.settledCount, { n: rows.length })}</span>
             <span style={{ color: total >= 0 ? "var(--up)" : "var(--down)" }}>
-              net {total >= 0 ? "+" : "−"}
-              {usd(Math.abs(total))}
+              {t.app.positions.net}{" "}
+              <span className="ltr-num">
+                {total >= 0 ? "+" : "−"}
+                {usd(Math.abs(total))}
+              </span>
             </span>
           </p>
           <ul className="mt-2 flex flex-col gap-2.5">
@@ -348,6 +359,7 @@ function SettledList({ onOpenMarket }: { onOpenMarket: (slug: string) => void })
 }
 
 function SettledCard({ r, onOpen }: { r: HistoryRow; onOpen: () => void }) {
+  const { t } = useLocale();
   const when = r.settledAt ? new Date(r.settledAt).toLocaleDateString(undefined, { month: "short", day: "numeric" }) : "";
   return (
     <li className="rounded-2xl border border-[var(--line)] bg-[var(--card)] p-4">
@@ -358,7 +370,7 @@ function SettledCard({ r, onOpen }: { r: HistoryRow; onOpen: () => void }) {
             {r.title}
           </h2>
           <span
-            className="shrink-0 font-mono text-[13px] font-semibold"
+            className="ltr-num shrink-0 font-mono text-[13px] font-semibold"
             style={{ color: r.pnl >= 0 ? "var(--up)" : "var(--down)" }}
           >
             {r.pnl >= 0 ? "+" : "−"}
@@ -367,8 +379,13 @@ function SettledCard({ r, onOpen }: { r: HistoryRow; onOpen: () => void }) {
         </div>
         <div className="mt-1 flex items-center justify-between font-mono text-[11px] text-[var(--faint)]">
           <span>
-            {r.side} · staked {usd(r.stake)}
-            {r.stake > 0 ? ` · ${r.pnlPct >= 0 ? "+" : ""}${r.pnlPct.toFixed(0)}%` : ""}
+            {r.side} · {t.app.positions.staked}{" "}
+            <span className="ltr-num">{usd(r.stake)}</span>
+            {r.stake > 0 ? (
+              <span className="ltr-num">
+                {` · ${r.pnlPct >= 0 ? "+" : ""}${r.pnlPct.toFixed(0)}%`}
+              </span>
+            ) : null}
           </span>
           <span>{when}</span>
         </div>
@@ -389,6 +406,7 @@ function ReduceSheet({
   onClose: () => void;
   onDone: () => void;
 }) {
+  const { t, tf } = useLocale();
   const claimable = position.settled && position.won;
   const [pct, setPct] = useState<number>(claimable ? 100 : 50);
   const [submitting, setSubmitting] = useState(false);
@@ -409,7 +427,7 @@ function ReduceSheet({
       onDone();
     } catch (e) {
       const server = (e as ApiCallError & { serverMessage?: string })?.serverMessage;
-      setError(server ?? "Couldn't close that position. Nothing changed — try again shortly.");
+      setError(server ?? t.app.positions.closeError);
     } finally {
       setSubmitting(false);
     }
@@ -422,16 +440,18 @@ function ReduceSheet({
         className="oz-sheet fixed inset-x-0 bottom-0 z-50 rounded-t-3xl border-t border-[var(--line)] bg-[var(--paper)] p-5 pb-8"
         role="dialog"
         aria-modal="true"
-        aria-label={claimable ? "Claim winnings" : "Close position"}
+        aria-label={claimable ? t.app.positions.claimWinnings : t.app.positions.closeSheetLabel}
       >
         <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-[var(--handle)]" />
         <div className="mx-auto max-w-md">
           <h2 className="text-[18px] font-bold tracking-[-0.02em]">
-            {claimable ? "Claim winnings" : "Reduce position"}
+            {claimable ? t.app.positions.claimWinnings : t.app.positions.reduceTitle}
           </h2>
           <p className="mt-1 text-[13px] text-[var(--mute)]">{position.title}</p>
           <p className="mt-0.5 font-mono text-[11px] text-[var(--faint)]">
-            {position.side} · {position.shares.toFixed(1)} shares @ {cents(position.curPrice)}
+            {position.side} · <span className="ltr-num">{position.shares.toFixed(1)}</span>{" "}
+            {t.app.positions.shares} {t.app.bet.at}{" "}
+            <span className="ltr-num">{cents(position.curPrice)}</span>
           </p>
 
           {!claimable && (
@@ -447,7 +467,7 @@ function ReduceSheet({
                       : "border border-[var(--line)] bg-[var(--btn)] text-[var(--mute)]"
                   }`}
                 >
-                  {v === 100 ? "All" : `${v}%`}
+                  {v === 100 ? t.app.positions.all : tf(t.app.positions.pctChip, { p: v })}
                 </button>
               ))}
             </div>
@@ -455,16 +475,21 @@ function ReduceSheet({
 
           <div className="mt-4 flex items-center justify-between rounded-xl bg-[var(--btn)] px-4 py-3">
             <span className="text-[13px] text-[var(--mute)]">
-              {claimable ? "Redeems for" : `Sell ${sellShares.toFixed(1)} shares ≈`}
+              {claimable
+                ? t.app.positions.redeemsFor
+                : tf(t.app.positions.sellApprox, { shares: sellShares.toFixed(1) })}
             </span>
-            <span className="font-mono text-[17px] font-bold" style={{ color: "var(--up)" }}>
+            <span
+              className="ltr-num font-mono text-[17px] font-bold"
+              style={{ color: "var(--up)" }}
+            >
               {usd(estProceeds)}
             </span>
           </div>
 
           {!claimable && (
             <p className="mt-2 font-mono text-[11px] text-[var(--faint)]">
-              Estimate at the current price; the fill is quoted server-side and may differ.
+              {t.app.positions.estimateNote}
             </p>
           )}
 
@@ -480,16 +505,20 @@ function ReduceSheet({
             onClick={submit}
             className="mt-4 min-h-[52px] w-full rounded-2xl bg-[var(--ink)] text-[16px] font-bold text-[var(--on-ink)] disabled:opacity-50"
           >
-            {submitting
-              ? "Processing…"
-              : claimable
-                ? `Claim ${usd(estProceeds)}`
-                : pct === 100
-                  ? "Sell all"
-                  : `Sell ${pct}%`}
+            {submitting ? (
+              t.app.positions.processing
+            ) : claimable ? (
+              <>
+                {t.app.positions.claim} <span className="ltr-num">{usd(estProceeds)}</span>
+              </>
+            ) : pct === 100 ? (
+              t.app.positions.sellAll
+            ) : (
+              tf(t.app.positions.sellPct, { p: pct })
+            )}
           </button>
           <p className="mt-3 text-center font-mono text-[10px] tracking-[0.06em] text-[var(--faint)]">
-            SIGNED ON-CHAIN · NON-REVERSIBLE
+            {t.app.bet.signedOnChain}
           </p>
         </div>
       </div>
@@ -498,12 +527,13 @@ function ReduceSheet({
 }
 
 export function WalletScreen() {
+  const { t } = useLocale();
   const state = useAuthed<Account>("/webapp/v1/me");
   const [sheet, setSheet] = useState<"deposit" | "withdraw" | null>(null);
   const [sent, setSent] = useState<WithdrawSent | null>(null);
 
   if (state.status === "loading")
-    return <p className="px-4 py-12 text-center text-[var(--mute)]">Loading…</p>;
+    return <p className="px-4 py-12 text-center text-[var(--mute)]">{t.app.positions.loading}</p>;
   if (state.status === "failed") return <Failure kind={state.kind} />;
 
   const data = state.data;
@@ -511,16 +541,16 @@ export function WalletScreen() {
 
   return (
     <div className="px-4 pb-28">
-      <h1 className="py-4 text-[20px] font-bold tracking-[-0.02em]">Wallet</h1>
+      <h1 className="py-4 text-[20px] font-bold tracking-[-0.02em]">{t.app.wallet.title}</h1>
 
       <div className="rounded-2xl border border-[var(--line)] bg-[var(--card)] p-5">
         <div className="font-mono text-[10px] tracking-[0.08em] text-[var(--faint)]">
-          AVAILABLE BALANCE
+          {t.app.wallet.availableBalance}
         </div>
-        <div className="mt-1 font-mono text-[30px] font-bold">{usd(data.balance)}</div>
-        <p className="mt-1 text-[12px] text-[var(--mute)]">
-          USDC on Polygon · self-custodial via Privy
-        </p>
+        <div className="mt-1 font-mono text-[30px] font-bold">
+          <span className="ltr-num">{usd(data.balance)}</span>
+        </div>
+        <p className="mt-1 text-[12px] text-[var(--mute)]">{t.app.wallet.custody}</p>
 
         {/* Both actions live here now. Withdrawal used to point at the bot,
             which is a dead end for anyone who signed up with Google or a
@@ -532,7 +562,7 @@ export function WalletScreen() {
             onClick={() => setSheet("deposit")}
             className="min-h-[48px] flex-1 rounded-xl bg-[var(--ink)] font-semibold text-[var(--on-ink)]"
           >
-            Deposit
+            {t.app.wallet.deposit}
           </button>
           <button
             type="button"
@@ -540,7 +570,7 @@ export function WalletScreen() {
             disabled={data.balance <= 0}
             className="min-h-[48px] flex-1 rounded-xl border border-[var(--line)] bg-[var(--btn)] font-semibold text-[var(--ink)] disabled:opacity-40"
           >
-            Withdraw
+            {t.app.wallet.withdraw}
           </button>
         </div>
       </div>
@@ -548,26 +578,26 @@ export function WalletScreen() {
       {(data.depositWalletAddress || data.walletAddress) && (
         <div className="mt-4 rounded-2xl border border-[var(--line)] bg-[var(--card)] p-5">
           <div className="font-mono text-[10px] tracking-[0.08em] text-[var(--faint)]">
-            YOUR ACCOUNTS
+            {t.app.wallet.accounts}
           </div>
           <div className="mt-3 flex flex-col gap-4">
             {data.depositWalletAddress && (
               <AddressRow
-                label="🟣 POLYMARKET ACCOUNT · POLYGON"
+                label={t.app.wallet.polymarketLabel}
                 address={data.depositWalletAddress}
-                sublabel="Deposit USDC on Polygon to this address. Polygon only — funds sent on another network can't be recovered."
+                sublabel={t.app.wallet.polymarketSub}
                 link={{
                   href: `https://polymarket.com/profile/${data.depositWalletAddress}`,
-                  text: "View on Polymarket ↗",
+                  text: t.app.wallet.viewOnPolymarket,
                 }}
               />
             )}
             {data.walletAddress && data.walletAddress !== data.depositWalletAddress && (
               <AddressRow
-                label="🔑 PRIVY WALLET · SIGNER"
+                label={t.app.wallet.privyLabel}
                 address={data.walletAddress}
                 tone="warn"
-                sublabel="⚠️ Don't deposit here — this is your signing wallet. Add funds to the Polymarket address above (or use Deposit)."
+                sublabel={t.app.wallet.privySub}
               />
             )}
           </div>
@@ -596,16 +626,22 @@ export function WalletScreen() {
       {sent && (
         <div className="fixed inset-x-0 bottom-20 z-50 mx-auto max-w-md px-4">
           <div className="rounded-xl bg-[var(--ink)] px-4 py-3 text-[13px] text-[var(--on-ink)]">
-            <div className="font-semibold">Sent {usd(sent.amountUsdc)}</div>
+            <div className="font-semibold">
+              {t.app.wallet.sent} <span className="ltr-num">{usd(sent.amountUsdc)}</span>
+            </div>
             <div className="mt-0.5 font-mono text-[10px] opacity-70">
-              {sent.txHash ? `${sent.txHash.slice(0, 10)}…` : "Confirming on-chain"}
+              {sent.txHash ? (
+                <span className="ltr-num">{`${sent.txHash.slice(0, 10)}…`}</span>
+              ) : (
+                t.app.wallet.confirming
+              )}
             </div>
             <button
               type="button"
               onClick={() => setSent(null)}
               className="mt-1 text-[11px] underline opacity-70"
             >
-              Dismiss
+              {t.app.wallet.dismiss}
             </button>
           </div>
         </div>
@@ -616,6 +652,7 @@ export function WalletScreen() {
 
 /** Deposit: the address, a QR for phone-to-phone, and the network warning. */
 function DepositSheet({ address, onClose }: { address: string; onClose: () => void }) {
+  const { t, tf } = useLocale();
   const [copied, setCopied] = useState(false);
   const [qr, setQr] = useState<string | null>(null);
 
@@ -644,25 +681,27 @@ function DepositSheet({ address, onClose }: { address: string; onClose: () => vo
         className="oz-sheet fixed inset-x-0 bottom-0 z-50 rounded-t-3xl border-t border-[var(--line)] bg-[var(--paper)] p-5 pb-8"
         role="dialog"
         aria-modal="true"
-        aria-label="Deposit"
+        aria-label={t.app.wallet.deposit}
       >
         <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-[var(--handle)]" />
         <div className="mx-auto max-w-md text-center">
-          <h2 className="text-[18px] font-bold tracking-[-0.02em]">Deposit USDC</h2>
-          <p className="mt-1 text-[12px] text-[var(--mute)]">Polygon network only</p>
+          <h2 className="text-[18px] font-bold tracking-[-0.02em]">{t.app.wallet.depositTitle}</h2>
+          <p className="mt-1 text-[12px] text-[var(--mute)]">{t.app.wallet.depositNetwork}</p>
 
           {qr && (
             /* eslint-disable-next-line @next/next/no-img-element */
             <img
               src={qr}
-              alt={`QR code for deposit address ${address}`}
+              alt={tf(t.app.wallet.qrAlt, { address })}
               width={180}
               height={180}
               className="mx-auto mt-4 h-[180px] w-[180px] rounded-xl bg-white p-2"
             />
           )}
 
-          <code className="mt-4 block font-mono text-[12px] break-all">{address}</code>
+          <code className="mt-4 block font-mono text-[12px] break-all">
+            <span className="ltr-num">{address}</span>
+          </code>
 
           <button
             type="button"
@@ -673,13 +712,11 @@ function DepositSheet({ address, onClose }: { address: string; onClose: () => vo
             }}
             className="mt-4 min-h-[48px] w-full rounded-2xl bg-[var(--ink)] font-semibold text-[var(--on-ink)]"
           >
-            {copied ? "Copied" : "Copy address"}
+            {copied ? t.app.wallet.copied : t.app.wallet.copyAddress}
           </button>
 
           <p className="mt-3 text-[11px] leading-relaxed text-[var(--faint)]">
-            Send USDC on Polygon only. Anything sent on another network, or a
-            different token, cannot be recovered. Funds appear here once the
-            transfer confirms.
+            {t.app.wallet.depositWarning}
           </p>
         </div>
       </div>
@@ -702,6 +739,7 @@ function AddressRow({
   tone?: "warn";
   link?: { href: string; text: string };
 }) {
+  const { t } = useLocale();
   const [copied, setCopied] = useState(false);
   return (
     <div>
@@ -718,10 +756,12 @@ function AddressRow({
           }}
           className="min-h-[32px] shrink-0 rounded-lg border border-[var(--line)] bg-[var(--btn)] px-3 font-mono text-[11px] text-[var(--mute)]"
         >
-          {copied ? "Copied" : "Copy"}
+          {copied ? t.app.wallet.copied : t.app.wallet.copy}
         </button>
       </div>
-      <code className="mt-1 block font-mono text-[12px] break-all">{address}</code>
+      <code className="mt-1 block font-mono text-[12px] break-all">
+        <span className="ltr-num">{address}</span>
+      </code>
       <div className="mt-1 flex items-end justify-between gap-3">
         <p
           className={`text-[11px] leading-relaxed ${

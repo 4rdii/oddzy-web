@@ -2,6 +2,7 @@
 
 import type { PlacedBet } from "./MarketDetail";
 import { cents, shortDate, usd } from "@/lib/format";
+import { useLocale } from "./LocaleProvider";
 
 /**
  * Confirmation — ticket-style receipt.
@@ -18,6 +19,7 @@ export function Receipt({
   onPositions: () => void;
   onNext: () => void;
 }) {
+  const { t } = useLocale();
   const sideColor = bet.side === "YES" ? "var(--up)" : "var(--down)";
 
   return (
@@ -31,34 +33,42 @@ export function Receipt({
           >
             ✓
           </div>
-          <h1 className="mt-4 text-[20px] font-bold tracking-[-0.02em]">Bet placed</h1>
-          <p className="mt-1 text-[13px] text-[var(--mute)]">Receipt settled to chain</p>
+          <h1 className="mt-4 text-[20px] font-bold tracking-[-0.02em]">{t.app.receipt.title}</h1>
+          <p className="mt-1 text-[13px] text-[var(--mute)]">{t.app.receipt.subtitle}</p>
         </div>
 
         <div className="mt-6 rounded-2xl border border-[var(--line)] bg-[var(--card)] p-5">
           <div className="font-mono text-[10px] tracking-[0.08em] text-[var(--faint)]">
-            ODDZY RECEIPT
+            {t.app.receipt.header}
           </div>
           <h2 className="mt-2 text-[15px] leading-snug font-semibold">{bet.market.title}</h2>
 
           <dl className="mt-4 flex flex-col gap-2.5">
-            <Row label="Side">
+            <Row label={t.app.receipt.side}>
               <span className="font-bold" style={{ color: sideColor }}>
-                {bet.side}
+                {bet.side === "YES" ? t.app.bet.yes : t.app.bet.no}
               </span>
             </Row>
-            <Row label="Stake">{usd(bet.stake)}</Row>
-            <Row label="Price">{cents(bet.price)}</Row>
-            <Row label="Shares">{bet.shares.toFixed(1)}</Row>
-            <Row label="Payout if correct">
-              <span className="font-bold text-[var(--up)]">{usd(bet.payout)}</span>
+            <Row label={t.app.receipt.stake}>
+              <span className="ltr-num">{usd(bet.stake)}</span>
             </Row>
-            <Row label="Resolves">{shortDate(bet.market.close_time)}</Row>
+            <Row label={t.app.receipt.price}>
+              <span className="ltr-num">{cents(bet.price)}</span>
+            </Row>
+            <Row label={t.app.receipt.shares}>
+              <span className="ltr-num">{bet.shares.toFixed(1)}</span>
+            </Row>
+            <Row label={t.app.receipt.payout}>
+              <span className="ltr-num font-bold text-[var(--up)]">{usd(bet.payout)}</span>
+            </Row>
+            <Row label={t.app.receipt.resolves}>
+              <span className="ltr-num">{shortDate(bet.market.close_time)}</span>
+            </Row>
           </dl>
 
           <div className="mt-4 border-t border-dashed border-[var(--line)] pt-4">
             <div className="font-mono text-[9px] tracking-[0.08em] text-[var(--faint)]">
-              TX HASH
+              {t.app.receipt.txHash}
             </div>
             {bet.txHash ? (
               <a
@@ -67,11 +77,11 @@ export function Receipt({
                 rel="noopener noreferrer"
                 className="mt-1 block font-mono text-[12px] break-all text-[var(--accent)]"
               >
-                {bet.txHash}
+                <span className="ltr-num">{bet.txHash}</span>
               </a>
             ) : (
               <p className="mt-1 font-mono text-[12px] text-[var(--mute)]">
-                Confirming on-chain — appears in Positions shortly.
+                {t.app.receipt.confirming}
               </p>
             )}
           </div>
@@ -83,14 +93,14 @@ export function Receipt({
             onClick={onPositions}
             className="min-h-[50px] flex-1 rounded-2xl bg-[var(--ink)] font-semibold text-[var(--on-ink)]"
           >
-            View position
+            {t.app.receipt.viewPosition}
           </button>
           <button
             type="button"
             onClick={onNext}
             className="min-h-[50px] flex-1 rounded-2xl border border-[var(--line)] bg-[var(--btn)] font-semibold text-[var(--mute)]"
           >
-            Next market
+            {t.app.receipt.nextMarket}
           </button>
         </div>
       </div>

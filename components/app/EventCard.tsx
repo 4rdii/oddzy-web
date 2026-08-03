@@ -4,6 +4,7 @@ import { useState } from "react";
 import type { EventMarket, Market, MarketEvent } from "@/lib/api";
 import { compactUsd, pct } from "@/lib/format";
 import { groupByKind } from "@/lib/market-kinds";
+import { useLocale } from "./LocaleProvider";
 
 /**
  * One event, rendered the way the bot renders a fixture: the match name and
@@ -21,6 +22,7 @@ export function EventCard({
   event: MarketEvent;
   onOpen: (m: Market) => void;
 }) {
+  const { t } = useLocale();
   const [showExtra, setShowExtra] = useState(false);
   const isMatch = event.kind === "match";
 
@@ -58,7 +60,7 @@ export function EventCard({
               className="min-h-[52px] rounded-xl border border-[var(--line)] bg-[var(--btn)] px-2 py-1.5 text-start"
             >
               <span className="block truncate font-mono text-[9px] tracking-[0.04em] text-[var(--faint)]">
-                {sideLabel(m)}
+                {sideLabel(m, t.app.event.draw)}
               </span>
               <span className="block text-[15px] font-bold text-[var(--up)]">
                 {pct(m.probability.yes)}%
@@ -77,7 +79,7 @@ export function EventCard({
             className="mt-3 flex min-h-[36px] w-full items-center justify-between rounded-lg px-1 font-mono text-[11px] text-[var(--mute)]"
           >
             <span>
-              {showExtra ? "Hide" : "Extra markets"} · {event.extra.length}
+              {showExtra ? t.app.event.hide : t.app.event.extra} · {event.extra.length}
             </span>
             <span aria-hidden>{showExtra ? "▴" : "▾"}</span>
           </button>
@@ -87,7 +89,9 @@ export function EventCard({
               {groupByKind(event.extra).map((group) => (
                 <ExtraGroup
                   key={group.key}
-                  label={group.label}
+                  // The lib carries the English label; the dictionary is the
+                  // authority for every locale, keyed by the same group key.
+                  label={(t.app.kinds as Record<string, string>)[group.key] ?? group.label}
                   markets={group.markets}
                   onOpen={onOpen}
                 />
@@ -98,7 +102,9 @@ export function EventCard({
       )}
 
       <div className="mt-3 flex items-center gap-3 font-mono text-[10px] tracking-[0.04em] text-[var(--faint)]">
-        <span>VOL {compactUsd(event.volume_24h)}</span>
+        <span>
+          {t.app.event.vol} <span className="ltr-num">{compactUsd(event.volume_24h)}</span>
+        </span>
         {event.topic && (
           <>
             <span aria-hidden>·</span>
@@ -183,8 +189,8 @@ function kickoff(iso: string): string {
  * don't fit a third of a row. `yes_label` is the ingest-provided display label
  * where available; otherwise pull the subject out of the question.
  */
-function sideLabel(m: Market & { kind?: string | null }): string {
-  if (m.kind === "draw") return "DRAW";
+function sideLabel(m: Market & { kind?: string | null }, drawLabel: string): string {
+  if (m.kind === "draw") return drawLabel;
   const labels = m.outcome_labels;
   if (labels && labels[0]) return labels[0].toUpperCase();
   const win = /^Will (.+?) win\b/i.exec(m.title);

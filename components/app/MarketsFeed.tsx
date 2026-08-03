@@ -5,6 +5,7 @@ import type { Market, MarketEvent } from "@/lib/api";
 import type { Topic } from "@/lib/taxonomy";
 import { compactUsd, pct, untilClose } from "@/lib/format";
 import { EventCard } from "./EventCard";
+import { useLocale } from "./LocaleProvider";
 
 /**
  * Markets feed.
@@ -33,6 +34,7 @@ export function MarketsFeed({
   onClearTopic: () => void;
   onBrowse: () => void;
 }) {
+  const { t, tf, tn } = useLocale();
   const [query, setQuery] = useState("");
   const [debounced, setDebounced] = useState("");
   const [markets, setMarkets] = useState<Market[]>(initialMarkets);
@@ -81,12 +83,12 @@ export function MarketsFeed({
       })
       .catch((e) => {
         if (e.name === "AbortError") return;
-        setError("Couldn't load markets.");
+        setError(t.app.feed.loadError);
       })
       .finally(() => setLoading(false));
 
     return () => ctrl.abort();
-  }, [searching, debounced, grouped, topic, initialMarkets]);
+  }, [searching, debounced, grouped, topic, initialMarkets, t]);
 
   const count = grouped ? events.length : markets.length;
 
@@ -99,8 +101,8 @@ export function MarketsFeed({
             type="search"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search markets"
-            aria-label="Search markets"
+            placeholder={t.app.feed.searchPlaceholder}
+            aria-label={t.app.feed.searchLabel}
             className="min-h-[42px] w-full rounded-xl border border-[var(--line)] bg-[var(--card)] ps-9 pe-3 text-[14px] text-[var(--ink)] placeholder:text-[var(--faint)]"
           />
           <span
@@ -115,7 +117,7 @@ export function MarketsFeed({
           onClick={onBrowse}
           className="min-h-[42px] shrink-0 rounded-xl border border-[var(--line)] bg-[var(--btn)] px-3.5 text-[13px] font-semibold text-[var(--mute)]"
         >
-          ☰ Browse
+          ☰ {t.app.feed.browse}
         </button>
       </div>
 
@@ -129,7 +131,7 @@ export function MarketsFeed({
             <button
               type="button"
               onClick={onClearTopic}
-              aria-label={`Clear ${topic.name} filter`}
+              aria-label={tf(t.app.feed.clearFilter, { name: topic.name })}
               className="ms-0.5 text-[14px] leading-none"
             >
               ×
@@ -141,12 +143,12 @@ export function MarketsFeed({
       <div className="flex items-center justify-between px-4 pt-3 pb-2">
         <span className="font-mono text-[10px] tracking-[0.06em] text-[var(--faint)]">
           {loading
-            ? "LOADING…"
+            ? t.app.feed.loading
             : searching
-              ? `${count} RESULT${count === 1 ? "" : "S"}`
+              ? tn(t.app.feed.results, count)
               : grouped
-                ? `${count} EVENT${count === 1 ? "" : "S"} · BY KICK-OFF`
-                : `${count} MARKET${count === 1 ? "" : "S"} · BY 24H VOLUME`}
+                ? tn(t.app.feed.events, count)
+                : tn(t.app.feed.markets, count)}
         </span>
       </div>
 
@@ -154,7 +156,7 @@ export function MarketsFeed({
 
       {!error && !loading && count === 0 && (
         <p className="px-4 py-10 text-center text-sm text-[var(--mute)]">
-          {searching ? `Nothing matches “${debounced}”.` : "No live markets here right now."}
+          {searching ? tf(t.app.feed.noMatch, { query: debounced }) : t.app.feed.empty}
         </p>
       )}
 
@@ -176,8 +178,18 @@ export function MarketsFeed({
 }
 
 function MarketCard({ market, onOpen }: { market: Market; onOpen: () => void }) {
+  const { t, tf } = useLocale();
   const yes = pct(market.probability.yes);
   const no = 100 - yes;
+
+  // `untilClose` owns the thresholds; the dictionary owns the wording.
+  const closes = {
+    unknown: t.app.feed.closes.unknown,
+    closed: t.app.feed.closes.closed,
+    days: (n: number) => tf(t.app.feed.closes.days, { n }),
+    hours: (n: number) => tf(t.app.feed.closes.hours, { n }),
+    soon: t.app.feed.closes.soon,
+  };
 
   return (
     <article className="rounded-2xl border border-[var(--line)] bg-[var(--card)] p-4">
@@ -192,10 +204,10 @@ function MarketCard({ market, onOpen }: { market: Market; onOpen: () => void }) 
           type="button"
           onClick={onOpen}
           className="min-h-[44px] flex-1 rounded-xl border border-[var(--line)] bg-[color-mix(in_srgb,var(--up)_10%,transparent)] px-3 text-start"
-          aria-label={`Buy Yes at ${yes} percent`}
+          aria-label={tf(t.app.feed.buyYes, { percent: yes })}
         >
           <span className="block font-mono text-[10px] tracking-[0.06em] text-[var(--faint)]">
-            YES
+            {t.app.feed.yes}
           </span>
           <span className="block text-[15px] font-bold text-[var(--up)]">{yes}%</span>
         </button>
@@ -203,19 +215,21 @@ function MarketCard({ market, onOpen }: { market: Market; onOpen: () => void }) 
           type="button"
           onClick={onOpen}
           className="min-h-[44px] flex-1 rounded-xl border border-[var(--line)] bg-[color-mix(in_srgb,var(--down)_10%,transparent)] px-3 text-start"
-          aria-label={`Buy No at ${no} percent`}
+          aria-label={tf(t.app.feed.buyNo, { percent: no })}
         >
           <span className="block font-mono text-[10px] tracking-[0.06em] text-[var(--faint)]">
-            NO
+            {t.app.feed.no}
           </span>
           <span className="block text-[15px] font-bold text-[var(--down)]">{no}%</span>
         </button>
       </div>
 
       <div className="mt-3 flex items-center gap-3 font-mono text-[10px] tracking-[0.04em] text-[var(--faint)]">
-        <span>VOL {compactUsd(market.volume.h24)}</span>
+        <span>
+          {t.app.feed.vol} <span className="ltr-num">{compactUsd(market.volume.h24)}</span>
+        </span>
         <span aria-hidden>·</span>
-        <span>{untilClose(market.close_time)}</span>
+        <span>{untilClose(market.close_time, closes)}</span>
         {market.category && (
           <>
             <span aria-hidden>·</span>

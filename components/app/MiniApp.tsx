@@ -191,30 +191,30 @@ export function MiniApp({
 
         <nav
           className="fixed inset-x-0 bottom-0 z-40 mx-auto flex max-w-md border-t border-[var(--line)] bg-[var(--paper)]"
-          aria-label="Main"
+          aria-label={t.app.nav.main}
         >
           <TabButton
             active={tab === "markets"}
             icon="◈"
-            label="Markets"
+            label={t.app.nav.markets}
             onClick={() => setScreen({ name: "feed" })}
           />
           <TabButton
             active={tab === "browse"}
             icon="☰"
-            label="Browse"
+            label={t.app.nav.browse}
             onClick={() => setScreen({ name: "browse" })}
           />
           <TabButton
             active={tab === "positions"}
             icon="▤"
-            label="Positions"
+            label={t.app.nav.positions}
             onClick={() => setScreen({ name: "positions" })}
           />
           <TabButton
             active={tab === "wallet"}
             icon="◉"
-            label="Wallet"
+            label={t.app.nav.wallet}
             onClick={() => setScreen({ name: "wallet" })}
           />
         </nav>

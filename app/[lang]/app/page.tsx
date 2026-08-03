@@ -7,12 +7,19 @@ import { getMarkets, getTopics } from "@/lib/api";
 import { brandFor, isLocale } from "@/lib/i18n";
 import { getDict } from "@/lib/dict";
 
-export const metadata: Metadata = {
-  title: "Markets",
-  // The trading surface has no SEO value and shouldn't compete with the
-  // marketing pages for the same queries — the blog and home carry that.
-  robots: { index: false, follow: false },
-};
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ lang: string }>;
+}): Promise<Metadata> {
+  const { lang } = await params;
+  return {
+    title: isLocale(lang) ? getDict(lang).app.nav.markets : "Markets",
+    // The trading surface has no SEO value and shouldn't compete with the
+    // marketing pages for the same queries — the blog and home carry that.
+    robots: { index: false, follow: false },
+  };
+}
 
 // The upstream snapshot moves every ~30 min; revalidate well inside it.
 export const revalidate = 300;

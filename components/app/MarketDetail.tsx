@@ -5,6 +5,7 @@ import type { Market } from "@/lib/api";
 import { cents, compactUsd, pct, payoutFor, shortDate, usd } from "@/lib/format";
 import { authedPost, ApiCallError } from "@/lib/client-api";
 import { useTelegram } from "@/lib/telegram";
+import { useLocale } from "./LocaleProvider";
 
 const STAKE_CHIPS = [10, 25, 50, 100];
 
@@ -42,6 +43,7 @@ export function MarketDetail({
   onPlaced: (bet: PlacedBet) => void;
   balance: number | null;
 }) {
+  const { t, tf } = useLocale();
   const { inTelegram } = useTelegram();
   const [side, setSide] = useState<"YES" | "NO">("YES");
   const [stake, setStake] = useState(25);
@@ -84,12 +86,10 @@ export function MarketDetail({
         // The gate normally stops a signed-out visitor long before here, so in
         // practice this is a session that expired mid-slip.
         setError(
-          inTelegram
-            ? "We couldn't verify your Telegram session. Reopen Oddzy from the bot."
-            : "Your session expired. Sign in again to place bets.",
+          inTelegram ? t.app.errors.telegramSession : t.app.bet.sessionExpired,
         );
       } else {
-        setError(server ?? "Couldn't place that bet.");
+        setError(server ?? t.app.bet.failed);
       }
     } finally {
       setSubmitting(false);
@@ -104,7 +104,7 @@ export function MarketDetail({
           onClick={onBack}
           className="min-h-[40px] rounded-lg px-2 font-mono text-[12px] text-[var(--mute)]"
         >
-          ← Back
+          {t.app.detail.back}
         </button>
       </div>
 
@@ -115,11 +115,11 @@ export function MarketDetail({
 
         {/* Probability ring */}
         <div className="mt-5 flex items-center gap-5">
-          <ProbabilityRing value={yesPct} />
+          <ProbabilityRing value={yesPct} yesLabel={t.app.bet.yes} />
           <div className="flex flex-col gap-2">
-            <Stat label="VOLUME" value={compactUsd(market.volume.total)} />
-            <Stat label="24H" value={compactUsd(market.volume.h24)} />
-            <Stat label="RESOLVES" value={shortDate(market.close_time)} />
+            <Stat label={t.app.detail.volume} value={compactUsd(market.volume.total)} />
+            <Stat label={t.app.detail.h24} value={compactUsd(market.volume.h24)} />
+            <Stat label={t.app.detail.resolves} value={shortDate(market.close_time)} />
           </div>
         </div>
 
@@ -131,12 +131,10 @@ export function MarketDetail({
 
         <section className="mt-5 rounded-2xl border border-[var(--line)] bg-[var(--card)] p-4">
           <h2 className="font-mono text-[10px] tracking-[0.06em] text-[var(--faint)]">
-            RESOLUTION
+            {t.app.detail.resolutionTitle}
           </h2>
           <p className="mt-2 text-[14px] leading-relaxed text-[var(--text2)]">
-            Settles on-chain via Polymarket at close. Final outcome is determined by the
-            market&apos;s oracle; where an outcome is disputed, the UMA optimistic oracle
-            decides.
+            {t.app.detail.resolutionBody}
           </p>
           <a
             href={market.url}
@@ -144,13 +142,12 @@ export function MarketDetail({
             rel="noopener noreferrer"
             className="mt-3 inline-block font-mono text-[11px] text-[var(--accent)]"
           >
-            View on Polymarket ↗
+            {t.app.detail.viewOnPolymarket}
           </a>
         </section>
 
         <p className="mt-4 text-[11px] leading-relaxed text-[var(--faint)]">
-          Prediction markets carry risk of loss. 18+. Oddzy is an interface to Polymarket
-          — it never holds your funds.
+          {t.app.detail.risk}
         </p>
       </div>
 
@@ -159,6 +156,7 @@ export function MarketDetail({
         <div className="mx-auto flex max-w-md gap-2">
           <SideButton
             side="YES"
+            label={t.app.bet.yes}
             active={side === "YES"}
             price={market.probability.yes}
             onClick={() => {
@@ -168,6 +166,7 @@ export function MarketDetail({
           />
           <SideButton
             side="NO"
+            label={t.app.bet.no}
             active={side === "NO"}
             price={market.probability.no}
             onClick={() => {
@@ -189,7 +188,7 @@ export function MarketDetail({
             className="oz-sheet fixed inset-x-0 bottom-0 z-50 rounded-t-3xl border-t border-[var(--line)] bg-[var(--paper)] p-5 pb-8"
             role="dialog"
             aria-modal="true"
-            aria-label="Place bet"
+            aria-label={t.app.bet.sheetLabel}
           >
             <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-[var(--handle)]" />
 
@@ -197,12 +196,14 @@ export function MarketDetail({
               <div className="flex gap-2">
                 <SideButton
                   side="YES"
+                  label={t.app.bet.yes}
                   active={side === "YES"}
                   price={market.probability.yes}
                   onClick={() => setSide("YES")}
                 />
                 <SideButton
                   side="NO"
+                  label={t.app.bet.no}
                   active={side === "NO"}
                   price={market.probability.no}
                   onClick={() => setSide("NO")}
@@ -211,9 +212,9 @@ export function MarketDetail({
 
               <div className="mt-5 flex items-baseline justify-between">
                 <span className="font-mono text-[10px] tracking-[0.06em] text-[var(--faint)]">
-                  STAKE
+                  {t.app.bet.stake}
                 </span>
-                <span className="font-mono text-[26px] font-semibold">{usd(stake)}</span>
+                <span className="ltr-num font-mono text-[26px] font-semibold">{usd(stake)}</span>
               </div>
 
               <div className="mt-3 flex gap-2">
@@ -234,7 +235,7 @@ export function MarketDetail({
               </div>
 
               <label className="mt-3 block">
-                <span className="sr-only">Custom stake in dollars</span>
+                <span className="sr-only">{t.app.bet.customStakeLabel}</span>
                 <input
                   type="number"
                   min={1}
@@ -245,25 +246,32 @@ export function MarketDetail({
                     setStake(Number.isFinite(n) && n > 0 ? n : 1);
                   }}
                   className="min-h-[44px] w-full rounded-xl border border-[var(--line)] bg-[var(--card)] px-3 font-mono text-[15px] text-[var(--ink)]"
-                  placeholder="Custom amount"
+                  placeholder={t.app.bet.customStakePlaceholder}
                 />
               </label>
 
               <div className="mt-4 flex items-center justify-between rounded-xl bg-[var(--btn)] px-4 py-3">
-                <span className="text-[13px] text-[var(--mute)]">Payout if correct</span>
-                <span className="font-mono text-[17px] font-bold text-[var(--up)]">
+                <span className="text-[13px] text-[var(--mute)]">{t.app.bet.payoutIfCorrect}</span>
+                <span className="ltr-num font-mono text-[17px] font-bold text-[var(--up)]">
                   {usd(payout)}
                 </span>
               </div>
 
               <p className="mt-2 flex justify-between font-mono text-[11px] text-[var(--faint)]">
-                <span>{shares.toFixed(1)} shares @ {cents(price)}</span>
-                {balance != null && <span>Balance {usd(balance)}</span>}
+                <span>
+                  <span className="ltr-num">{shares.toFixed(1)}</span> {t.app.bet.shares}{" "}
+                  {t.app.bet.at} <span className="ltr-num">{cents(price)}</span>
+                </span>
+                {balance != null && (
+                  <span>
+                    {t.app.bet.balance} <span className="ltr-num">{usd(balance)}</span>
+                  </span>
+                )}
               </p>
 
               {insufficient && (
                 <p className="mt-3 text-[13px] text-[var(--down)]">
-                  Stake is more than your available balance.
+                  {t.app.bet.insufficient}
                 </p>
               )}
 
@@ -279,11 +287,18 @@ export function MarketDetail({
                 onClick={place}
                 className="mt-4 min-h-[52px] w-full rounded-2xl bg-[var(--ink)] text-[16px] font-bold text-[var(--on-ink)] disabled:opacity-50"
               >
-                {submitting ? "Placing…" : `Place ${side} bet · ${usd(stake)}`}
+                {submitting ? (
+                  t.app.bet.placing
+                ) : (
+                  <>
+                    {tf(t.app.bet.place, { side: side === "YES" ? t.app.bet.yes : t.app.bet.no })} ·{" "}
+                    <span className="ltr-num">{usd(stake)}</span>
+                  </>
+                )}
               </button>
 
               <p className="mt-3 text-center font-mono text-[10px] tracking-[0.06em] text-[var(--faint)]">
-                SIGNED ON-CHAIN · NON-REVERSIBLE
+                {t.app.bet.signedOnChain}
               </p>
             </div>
           </div>
@@ -295,11 +310,14 @@ export function MarketDetail({
 
 function SideButton({
   side,
+  label,
   active,
   price,
   onClick,
 }: {
   side: "YES" | "NO";
+  /** Localised YES/NO wording; `side` stays the untranslated logical value. */
+  label: string;
   active: boolean;
   price: number;
   onClick: () => void;
@@ -317,7 +335,7 @@ function SideButton({
         borderColor: active ? color : "var(--line)",
       }}
     >
-      {side} · {cents(price)}
+      {label} · <span className="ltr-num">{cents(price)}</span>
     </button>
   );
 }
@@ -333,7 +351,7 @@ function Stat({ label, value }: { label: string; value: string }) {
   );
 }
 
-function ProbabilityRing({ value }: { value: number }) {
+function ProbabilityRing({ value, yesLabel }: { value: number; yesLabel: string }) {
   const r = 42;
   const c = 2 * Math.PI * r;
   const filled = (value / 100) * c;
@@ -355,7 +373,7 @@ function ProbabilityRing({ value }: { value: number }) {
       <div className="absolute inset-0 flex flex-col items-center justify-center">
         <span className="font-mono text-[22px] font-bold">{value}%</span>
         <span className="font-mono text-[9px] tracking-[0.08em] text-[var(--faint)]">
-          YES
+          {yesLabel}
         </span>
       </div>
     </div>

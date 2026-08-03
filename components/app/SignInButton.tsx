@@ -3,6 +3,7 @@
 import { usePrivy } from "@privy-io/react-auth";
 import { PRIVY_ENABLED } from "./PrivyRoot";
 import { botLink } from "@/lib/telegram";
+import { useLocale } from "./LocaleProvider";
 
 /**
  * Sign in / sign out for web visitors.
@@ -17,10 +18,11 @@ import { botLink } from "@/lib/telegram";
  * module constant, so which branch renders is fixed for the life of the page.
  */
 export function SignInButton({ className }: { className: string }) {
+  const { t } = useLocale();
   if (!PRIVY_ENABLED) {
     return (
       <a href={botLink()} className={className}>
-        Open in Telegram
+        {t.app.login.openTelegram}
       </a>
     );
   }
@@ -28,6 +30,7 @@ export function SignInButton({ className }: { className: string }) {
 }
 
 function PrivySignIn({ className }: { className: string }) {
+  const { t } = useLocale();
   const { ready, authenticated, login, logout } = usePrivy();
 
   // Render nothing rather than a "Sign in" that flips to "Sign out" a moment
@@ -40,7 +43,7 @@ function PrivySignIn({ className }: { className: string }) {
       onClick={authenticated ? () => logout() : login}
       className={className}
     >
-      {authenticated ? "Sign out" : "Sign in"}
+      {authenticated ? t.app.login.signOut : t.app.login.signIn}
     </button>
   );
 }

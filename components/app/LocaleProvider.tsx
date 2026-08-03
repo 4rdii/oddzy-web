@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext } from "react";
+import { createContext, useContext, useMemo } from "react";
 import type { Locale, Brand } from "@/lib/i18n";
 import type { Dict } from "@/lib/dict/en";
 
@@ -36,12 +36,46 @@ export function LocaleProvider({
   return <LocaleContext.Provider value={value}>{children}</LocaleContext.Provider>;
 }
 
-export function useLocale(): LocaleContextValue {
+/**
+ * A count-dependent string. English picks by `n === 1`; locales without that
+ * distinction (Persian among them) set both members to the same text, so no
+ * caller ever has to know which rule applies.
+ */
+export type Plural = { one: string; other: string };
+
+export type LocaleTools = LocaleContextValue & {
+  /**
+   * Substitute `{name}` placeholders in a dictionary string.
+   *
+   * The dictionary crosses the RSC boundary as a prop, so it can only hold
+   * plain data — templates, never functions. Numbers are passed through
+   * `localizeDigits`; strings (names, queries, addresses) go in verbatim.
+   */
+  tf: (template: string, vars: Record<string, string | number>) => string;
+  /** Pick the plural form for `n`, then substitute its `{n}`. */
+  tn: (forms: Plural, n: number) => string;
+};
+
+export function useLocale(): LocaleTools {
   const ctx = useContext(LocaleContext);
+  const locale = ctx?.locale ?? "en";
+
+  // Built before the guard below so the hook order is unconditional.
+  const tools = useMemo(() => {
+    const tf = (template: string, vars: Record<string, string | number>) =>
+      template.replace(/\{(\w+)\}/g, (whole, key: string) => {
+        const v = vars[key];
+        if (v === undefined) return whole;
+        return typeof v === "number" ? localizeDigits(v, locale) : v;
+      });
+    const tn = (forms: Plural, n: number) => tf(n === 1 ? forms.one : forms.other, { n });
+    return { tf, tn };
+  }, [locale]);
+
   if (!ctx) {
     throw new Error("useLocale must be used inside <LocaleProvider>");
   }
-  return ctx;
+  return { ...ctx, ...tools };
 }
 
 /**
