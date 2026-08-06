@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { SiteChrome } from "@/components/site/Chrome";
 import { getHottest, getMarkets } from "@/lib/api";
 import { getAllPosts } from "@/lib/posts";
-import { compactUsd, pct } from "@/lib/format";
+import { compactUsd, localized, pct } from "@/lib/format";
 import { brandFor, isLocale } from "@/lib/i18n";
 import { getDict } from "@/lib/dict";
 
@@ -38,7 +38,7 @@ export default async function HomePage({
   const [hottest, snapshot, posts] = await Promise.all([
     getHottest().catch(() => null),
     getMarkets({ limit: 6 }).catch(() => ({ markets: [] as never[] })),
-    getAllPosts(),
+    getAllPosts(lang),
   ]);
 
   const orgJsonLd = {
@@ -95,26 +95,36 @@ export default async function HomePage({
           </h2>
           <ul className="mt-4 grid gap-2.5 sm:grid-cols-2">
             {snapshot.markets.slice(0, 6).map((m) => (
-              <li
-                key={m.id}
-                className="flex items-center justify-between gap-4 rounded-xl border border-[var(--line)] bg-[var(--card)] px-4 py-3.5"
-              >
-                <span className="text-[14px] leading-snug font-medium">{m.title}</span>
-                <span className="shrink-0 text-end">
-                  <span className="block font-mono text-[16px] font-bold text-[var(--up)]">
-                    {pct(m.probability.yes)}%
+              <li key={m.id}>
+                {/* Each row is the entry point to that market's own page: this
+                    is the highest-volume set on the site, so leaving it as dead
+                    text stranded the pages that most deserve internal links. */}
+                <Link
+                  href={`/market/${m.slug}`}
+                  className="flex items-center justify-between gap-4 rounded-xl border border-[var(--line)] bg-[var(--card)] px-4 py-3.5"
+                >
+                  <span className="text-[14px] leading-snug font-medium">
+                    {localized(lang, m.title, m.title_fa)}
                   </span>
-                  <span className="block font-mono text-[10px] text-[var(--faint)]">
-                    {compactUsd(m.volume.h24)}
+                  <span className="shrink-0 text-end">
+                    <span className="block font-mono text-[16px] font-bold text-[var(--up)]">
+                      {pct(m.probability.yes)}%
+                    </span>
+                    <span className="block font-mono text-[10px] text-[var(--faint)]">
+                      {compactUsd(m.volume.h24)}
+                    </span>
                   </span>
-                </span>
+                </Link>
               </li>
             ))}
           </ul>
           {hottest && (
             <p className="mt-4 font-mono text-[11px] text-[var(--faint)]">
-              {t.home.busiest}: {hottest.title} · {compactUsd(hottest.volume.h24)}{" "}
-              {t.home.in24h}
+              {t.home.busiest}:{" "}
+              <Link href={`/market/${hottest.slug}`} className="underline">
+                {localized(lang, hottest.title, hottest.title_fa)}
+              </Link>{" "}
+              · {compactUsd(hottest.volume.h24)} {t.home.in24h}
             </p>
           )}
         </section>

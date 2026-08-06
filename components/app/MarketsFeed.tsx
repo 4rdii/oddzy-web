@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { Market, MarketEvent } from "@/lib/api";
 import type { Topic } from "@/lib/taxonomy";
-import { compactUsd, pct, untilClose } from "@/lib/format";
+import { compactUsd, pct, untilClose, localized } from "@/lib/format";
 import { EventCard } from "./EventCard";
 import { useLocale } from "./LocaleProvider";
 
@@ -34,7 +34,7 @@ export function MarketsFeed({
   onClearTopic: () => void;
   onBrowse: () => void;
 }) {
-  const { t, tf, tn } = useLocale();
+  const { t, tf, tn, locale } = useLocale();
   const [query, setQuery] = useState("");
   const [debounced, setDebounced] = useState("");
   const [markets, setMarkets] = useState<Market[]>(initialMarkets);
@@ -127,11 +127,13 @@ export function MarketsFeed({
         <div className="flex items-center gap-2 px-4 pt-3">
           <span className="flex min-h-[30px] items-center gap-1.5 rounded-full border border-[var(--accent)] px-3 text-[12px] font-semibold text-[var(--accent)]">
             {topic.emoji ? `${topic.emoji} ` : ""}
-            {topic.name}
+            {localized(locale, topic.name, topic.name_fa)}
             <button
               type="button"
               onClick={onClearTopic}
-              aria-label={tf(t.app.feed.clearFilter, { name: topic.name })}
+              aria-label={tf(t.app.feed.clearFilter, {
+                name: localized(locale, topic.name, topic.name_fa),
+              })}
               className="ms-0.5 text-[14px] leading-none"
             >
               ×
@@ -178,7 +180,7 @@ export function MarketsFeed({
 }
 
 function MarketCard({ market, onOpen }: { market: Market; onOpen: () => void }) {
-  const { t, tf } = useLocale();
+  const { t, tf, locale } = useLocale();
   const yes = pct(market.probability.yes);
   const no = 100 - yes;
 
@@ -195,7 +197,7 @@ function MarketCard({ market, onOpen }: { market: Market; onOpen: () => void }) 
     <article className="rounded-2xl border border-[var(--line)] bg-[var(--card)] p-4">
       <button type="button" onClick={onOpen} className="w-full text-start">
         <h3 className="text-[15px] leading-snug font-semibold tracking-[-0.01em] text-[var(--ink)]">
-          {market.title}
+          {localized(locale, market.title, market.title_fa)}
         </h3>
       </button>
 
@@ -233,7 +235,9 @@ function MarketCard({ market, onOpen }: { market: Market; onOpen: () => void }) 
         {market.category && (
           <>
             <span aria-hidden>·</span>
-            <span className="truncate">{market.category.name}</span>
+            <span className="truncate">
+              {localized(locale, market.category.name, market.category.name_fa)}
+            </span>
           </>
         )}
       </div>

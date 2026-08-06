@@ -121,6 +121,124 @@ export const en = {
       },
     ],
   },
+  market: {
+    metaDescription:
+      "The market puts {title} at {chance}%, with {volume} traded in the last 24 hours. Live price, resolution rules and history.",
+    answer: "The market prices this at {chance}%, backed by {volume} of trading in the last 24 hours.",
+    chanceYes: "chance, according to the market",
+    backedBy: "Backed by ",
+    backedBySuffix: " traded in the last 24 hours — this is a price people are staking money on, not a forecast.",
+    metaDescriptionResolved:
+      "{title} — the market resolved {outcome}. Final price, how it moved, and the rules that decided it.",
+    resolvedYes: "Yes",
+    resolvedNo: "No",
+    resolvedUnknown: "Resolved",
+    resolvedSub: "Settled on-chain after ",
+    resolvedSubSuffix: " of lifetime trading. The rules that decided it are below.",
+    resolvedNotice: "This market has resolved.",
+    rulesHeading: "How this resolves",
+    rulesLead:
+      "The rules below decide who gets paid. Read them before the price — most surprises are definitional, not predictive.",
+    ctaLead: "Follow this market, or take a position, straight from Telegram.",
+    asOf: "Price as of",
+    source: "Source: Polymarket",
+    history: {
+      heading: "How the price has moved",
+      since: "On {date} the market put this at {pct}%.",
+      empty: "We started recording this market's daily price today — the history will build from here.",
+      now: "now",
+    },
+    /** Shown on a market that is one deadline of a rolling question. */
+    partOfSeries: "This is the {date} deadline of an ongoing question.",
+    seeCurrent: "See the current market →",
+  },
+  series: {
+    metaDescription:
+      "{title} — the live market price, every past deadline and how each resolved. Updated as the question rolls forward.",
+    metaDescriptionResolved:
+      "{title} — every deadline this question has run through and how each one resolved.",
+    /** The question stripped of its deadline, used as the page's H1 lead-in. */
+    currentHeading: "Right now",
+    currentDeadline: "Deadline: {date}",
+    timelineHeading: "Every deadline so far",
+    timelineLead:
+      "Polymarket re-lists this question at successive deadlines. Each row is one of them, with how it resolved.",
+    open: "Open",
+    awaiting: "Awaiting settlement",
+    resolvedYes: "Yes",
+    resolvedNo: "No",
+    resolvedUnknown: "Resolved",
+    current: "Current",
+    /** Link from a settled leg forward to the one that is live now. */
+    successorLead: "This deadline has passed. The question continues:",
+    noSuccessor: "Every deadline for this question has passed.",
+    viewLeg: "View this deadline →",
+  },
+  basket: {
+    indexMetaTitle: "Baskets — buy a whole thesis in one click",
+    indexMetaDescription:
+      "Curated sets of prediction-market positions. One click buys every leg at its stated weight, and each leg settles on its own.",
+    indexH1: "Baskets",
+    indexLead:
+      "A basket is a set of positions with a weight on each. It is not a parlay: buying one places every position as a separate trade, each settles on its own, and you don't need them all to come in.",
+    empty: "No baskets are published yet.",
+    metaTitle: "{title} — a basket of {count} positions",
+    metaDescription:
+      "{title}: {count} prediction-market positions bought in one click, each at its stated weight. Live prices and what the basket costs.",
+    /**
+     * The single most important thing to say, because "buy 4 positions at once"
+     * reads as a parlay to anyone who has used a sportsbook. It is the opposite:
+     * the legs are independent, and partial success is the normal case.
+     */
+    notParlay:
+      "This is not a parlay. Each position is bought and settles on its own — you don't need them all to come in, and you can sell any one of them without touching the rest.",
+    legsHeading: "What's in it",
+    legsLead: "Each row is a separate position. The weight is that leg's share of whatever you put in.",
+    /** Column headers for the legs table. */
+    colWeight: "Weight",
+    colSide: "Side",
+    colPrice: "Price",
+    blendedHeading: "Blended price",
+    blendedLead:
+      "The weighted average of the legs — what one unit of this basket costs as a probability.",
+    /**
+     * Payout figures, quoted per $100 because the web page has no stake input.
+     *
+     * Two forms, because two kinds of basket. An independent basket can have
+     * every leg hit at once, so "if everything hits" is collectable. An
+     * exclusive one — five clubs, one trophy — cannot, and quoting that number
+     * would advertise a return nobody can reach.
+     */
+    payoutHeading: "If it comes good",
+    payoutAllHit: "{amount} back on {stake} — {multiple}× — if every position hits.",
+    payoutEven: "Every {stake} turns into {amount} — {multiple}×, whichever one wins.",
+    payoutEvenLead:
+      "The stake is split to buy the same number of shares in each, so the winner doesn't change what it pays. The risk is that none of them wins.",
+    payoutRange:
+      "Only one of these can win. Depending which, {stake} returns between {low} and {high}.",
+    payoutRangeWarn:
+      "Note the bottom of that range: an even split across five contenders pays back less than you put in if the favourite wins. The longer prices are where this basket makes money.",
+    payoutNested:
+      "The rungs are nested — clearing a higher level means every level below it cleared too.",
+    curated: "Editorial",
+    legCount: "{count} positions",
+    buys: "{count} buys",
+    settled: "Every position in this basket has settled.",
+    /** The honest caveat, shown on every basket page. */
+    partialNotice:
+      "Legs are placed as separate orders. If one can't fill at the price shown, the rest still go through and that leg's share stays in your balance.",
+    minStake: "Minimum {amount} — the smallest leg needs at least the minimum bet.",
+    cta: "Buy this basket in Telegram",
+  },
+  topic: {
+    metaTitle: "{topic} — what the market says",
+    metaDescription:
+      "Live probabilities for {topic}, priced by a market with real money behind it. Updated continuously.",
+    h1: "{topic}: what the market says",
+    lead:
+      "Every question below is priced by people staking money on the answer. The percentage is the market's probability, and the volume tells you how much to trust it.",
+    vol: "24h volume",
+  },
   learn: {
     metaTitle: "Learn — prediction markets explained",
     metaDescription:
@@ -162,6 +280,49 @@ export const en = {
       browse: "Browse",
       positions: "Positions",
       wallet: "Wallet",
+      baskets: "Baskets",
+    },
+
+    baskets: {
+      title: "Baskets",
+      lead: "A set of positions with a weight on each. One tap buys them all.",
+      notParlay:
+        "Not a parlay — each position settles on its own, so you don't need them all to come in.",
+      payoutHeading: "If it comes good",
+      payoutAllHit: "{amount} back on {stake} — {multiple}× — if every position hits.",
+        payoutEven: "Every {stake} turns into {amount} — {multiple}×, whichever one wins.",
+      payoutEvenLead:
+        "The stake is split to buy the same number of shares in each, so the winner doesn't change what it pays. The risk is that none of them wins.",
+      payoutRange: "Only one can win. Depending which, {stake} returns {low} – {high}.",
+      payoutRangeWarn:
+        "The even split means the favourite pays back less than you put in — the longer prices are where this basket makes money.",
+      empty: "No baskets are published yet.",
+      legs: "{count} positions",
+      weight: "Weight",
+      minStake: "Minimum ${amount}",
+      /** The partial-fill contract, shown before the user commits. */
+      partialNotice:
+        "Each leg is a separate order. If one can't fill at the price shown, the rest still go through and that leg's share stays in your balance.",
+      amount: "Amount",
+      buy: "Buy basket",
+      buying: "Buying…",
+      belowMin: "This basket needs at least ${amount}.",
+      insufficient: "That's more than your balance.",
+      skipping: "{count} skipped — no price right now",
+      /** Receipt. */
+      boughtTitle: "Basket bought",
+      partialTitle: "Partially filled",
+      failedTitle: "Nothing filled",
+      filledOf: "${filled} of ${requested}",
+      unspent: "${amount} stayed in your balance.",
+      reasonNoFill: "price moved",
+      reasonSettled: "already settled",
+      reasonUnbuyable: "no seller",
+      reasonNoQuote: "no price",
+      reasonBelowMin: "below minimum",
+      reasonError: "not placed",
+      viewPositions: "View positions",
+      done: "Done",
     },
 
     feed: {
@@ -196,9 +357,9 @@ export const en = {
       pathLabel: "Category path",
       all: "All",
       allMarkets: "All {name} markets",
-      marketCount: { one: "{n} MARKET", other: "{n} MARKETS" },
+      marketCount: { one: "{n} market", other: "{n} markets" },
       /** Appended after the market count; carries its own separator. */
-      subCount: " · {n} SUB",
+      subCount: "{n} subcategories",
       /** Drill-in chevron. Mirrored in RTL. */
       chevron: "›",
       empty: "Nothing below this category.",
@@ -231,7 +392,9 @@ export const en = {
       resolves: "RESOLVES",
       resolutionTitle: "RESOLUTION",
       resolutionBody:
-        "Settles on-chain via Polymarket at close. Final outcome is determined by the market's oracle; where an outcome is disputed, the UMA optimistic oracle decides.",
+        "When the result is in, every winning share pays $1 straight to your wallet. Polymarket's oracle calls the outcome; a disputed result goes to UMA.",
+      showMore: "Read the full rules",
+      showLess: "Show less",
       viewOnPolymarket: "View on Polymarket ↗",
       risk: "Prediction markets carry risk of loss. 18+. Oddzy is an interface to Polymarket — it never holds your funds.",
     },
@@ -248,13 +411,13 @@ export const en = {
       /** Sits between the share count and the price. */
       at: "@",
       balance: "Balance",
-      insufficient: "Stake is more than your available balance.",
+      insufficient: "That's more than your balance. Lower the stake, or deposit first.",
       placing: "Placing…",
       /** `side` is the localised YES/NO label; the amount follows as its own span. */
       place: "Place {side} bet",
       signedOnChain: "SIGNED ON-CHAIN · NON-REVERSIBLE",
       sessionExpired: "Your session expired. Sign in again to place bets.",
-      failed: "Couldn't place that bet.",
+      failed: "That bet didn't go through. Check Positions before trying again.",
     },
 
     receipt: {
@@ -303,7 +466,7 @@ export const en = {
       redeemsFor: "Redeems for",
       sellApprox: "Sell {shares} shares ≈",
       estimateNote:
-        "Estimate at the current price; the fill is quoted server-side and may differ.",
+        "Estimated at the current price. Your real fill is quoted when you confirm, and can differ on a thin book.",
       closeError: "Couldn't close that position. Nothing changed — try again shortly.",
       processing: "Processing…",
       /** Followed by the amount as its own span. */
@@ -318,14 +481,18 @@ export const en = {
       custody: "USDC on Polygon · self-custodial via Privy",
       deposit: "Deposit",
       withdraw: "Withdraw",
-      accounts: "YOUR ACCOUNTS",
+      accounts: "YOUR ON-CHAIN ADDRESSES",
+      accountsShow: "Show",
+      accountsHide: "Hide",
+      accountsWarning:
+        "Never send funds to these addresses. They're here so you can look your account up on-chain — nothing more. To add money, use the Deposit button: it gives you the right address for the network you're sending from, and these two aren't it.",
       polymarketLabel: "🟣 POLYMARKET ACCOUNT · POLYGON",
       polymarketSub:
-        "Deposit USDC on Polygon to this address. Polygon only — funds sent on another network can't be recovered.",
+        "Your Polymarket account — where your balance and open positions live.",
       viewOnPolymarket: "View on Polymarket ↗",
       privyLabel: "🔑 PRIVY WALLET · SIGNER",
       privySub:
-        "⚠️ Don't deposit here — this is your signing wallet. Add funds to the Polymarket address above (or use Deposit).",
+        "Your signing wallet. It never holds your balance, and anything sent here is not credited to your account.",
       /** Followed by the amount as its own span. */
       sent: "Sent",
       confirming: "Confirming on-chain",
@@ -337,7 +504,49 @@ export const en = {
       qrAlt: "QR code for deposit address {address}",
       copyAddress: "Copy address",
       depositWarning:
-        "Send USDC on Polygon only. Anything sent on another network, or a different token, cannot be recovered. Funds appear here once the transfer confirms.",
+        "USDC on Polygon only. Another network or another token means the funds are gone for good — no one can reverse it. Your balance updates the moment the transfer confirms.",
+      depositWarningVault:
+        "Send on the selected network only. A transfer on any other network cannot be recovered by anyone. Your balance updates automatically once it lands — usually a couple of minutes.",
+      /**
+       * Copy per funding rail, keyed by the `id` GET /webapp/v1/deposit returns.
+       * The vault rails (56/8453/42161) take ANY token on that chain and swap it
+       * for you; the bridge and Polygon rails do not, and their copy has to say
+       * so — a user who sends USDT to a USDC-only address loses it.
+       */
+      rails: {
+        "56": {
+          title: "BNB Chain",
+          blurb: "Send USDT or any major token on BNB Chain (BEP20). It converts automatically.",
+        },
+        "8453": {
+          title: "Base",
+          blurb: "Send USDC or any major token on Base. It converts automatically.",
+        },
+        "42161": {
+          title: "Arbitrum",
+          blurb: "Send USDC or any major token on Arbitrum. It converts automatically.",
+        },
+        polygon: {
+          title: "Polygon",
+          blurb: "Send USDC.e on Polygon straight to your account address.",
+        },
+        evm: {
+          title: "Ethereum & EVM",
+          blurb: "Send USDC on Ethereum, Arbitrum, Base or Optimism. Bridged for you.",
+        },
+        svm: {
+          title: "Solana",
+          blurb: "Send USDC on Solana. Bridged for you.",
+        },
+        btc: {
+          title: "Bitcoin",
+          blurb: "Send BTC. Converted and bridged for you.",
+        },
+        tron: {
+          title: "Tron",
+          blurb: "Send USDT on Tron (TRC20). Converted and bridged for you.",
+        },
+      },
     },
 
     withdraw: {
@@ -371,8 +580,8 @@ export const en = {
       signOut: "Sign out",
       openTelegram: "Open in Telegram",
       loading: "Loading…",
-      title: "Trade prediction markets",
-      lead: "Sign in to place bets. Your wallet is yours — we never hold your funds.",
+      title: "Back the outcome you see coming",
+      lead: "Sign in to start. The wallet is yours from the first second — we never hold your funds, and you can export the keys whenever you want.",
       methods: "TELEGRAM · GOOGLE · WALLET",
       tryAgain: "Try again",
       creatingWallet: "Creating your wallet…",

@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import Image from "next/image";
 import Script from "next/script";
 import type { Market } from "@/lib/api";
 import type { Topic } from "@/lib/taxonomy";
@@ -13,6 +14,7 @@ import { useLocale } from "./LocaleProvider";
 import { MarketDetail, type PlacedBet } from "./MarketDetail";
 import { Receipt } from "./Receipt";
 import { PositionsScreen, WalletScreen } from "./AccountScreens";
+import { BasketsScreen, BasketReceiptScreen, type BasketReceipt } from "./BasketsScreen";
 import { WebLogin } from "./WebLogin";
 import { SignInButton } from "./SignInButton";
 import { PRIVY_ENABLED } from "./PrivyRoot";
@@ -23,7 +25,9 @@ type Screen =
   | { name: "detail"; market: Market; from?: "feed" | "positions" }
   | { name: "done"; bet: PlacedBet }
   | { name: "positions" }
-  | { name: "wallet" };
+  | { name: "wallet" }
+  | { name: "baskets" }
+  | { name: "basketDone"; receipt: BasketReceipt };
 
 /**
  * The trading surface.
@@ -40,7 +44,7 @@ export function MiniApp({
   topics: Topic[];
   initialMarkets: Market[];
 }) {
-  const { brand, t, rtl } = useLocale();
+  const { brand, t } = useLocale();
   const [screen, setScreen] = useState<Screen>({ name: "feed" });
   // The category picked in Browse; the feed reads it. Kept here so switching
   // tabs doesn't lose the filter.
@@ -91,7 +95,13 @@ export function MiniApp({
 
   // Screens that can't render anything meaningful without an account.
   const gated =
-    screen.name === "detail" || screen.name === "positions" || screen.name === "wallet";
+    screen.name === "detail" ||
+    screen.name === "positions" ||
+    screen.name === "wallet" ||
+    // Baskets read the balance and then spend it, so they need an account for
+    // the same reason the detail screen does.
+    screen.name === "baskets" ||
+    screen.name === "basketDone";
   const needsLogin = inTelegram === false && PRIVY_ENABLED && webAuth === "needed";
 
   const tab =
@@ -101,7 +111,9 @@ export function MiniApp({
         ? "wallet"
         : screen.name === "browse"
           ? "browse"
-          : "markets";
+          : screen.name === "baskets" || screen.name === "basketDone"
+            ? "baskets"
+            : "markets";
 
   return (
     <>
@@ -112,15 +124,15 @@ export function MiniApp({
       <div className="mx-auto min-h-screen max-w-md bg-[var(--page)] pb-16">
         <header className="sticky top-0 z-30 flex items-center justify-between border-b border-[var(--line)] bg-[color-mix(in_srgb,var(--page)_90%,transparent)] px-4 py-3 backdrop-blur-md">
           <div className="flex items-center gap-2.5">
-            <div
-              className={
-                rtl
-                  ? "flex h-7 w-7 items-center justify-center rounded-[9px] bg-[var(--accent)] text-[13px] font-extrabold text-[var(--accent-ink)]"
-                  : "flex h-7 w-7 items-center justify-center rounded-full bg-[var(--ink)] text-[13px] font-bold text-[var(--on-ink)]"
-              }
-            >
-              {brand.glyph}
-            </div>
+            {/* The bot's own avatar — same mark the user tapped in Telegram. */}
+            <Image
+              src={brand.logo}
+              alt=""
+              width={28}
+              height={28}
+              priority
+              className="h-7 w-7 rounded-[9px]"
+            />
             <span className="text-[15px] font-bold tracking-[-0.02em]">{brand.name}</span>
           </div>
 
@@ -184,6 +196,26 @@ export function MiniApp({
               />
             )}
 
+            {screen.name === "baskets" && (
+              <BasketsScreen
+                balance={balance}
+                onDone={(receipt) => {
+                  setScreen({ name: "basketDone", receipt });
+                  // Legs just spent real money — re-read the balance rather
+                  // than leaving the stale figure on the other screens.
+                  loadMe();
+                }}
+              />
+            )}
+
+            {screen.name === "basketDone" && (
+              <BasketReceiptScreen
+                receipt={screen.receipt}
+                onPositions={() => setScreen({ name: "positions" })}
+                onDone={() => setScreen({ name: "baskets" })}
+              />
+            )}
+
             {screen.name === "positions" && <PositionsScreen onOpenMarket={openMarketBySlug} />}
             {screen.name === "wallet" && <WalletScreen />}
           </>
@@ -204,6 +236,12 @@ export function MiniApp({
             icon="☰"
             label={t.app.nav.browse}
             onClick={() => setScreen({ name: "browse" })}
+          />
+          <TabButton
+            active={tab === "baskets"}
+            icon="▨"
+            label={t.app.nav.baskets}
+            onClick={() => setScreen({ name: "baskets" })}
           />
           <TabButton
             active={tab === "positions"}

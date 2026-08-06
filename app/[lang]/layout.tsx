@@ -67,6 +67,16 @@ export async function generateMetadata({
     twitter: { card: "summary_large_image" },
     robots: { index: true, follow: true },
     alternates: { canonical: brand.siteUrl },
+    // Search Console ownership. Per-brand because they are separate properties
+    // on separate hostnames; set whichever token Google hands you and redeploy.
+    // DNS TXT verification works too and needs no code — this exists so the
+    // meta-tag route doesn't require a patch at the moment you need it.
+    verification: {
+      google:
+        (lang === "fa"
+          ? process.env.GOOGLE_SITE_VERIFICATION_FA
+          : process.env.GOOGLE_SITE_VERIFICATION) || undefined,
+    },
   };
 }
 

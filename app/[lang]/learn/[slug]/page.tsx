@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { SiteChrome } from "@/components/site/Chrome";
 import { getAllPosts, getPost } from "@/lib/posts";
-import { brandFor, isLocale, LOCALES } from "@/lib/i18n";
+import { BRANDS, brandFor, isLocale, LOCALES } from "@/lib/i18n";
 import { getDict } from "@/lib/dict";
 
 /** Pre-render every article, per locale — this is the SEO surface. */
@@ -17,13 +17,24 @@ type ArticleParams = { params: Promise<{ lang: string; slug: string }> };
 export async function generateMetadata(props: ArticleParams): Promise<Metadata> {
   const { lang, slug } = await props.params;
   if (!isLocale(lang)) return {};
-  const post = await getPost(slug);
+  const post = await getPost(slug, lang);
   if (!post) return {};
   const siteUrl = brandFor(lang).siteUrl;
   return {
     title: post.title,
     description: post.description,
-    alternates: { canonical: `/learn/${post.slug}` },
+    alternates: {
+      canonical: `/learn/${post.slug}`,
+      // The same slug is the same article in both languages on two different
+      // hostnames. Without hreflang, Google can read the pair as duplicates and
+      // pick one host for both audiences — tell it they're translations.
+      languages: Object.fromEntries(
+        LOCALES.map((l) => [
+          BRANDS[l].htmlLang,
+          `${BRANDS[l].siteUrl}/learn/${post.slug}`,
+        ]),
+      ),
+    },
     openGraph: {
       type: "article",
       title: post.title,
@@ -38,14 +49,21 @@ export async function generateMetadata(props: ArticleParams): Promise<Metadata> 
 export default async function ArticlePage(props: ArticleParams) {
   const { lang, slug } = await props.params;
   if (!isLocale(lang)) notFound();
-  const post = await getPost(slug);
+  const post = await getPost(slug, lang);
   if (!post) notFound();
 
   const brand = brandFor(lang);
   const t = getDict(lang);
 
   // Dynamic import of the MDX body — the loader compiles it to a component.
-  const { default: Body } = await import(`@/content/posts/${slug}.mdx`);
+  // Both arms are template literals with a fixed prefix and suffix so the
+  // bundler can resolve them to a directory of candidates at build time.
+  // `post.translated` is what getPost actually read, so a post without a
+  // Persian file imports the English body instead of failing the route.
+  const { default: Body } =
+    lang !== "en" && post.translated
+      ? await import(`@/content/posts/${slug}.${lang}.mdx`)
+      : await import(`@/content/posts/${slug}.mdx`);
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -57,7 +75,10 @@ export default async function ArticlePage(props: ArticleParams) {
     author: { "@type": "Organization", name: brand.name },
     publisher: { "@type": "Organization", name: brand.name },
     mainEntityOfPage: `${brand.siteUrl}/learn/${post.slug}`,
-    inLanguage: brand.htmlLang,
+    // The language of the ARTICLE, which is not the language of the site when
+    // a translation is missing — claiming fa-IR over an English body would be
+    // a false signal to search engines.
+    inLanguage: post.translated ? brand.htmlLang : "en",
   };
 
   // fa-IR resolves to the Jalali calendar and Persian-Indic digits, so a post
@@ -74,7 +95,13 @@ export default async function ArticlePage(props: ArticleParams) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <article className="mx-auto max-w-2xl px-5 pt-10 pb-8">
+      {/* An untranslated article is English text inside an RTL page. Marking it
+          keeps the paragraphs left-aligned and stops a screen reader reading
+          English with a Persian voice. */}
+      <article
+        className="mx-auto max-w-2xl px-5 pt-10 pb-8"
+        {...(post.translated ? {} : { lang: "en", dir: "ltr" as const })}
+      >
         <Link href="/learn" className="font-mono text-[11px] text-[var(--mute)]">
           {t.learn.backToAll}
         </Link>

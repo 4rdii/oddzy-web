@@ -30,7 +30,7 @@ export default async function LearnPage({
   if (!isLocale(lang)) notFound();
   const t = getDict(lang);
 
-  const posts = await getAllPosts();
+  const posts = await getAllPosts(lang);
 
   return (
     <SiteChrome lang={lang}>

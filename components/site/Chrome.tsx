@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { ThemeToggle } from "./ThemeToggle";
 import { TelegramRedirect } from "./TelegramRedirect";
@@ -38,17 +39,16 @@ export function SiteChrome({
         <header className="sticky top-0 z-40 border-b border-[var(--line)] bg-[color-mix(in_srgb,var(--page)_90%,transparent)] backdrop-blur-md">
           <div className="mx-auto flex max-w-5xl items-center justify-between gap-6 px-5 py-3.5">
             <Link href="/" className="flex items-center gap-2.5 text-[var(--ink)]">
-              {/* Oddzy's mark is an ink circle; PolyBaaz's is a gold rounded
-                  square with dark ink on it. */}
-              <span
-                className={
-                  fa
-                    ? "flex h-7 w-7 items-center justify-center rounded-[9px] bg-[var(--accent)] text-[13px] font-extrabold text-[var(--accent-ink)]"
-                    : "flex h-7 w-7 items-center justify-center rounded-full bg-[var(--ink)] text-[13px] font-bold text-[var(--on-ink)]"
-                }
-              >
-                {brand.glyph}
-              </span>
+              {/* The bot's own avatar. Both files bake in their background, so
+                  no ring or fill is needed behind them in either theme. */}
+              <Image
+                src={brand.logo}
+                alt=""
+                width={28}
+                height={28}
+                priority
+                className="h-7 w-7 rounded-[9px]"
+              />
               <span className="text-[15px] font-bold tracking-[-0.02em]">
                 {brand.name}
               </span>

@@ -21,12 +21,28 @@ export type Market = {
   id: string;
   slug: string;
   title: string;
-  category: { id: string; name: string } | null;
+  /**
+   * Persian title, filled by the bot's translation worker. Null means "not
+   * translated yet", which is common for markets that were only just ingested —
+   * always read it through `localized()` so the English title covers the gap.
+   */
+  title_fa: string | null;
+  /**
+   * Polymarket's own resolution rules, verbatim and untranslated. Plain text
+   * that may contain newlines; render it as text, never as markup — it is
+   * creator-authored and reaches us unescaped.
+   */
+  description: string | null;
+  /** Persian rendering of the same rules; null until translated. */
+  description_fa: string | null;
+  category: { id: string; name: string; name_fa: string | null } | null;
   probability: { yes: number; no: number };
-  outcome_labels: string[] | null;
+  outcome_labels: { yes: string | null; no: string | null; yes_fa: string | null; no_fa: string | null } | null;
   volume: { total: number; h24: number };
   close_time: string | null;
   status: string;
+  /** "YES" / "NO" once settled, null while live. */
+  outcome: string | null;
   url: string;
 };
 
@@ -41,9 +57,11 @@ export type MarketEvent = {
   id: string;
   short_id: string;
   title: string;
+  /** Persian event title; null until translated. See `localized()`. */
+  title_fa: string | null;
   kind: "match" | "multi_winner" | "binary";
   starts_at: string | null;
-  topic: { id: string; name: string } | null;
+  topic: { id: string; name: string; name_fa: string | null } | null;
   market_count: number;
   volume_24h: number;
   /** Moneyline + draw for a match; the outcome list for a multi-winner. */
@@ -119,6 +137,236 @@ export async function getEvents(opts: { category?: string; limit?: number } = {}
   if (opts.category) params.set("category", opts.category);
   params.set("limit", String(opts.limit ?? 20));
   return get<{ events: MarketEvent[]; count: number }>(`/events?${params}`, 300);
+}
+
+
+export type PricePoint = { day: string; yes: number | null; volume_24h: number | null };
+
+export type MarketDetail = {
+  market: Market;
+  /**
+   * Daily closing probability, oldest first. Empty or one-length for markets
+   * first seen after the recorder started — a page must degrade to "no history
+   * yet" rather than assume it can draw a line.
+   */
+  history: PricePoint[];
+  as_of: string;
+};
+
+export type IndexableMarket = {
+  slug: string;
+  title: string;
+  title_fa: string | null;
+  /**
+   * Non-null when this market is one deadline of a rolling question ("…by
+   * August 15" / "…by August 31"). Such a market does NOT get its own indexed
+   * page — it canonicalizes to /question/<key>. See `getQuestionSeries`.
+   */
+  series_key: string | null;
+  category_id: string | null;
+  volume_24h: number | null;
+  volume_total: number | null;
+  close_time: string | null;
+  status: string;
+  outcome: string | null;
+};
+
+/** One market plus its price history — the market page's only data source. */
+export async function getMarketDetail(slug: string): Promise<MarketDetail | null> {
+  try {
+    return await get<MarketDetail>(`/markets/${encodeURIComponent(slug)}`, 600);
+  } catch (e) {
+    if (e instanceof ApiError && e.status === 404) return null;
+    throw e;
+  }
+}
+
+/**
+ * The markets that qualify for a public, indexed page.
+ *
+ * The gate lives upstream on purpose: liquidity, having rules to show, and a
+ * Persian title that passed verification are all facts about the DATA, and a
+ * second copy of that logic here would drift. Used by generateStaticParams and
+ * by the sitemap, so both always agree on what exists.
+ *
+ * Cached for an hour: the set changes as markets cross the volume threshold or
+ * resolve, which is not a per-request concern.
+ */
+export async function getIndexableMarkets(): Promise<IndexableMarket[]> {
+  try {
+    const data = await get<{ markets: IndexableMarket[] }>("/markets/indexable", 3600);
+    return data.markets;
+  } catch {
+    // A build must not fail because the API blinked; an empty list just means
+    // no new market pages this build, and the existing ones stay published.
+    return [];
+  }
+}
+
+/** One deadline of a rolling question, as it appears in the family's timeline. */
+export type SeriesMember = {
+  slug: string;
+  title: string;
+  title_fa: string | null;
+  status: string;
+  outcome: string | null;
+  close_time: string | null;
+  probability: { yes: number; no: number } | null;
+  volume: { total: number; h24: number };
+  /** True for the leg the family currently headlines. */
+  current: boolean;
+};
+
+export type SeriesSummary = {
+  key: string;
+  current: Omit<SeriesMember, "current">;
+  category_id: string | null;
+  member_slugs: string[];
+  member_count: number;
+  status: string;
+};
+
+export type QuestionSeries = {
+  key: string;
+  /** The market that answers the question today, in full detail. */
+  market: Market;
+  history: PricePoint[];
+  /** Every deadline, oldest first, with how each one turned out. */
+  members: SeriesMember[];
+  as_of: string;
+};
+
+/**
+ * Question families that deserve one canonical page.
+ *
+ * Polymarket re-lists the same question at successive deadlines, so publishing
+ * a page per market would put five near-identical pages in front of one query
+ * and retire each one's rankings on its deadline. One family page instead
+ * accumulates them.
+ */
+export async function getQuestionSeriesIndex(): Promise<SeriesSummary[]> {
+  try {
+    const data = await get<{ series: SeriesSummary[] }>("/markets/series", 3600);
+    return data.series;
+  } catch {
+    // Same rule as getIndexableMarkets: a blinking API must not fail a build.
+    return [];
+  }
+}
+
+export async function getQuestionSeries(key: string): Promise<QuestionSeries | null> {
+  try {
+    return await get<QuestionSeries>(`/markets/series/${encodeURIComponent(key)}`, 600);
+  } catch (e) {
+    if (e instanceof ApiError && e.status === 404) return null;
+    throw e;
+  }
+}
+
+/** One leg of a basket: a market, the side the basket holds, and its weight. */
+export type BasketLeg = {
+  side: "YES" | "NO";
+  weight_bps: number;
+  weight_pct: number;
+  /**
+   * Price of the side the basket actually holds — NOT always the YES price.
+   * Null when the leg's book is empty. Use this, never `market.probability`,
+   * when showing what a leg costs.
+   */
+  price: number | null;
+  market: Market;
+};
+
+export type BasketSummary = {
+  slug: string;
+  title: string;
+  title_fa: string | null;
+  description: string | null;
+  description_fa: string | null;
+  curated: boolean;
+  leg_count: number;
+  /** "active" while any leg still trades; "settled" once they all have. */
+  status: string;
+  first_close_time: string | null;
+  volume: { legs_total: number | null };
+  stats: { buys: number; volume_usdc: number | null };
+  /** Smallest leg weight — sets the basket's minimum stake. */
+  min_weight_bps: number | null;
+};
+
+export type BasketDetail = {
+  slug: string;
+  title: string;
+  title_fa: string | null;
+  description: string | null;
+  description_fa: string | null;
+  curated: boolean;
+  status: string;
+  leg_count: number;
+  /**
+   * Weighted average of the legs' prices — what one unit of the basket costs as
+   * a probability. Null unless EVERY leg is priced, so it is never a partial
+   * average masquerading as the whole.
+   */
+  blended_probability: number | null;
+  /**
+   * At most one leg can resolve YES — five contenders, one trophy. Decides
+   * which payout figure the page is allowed to quote.
+   */
+  exclusive: boolean;
+  /** 'weights' | 'equal_shares' — how the stake is split across legs. */
+  sizing: string;
+  /**
+   * What the basket returns if it comes good, per `notional` staked. Null when
+   * any leg is unpriced, for the same reason `blended_probability` is: a figure
+   * computed from some of the legs would misstate the whole basket.
+   */
+  payout: {
+    notional: number;
+    exclusive: boolean;
+    /** Return if EVERY leg hits. Null on an exclusive basket — unreachable. */
+    all_hit: number | null;
+    multiple: number | null;
+    /** Return if exactly one leg wins: worst and best case. */
+    single_low: number;
+    single_high: number;
+    /**
+     * Set when every single-winner payout is the same — the point of
+     * equal-shares sizing. Lets the page state one figure instead of a range
+     * whose ends differ only by rounding.
+     */
+    single_even: number | null;
+    single_multiple: number | null;
+    sizing: string;
+  } | null;
+  stats: { buys: number; volume_usdc: number | null };
+  legs: BasketLeg[];
+  as_of: string;
+};
+
+/**
+ * Published baskets — curated sets of positions bought in one click.
+ *
+ * Cached for an hour: the set of baskets is editorial and changes when someone
+ * publishes one, not per-request. Leg prices come from the detail call.
+ */
+export async function getBaskets(): Promise<BasketSummary[]> {
+  try {
+    const data = await get<{ baskets: BasketSummary[] }>("/baskets", 3600);
+    return data.baskets;
+  } catch {
+    // Same rule as getIndexableMarkets: a blinking API must not fail a build.
+    return [];
+  }
+}
+
+export async function getBasket(slug: string): Promise<BasketDetail | null> {
+  try {
+    return await get<BasketDetail>(`/baskets/${encodeURIComponent(slug)}`, 600);
+  } catch (e) {
+    if (e instanceof ApiError && e.status === 404) return null;
+    throw e;
+  }
 }
 
 /** The single highest-24h-volume live market — powers the marketing hero. */

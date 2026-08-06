@@ -2,12 +2,22 @@
 
 import { useState } from "react";
 import type { Market } from "@/lib/api";
-import { cents, compactUsd, pct, payoutFor, shortDate, usd } from "@/lib/format";
+import { cents, compactUsd, pct, payoutFor, shortDate, usd, localized } from "@/lib/format";
 import { authedPost, ApiCallError } from "@/lib/client-api";
 import { useTelegram } from "@/lib/telegram";
 import { useLocale } from "./LocaleProvider";
 
 const STAKE_CHIPS = [10, 25, 50, 100];
+
+/**
+ * Characters of the resolution rules shown before "Read more".
+ *
+ * Polymarket descriptions run from one line to a dozen paragraphs of edge-case
+ * handling. Showing all of it pushes the bet buttons off a phone screen; ~320
+ * characters covers the "resolves Yes if…" sentence that answers the question
+ * for most markets, and the rest is one tap away.
+ */
+const DESC_PREVIEW = 320;
 
 export type PlacedBet = {
   market: Market;
@@ -43,9 +53,10 @@ export function MarketDetail({
   onPlaced: (bet: PlacedBet) => void;
   balance: number | null;
 }) {
-  const { t, tf } = useLocale();
+  const { t, tf, locale } = useLocale();
   const { inTelegram } = useTelegram();
   const [side, setSide] = useState<"YES" | "NO">("YES");
+  const [expanded, setExpanded] = useState(false);
   const [stake, setStake] = useState(25);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -110,7 +121,7 @@ export function MarketDetail({
 
       <div className="px-4">
         <h1 className="text-[19px] leading-snug font-bold tracking-[-0.02em]">
-          {market.title}
+          {localized(locale, market.title, market.title_fa)}
         </h1>
 
         {/* Probability ring */}
@@ -124,18 +135,52 @@ export function MarketDetail({
         </div>
 
         {market.category && (
-          <p className="mt-4 font-mono text-[10px] tracking-[0.06em] text-[var(--faint)]">
-            {market.category.name.toUpperCase()}
+          <p className="mt-4 font-mono text-[10px] tracking-[0.06em] text-[var(--faint)] uppercase">
+            {localized(locale, market.category.name, market.category.name_fa)}
           </p>
         )}
 
         <section className="mt-5 rounded-2xl border border-[var(--line)] bg-[var(--card)] p-4">
-          <h2 className="font-mono text-[10px] tracking-[0.06em] text-[var(--faint)]">
+          <h2 className="font-mono text-[10px] tracking-[0.06em] text-[var(--faint)] uppercase">
             {t.app.detail.resolutionTitle}
           </h2>
-          <p className="mt-2 text-[14px] leading-relaxed text-[var(--text2)]">
-            {t.app.detail.resolutionBody}
-          </p>
+
+          {/* Polymarket's own rules for this specific market, when we have them.
+              This is the only text on the page that answers "what exactly
+              counts as a win?", so it outranks our generic settlement note —
+              which stays below it, smaller, as the mechanism rather than the
+              criteria.
+
+              Untranslated by design: these are legal-ish resolution criteria
+              where a machine translation that drifts is worse than English.
+              They are also creator-authored, so this renders as text with
+              `whitespace-pre-line` for paragraphs — never as markup. */}
+          {market.description ? (
+            <>
+              <p className="mt-2 text-[14px] leading-relaxed whitespace-pre-line text-[var(--text2)]">
+                {expanded || market.description.length <= DESC_PREVIEW
+                  ? market.description
+                  : `${market.description.slice(0, DESC_PREVIEW).trimEnd()}…`}
+              </p>
+              {market.description.length > DESC_PREVIEW && (
+                <button
+                  type="button"
+                  onClick={() => setExpanded((v) => !v)}
+                  className="mt-2 text-[13px] font-semibold text-[var(--accent)]"
+                >
+                  {expanded ? t.app.detail.showLess : t.app.detail.showMore}
+                </button>
+              )}
+              <p className="mt-3 text-[12px] leading-relaxed text-[var(--faint)]">
+                {t.app.detail.resolutionBody}
+              </p>
+            </>
+          ) : (
+            <p className="mt-2 text-[14px] leading-relaxed text-[var(--text2)]">
+              {t.app.detail.resolutionBody}
+            </p>
+          )}
+
           <a
             href={market.url}
             target="_blank"

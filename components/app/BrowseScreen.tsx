@@ -27,10 +27,13 @@ export function BrowseScreen({
   /** Show this topic's markets in the feed. */
   onPick: (topic: Topic) => void;
 }) {
-  const { t, tf, tn } = useLocale();
+  const { t, tf, locale } = useLocale();
   const [path, setPath] = useState<Topic[]>([]);
   const rows = childrenOf(topics, path);
   const current = path.length > 0 ? path[path.length - 1] : null;
+  // `/topics` carries both names; the Persian one is authored in the bot's
+  // topics table, so a missing translation is a data gap, not a code path.
+  const name = (n: Topic) => (locale === "fa" && n.name_fa ? n.name_fa : n.name);
 
   return (
     <div className="pb-28">
@@ -47,7 +50,7 @@ export function BrowseScreen({
             active={i === path.length - 1}
             onClick={() => setPath(path.slice(0, i + 1))}
           >
-            {node.name}
+            {name(node)}
           </Crumb>
         ))}
       </nav>
@@ -63,14 +66,10 @@ export function BrowseScreen({
               onClick={() => onPick(current)}
               className="flex min-h-[56px] w-full items-center gap-3 px-4 text-start"
             >
-              <span className="flex-1">
-                <span className="block text-[15px] font-semibold text-[var(--accent)]">
-                  {tf(t.app.browse.allMarkets, { name: current.name })}
-                </span>
-                <span className="block font-mono text-[10px] tracking-[0.04em] text-[var(--faint)]">
-                  {tn(t.app.browse.marketCount, current.own_markets)}
-                </span>
+              <span className="flex-1 text-[15px] font-semibold text-[var(--accent)]">
+                {tf(t.app.browse.allMarkets, { name: name(current) })}
               </span>
+              <CountPill n={current.own_markets} />
             </button>
           </li>
         )}
@@ -94,13 +93,20 @@ export function BrowseScreen({
                 )}
                 <span className="flex-1">
                   <span className="block text-[15px] font-semibold text-[var(--ink)]">
-                    {node.name}
+                    {name(node)}
                   </span>
-                  <span className="block font-mono text-[10px] tracking-[0.04em] text-[var(--faint)]">
-                    {tn(t.app.browse.marketCount, node.active_markets)}
-                    {hasKids && tf(t.app.browse.subCount, { n: node.children.length })}
-                  </span>
+                  {/* Only the subcategory count lives under the name now. The
+                      market count moved into the trailing pill: as a second
+                      mono caption it competed with the name for the same line
+                      of attention while being the least useful number on the
+                      row, and in Persian it rendered in a fallback face. */}
+                  {hasKids && (
+                    <span className="mt-0.5 block text-[12px] text-[var(--faint)]">
+                      {tf(t.app.browse.subCount, { n: node.children.length })}
+                    </span>
+                  )}
                 </span>
+                <CountPill n={node.active_markets} />
                 {hasKids && (
                   <span className="text-[18px] text-[var(--mute)]" aria-hidden>
                     {t.app.browse.chevron}
@@ -118,6 +124,23 @@ export function BrowseScreen({
         </p>
       )}
     </div>
+  );
+}
+
+/**
+ * Live market count for a row, as a trailing chip.
+ *
+ * Kept as a bare figure rather than "1,204 markets": the row is already a
+ * category, so the noun is implied, and the number reads faster without it —
+ * which matters more here than anywhere else in the app, since scanning
+ * categories by size is the whole reason to look at this screen.
+ */
+function CountPill({ n }: { n: number }) {
+  const { locale } = useLocale();
+  return (
+    <span className="shrink-0 rounded-full bg-[var(--btn)] px-2.5 py-1 text-[12px] font-semibold text-[var(--mute)] tabular-nums">
+      {n.toLocaleString(locale === "fa" ? "fa-IR" : "en-US")}
+    </span>
   );
 }
 

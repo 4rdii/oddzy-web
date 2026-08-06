@@ -32,8 +32,16 @@ export function localeForHost(host: string | null | undefined): Locale {
 export type Brand = {
   /** Wordmark shown in the header, footer and receipts. */
   name: string;
-  /** Single-glyph logo mark. */
-  glyph: string;
+  /**
+   * Logo mark — the bot's actual Telegram avatar, served from /public.
+   *
+   * Was a single letter set in the UI font ("O" / "پ"). That is not the logo
+   * anyone recognises: a user arriving from the bot saw a different mark on the
+   * web than the one they tapped in Telegram. Both files are square app icons
+   * with their own background baked in, so they carry their own contrast in
+   * either theme and want a rounded-square frame, not a circular crop.
+   */
+  logo: string;
   /** Canonical origin — drives metadataBase, OG urls, sitemap and robots. */
   siteUrl: string;
   /** Telegram bot deep-linked from every "open in Telegram" affordance. */
@@ -46,7 +54,7 @@ export type Brand = {
 export const BRANDS: Record<Locale, Brand> = {
   en: {
     name: "Oddzy",
-    glyph: "O",
+    logo: "/logo-en.jpg",
     siteUrl: process.env.NEXT_PUBLIC_SITE_URL ?? "https://oddzy.xyz",
     tgBot: process.env.NEXT_PUBLIC_TG_BOT ?? "poly_sport_bet_bot",
     dir: "ltr",
@@ -54,7 +62,7 @@ export const BRANDS: Record<Locale, Brand> = {
   },
   fa: {
     name: "پلی‌باز",
-    glyph: "پ",
+    logo: "/logo-fa.jpg",
     siteUrl: process.env.NEXT_PUBLIC_SITE_URL_FA ?? "https://polybaaz.com",
     tgBot: process.env.NEXT_PUBLIC_TG_BOT_FA ?? "PolyBaaz_Bot",
     dir: "rtl",

@@ -531,6 +531,7 @@ export function WalletScreen() {
   const state = useAuthed<Account>("/webapp/v1/me");
   const [sheet, setSheet] = useState<"deposit" | "withdraw" | null>(null);
   const [sent, setSent] = useState<WithdrawSent | null>(null);
+  const [showAddresses, setShowAddresses] = useState(false);
 
   if (state.status === "loading")
     return <p className="px-4 py-12 text-center text-[var(--mute)]">{t.app.positions.loading}</p>;
@@ -575,32 +576,59 @@ export function WalletScreen() {
         </div>
       </div>
 
+      {/* On-chain addresses, collapsed by default.
+          These were previously two copyable address blocks sitting directly
+          under the Deposit button, one of them captioned "deposit USDC here".
+          That is a trap: the Deposit sheet now hands out a DIFFERENT address
+          per network, so a user who copies from here instead is sending on a
+          network these addresses can't receive — and the signer wallet credits
+          nothing at all. They stay reachable for looking up a profile or a
+          block explorer, but they are reference data, not an action, and the
+          UI now says so before it shows them. */}
       {(data.depositWalletAddress || data.walletAddress) && (
         <div className="mt-4 rounded-2xl border border-[var(--line)] bg-[var(--card)] p-5">
-          <div className="font-mono text-[10px] tracking-[0.08em] text-[var(--faint)]">
-            {t.app.wallet.accounts}
-          </div>
-          <div className="mt-3 flex flex-col gap-4">
-            {data.depositWalletAddress && (
-              <AddressRow
-                label={t.app.wallet.polymarketLabel}
-                address={data.depositWalletAddress}
-                sublabel={t.app.wallet.polymarketSub}
-                link={{
-                  href: `https://polymarket.com/profile/${data.depositWalletAddress}`,
-                  text: t.app.wallet.viewOnPolymarket,
-                }}
-              />
-            )}
-            {data.walletAddress && data.walletAddress !== data.depositWalletAddress && (
-              <AddressRow
-                label={t.app.wallet.privyLabel}
-                address={data.walletAddress}
-                tone="warn"
-                sublabel={t.app.wallet.privySub}
-              />
-            )}
-          </div>
+          <button
+            type="button"
+            onClick={() => setShowAddresses((v) => !v)}
+            aria-expanded={showAddresses}
+            className="flex w-full items-center justify-between gap-3 text-start"
+          >
+            <span className="font-mono text-[10px] tracking-[0.08em] text-[var(--faint)] uppercase">
+              {t.app.wallet.accounts}
+            </span>
+            <span className="text-[13px] font-semibold text-[var(--mute)]">
+              {showAddresses ? t.app.wallet.accountsHide : t.app.wallet.accountsShow}
+            </span>
+          </button>
+
+          {showAddresses && (
+            <>
+              <p className="mt-3 rounded-xl bg-[color-mix(in_srgb,var(--down)_10%,transparent)] px-3 py-2.5 text-[12px] leading-relaxed text-[var(--down)]">
+                {t.app.wallet.accountsWarning}
+              </p>
+              <div className="mt-4 flex flex-col gap-4">
+                {data.depositWalletAddress && (
+                  <AddressRow
+                    label={t.app.wallet.polymarketLabel}
+                    address={data.depositWalletAddress}
+                    sublabel={t.app.wallet.polymarketSub}
+                    link={{
+                      href: `https://polymarket.com/profile/${data.depositWalletAddress}`,
+                      text: t.app.wallet.viewOnPolymarket,
+                    }}
+                  />
+                )}
+                {data.walletAddress && data.walletAddress !== data.depositWalletAddress && (
+                  <AddressRow
+                    label={t.app.wallet.privyLabel}
+                    address={data.walletAddress}
+                    tone="warn"
+                    sublabel={t.app.wallet.privySub}
+                  />
+                )}
+              </div>
+            </>
+          )}
         </div>
       )}
 
@@ -650,11 +678,63 @@ export function WalletScreen() {
   );
 }
 
-/** Deposit: the address, a QR for phone-to-phone, and the network warning. */
-function DepositSheet({ address, onClose }: { address: string; onClose: () => void }) {
+/**
+ * Funding rails, as offered by GET /webapp/v1/deposit.
+ *
+ * `id` keys the copy in the dictionary; `vault` marks the Depositron rail,
+ * which accepts any token on that chain rather than USDC specifically.
+ */
+type DepositRail = { id: string; chainId: number | null; address: string; vault: boolean };
+
+/** Rails in the order they should be offered, easiest funding path first. */
+const RAIL_ORDER = ["56", "42161", "8453", "tron", "evm", "svm", "btc", "polygon"];
+
+/**
+ * Deposit: pick a chain, then its address + QR and the network warning.
+ *
+ * This used to show one address — USDC.e on Polygon — which is the rail almost
+ * nobody in the Persian audience can actually reach; they hold USDT on BSC or
+ * Tron. The bot has offered the vault and bridge rails for weeks, so the sheet
+ * now asks the server which rails apply to this user and renders the same set.
+ *
+ * `fallbackAddress` keeps the sheet useful if that call fails: the Polygon
+ * proxy address is already on screen in the Wallet, so the worst case is
+ * exactly the behaviour this replaced rather than an empty sheet.
+ */
+function DepositSheet({
+  address: fallbackAddress,
+  onClose,
+}: {
+  address: string;
+  onClose: () => void;
+}) {
   const { t, tf } = useLocale();
   const [copied, setCopied] = useState(false);
   const [qr, setQr] = useState<string | null>(null);
+  const [rails, setRails] = useState<DepositRail[] | null>(null);
+  const [picked, setPicked] = useState<string | null>(null);
+
+  useEffect(() => {
+    const ctrl = new AbortController();
+    authedGet<{ rails: DepositRail[] }>("/webapp/v1/deposit", ctrl.signal)
+      .then((d) => {
+        const sorted = [...d.rails].sort(
+          (a, b) => railRank(a.id) - railRank(b.id),
+        );
+        setRails(sorted);
+        setPicked((p) => p ?? sorted[0]?.id ?? null);
+      })
+      .catch(() => {
+        // Degrade to the single Polygon rail rather than blocking deposits.
+        setRails([]);
+      });
+    return () => ctrl.abort();
+  }, []);
+
+  const rail = rails?.find((r) => r.id === picked) ?? null;
+  const address = rail?.address ?? fallbackAddress;
+  const railCopy = (r: DepositRail) =>
+    (t.app.wallet.rails as Record<string, { title: string; blurb: string }>)[r.id];
 
   // Generated in the browser rather than by an image service: handing a user's
   // deposit address to a third-party host to render would leak exactly the thing
@@ -686,7 +766,36 @@ function DepositSheet({ address, onClose }: { address: string; onClose: () => vo
         <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-[var(--handle)]" />
         <div className="mx-auto max-w-md text-center">
           <h2 className="text-[18px] font-bold tracking-[-0.02em]">{t.app.wallet.depositTitle}</h2>
-          <p className="mt-1 text-[12px] text-[var(--mute)]">{t.app.wallet.depositNetwork}</p>
+
+          {rails && rails.length > 1 && (
+            <div className="mt-3 flex flex-wrap justify-center gap-2">
+              {rails.map((r) => {
+                const active = r.id === picked;
+                return (
+                  <button
+                    key={r.id}
+                    type="button"
+                    onClick={() => setPicked(r.id)}
+                    aria-pressed={active}
+                    className="min-h-[36px] rounded-xl border px-3 text-[13px] font-semibold"
+                    style={{
+                      borderColor: active ? "var(--accent)" : "var(--line)",
+                      color: active ? "var(--accent)" : "var(--mute)",
+                      background: active
+                        ? "color-mix(in srgb, var(--accent) 10%, transparent)"
+                        : "var(--btn)",
+                    }}
+                  >
+                    {railCopy(r)?.title ?? r.id}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
+          <p className="mt-3 text-[13px] leading-relaxed text-[var(--mute)]">
+            {(rail && railCopy(rail)?.blurb) ?? t.app.wallet.depositNetwork}
+          </p>
 
           {qr && (
             /* eslint-disable-next-line @next/next/no-img-element */
@@ -716,7 +825,7 @@ function DepositSheet({ address, onClose }: { address: string; onClose: () => vo
           </button>
 
           <p className="mt-3 text-[11px] leading-relaxed text-[var(--faint)]">
-            {t.app.wallet.depositWarning}
+            {rail?.vault ? t.app.wallet.depositWarningVault : t.app.wallet.depositWarning}
           </p>
         </div>
       </div>
@@ -794,4 +903,10 @@ function Tile({ label, value, color }: { label: string; value: string; color?: s
       </div>
     </div>
   );
+}
+
+/** Sort key for a rail id; anything unknown sorts to the end. */
+function railRank(id: string): number {
+  const i = RAIL_ORDER.indexOf(id);
+  return i === -1 ? RAIL_ORDER.length : i;
 }

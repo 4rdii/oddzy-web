@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import type { EventMarket, Market, MarketEvent } from "@/lib/api";
-import { compactUsd, pct } from "@/lib/format";
+import { compactUsd, pct, localized } from "@/lib/format";
 import { groupByKind } from "@/lib/market-kinds";
 import { useLocale } from "./LocaleProvider";
 
@@ -22,7 +22,7 @@ export function EventCard({
   event: MarketEvent;
   onOpen: (m: Market) => void;
 }) {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const [showExtra, setShowExtra] = useState(false);
   const isMatch = event.kind === "match";
 
@@ -30,7 +30,7 @@ export function EventCard({
     <article className="rounded-2xl border border-[var(--line)] bg-[var(--card)] p-4">
       <header className="flex items-start justify-between gap-3">
         <h3 className="text-[15px] leading-snug font-semibold tracking-[-0.01em]">
-          {event.title}
+          {localized(locale, event.title, event.title_fa)}
         </h3>
         {event.market_count > 1 && (
           <span className="shrink-0 font-mono text-[10px] text-[var(--faint)]">
@@ -41,7 +41,7 @@ export function EventCard({
 
       {isMatch && event.starts_at && (
         <p className="mt-1 font-mono text-[10px] tracking-[0.05em] text-[var(--faint)]">
-          {kickoff(event.starts_at)}
+          {kickoff(event.starts_at, locale)}
         </p>
       )}
 
@@ -60,7 +60,7 @@ export function EventCard({
               className="min-h-[52px] rounded-xl border border-[var(--line)] bg-[var(--btn)] px-2 py-1.5 text-start"
             >
               <span className="block truncate font-mono text-[9px] tracking-[0.04em] text-[var(--faint)]">
-                {sideLabel(m, t.app.event.draw)}
+                {sideLabel(m, t.app.event.draw, locale)}
               </span>
               <span className="block text-[15px] font-bold text-[var(--up)]">
                 {pct(m.probability.yes)}%
@@ -93,6 +93,7 @@ export function EventCard({
                   // authority for every locale, keyed by the same group key.
                   label={(t.app.kinds as Record<string, string>)[group.key] ?? group.label}
                   markets={group.markets}
+                  locale={locale}
                   onOpen={onOpen}
                 />
               ))}
@@ -108,7 +109,9 @@ export function EventCard({
         {event.topic && (
           <>
             <span aria-hidden>·</span>
-            <span className="truncate">{event.topic.name}</span>
+            <span className="truncate">
+              {localized(locale, event.topic.name, event.topic.name_fa)}
+            </span>
           </>
         )}
       </div>
@@ -125,10 +128,12 @@ export function EventCard({
 function ExtraGroup({
   label,
   markets,
+  locale,
   onOpen,
 }: {
   label: string;
   markets: EventMarket[];
+  locale: string;
   onOpen: (m: Market) => void;
 }) {
   const [open, setOpen] = useState(false);
@@ -158,7 +163,9 @@ function ExtraGroup({
                 onClick={() => onOpen(m)}
                 className="flex min-h-[44px] w-full items-center justify-between gap-3 rounded-lg border border-[var(--line)] px-3 text-start"
               >
-                <span className="flex-1 text-[13px] leading-snug">{m.title}</span>
+                <span className="flex-1 text-[13px] leading-snug">
+                  {localized(locale, m.title, m.title_fa)}
+                </span>
                 <span className="shrink-0 font-mono text-[13px] font-bold text-[var(--up)]">
                   {pct(m.probability.yes)}%
                 </span>
@@ -171,15 +178,19 @@ function ExtraGroup({
   );
 }
 
-/** "SAT 28 JUL · 15:00" in the viewer's timezone. */
-function kickoff(iso: string): string {
+/**
+ * "SAT 28 JUL · 15:00" in the viewer's timezone — Jalali for Persian readers,
+ * who do not navigate by Gregorian dates.
+ */
+function kickoff(iso: string, locale: string): string {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return "";
-  const day = d
-    .toLocaleDateString(undefined, { weekday: "short", day: "numeric", month: "short" })
-    .toUpperCase();
-  const time = d.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
-  return `${day} · ${time}`;
+  const tag = locale === "fa" ? "fa-IR" : undefined;
+  const day = d.toLocaleDateString(tag, { weekday: "short", day: "numeric", month: "short" });
+  const time = d.toLocaleTimeString(tag, { hour: "2-digit", minute: "2-digit" });
+  // Uppercase is a latin-only convention; Persian has no case and the CSS
+  // already opts FA out of `uppercase`, so match that here.
+  return `${locale === "fa" ? day : day.toUpperCase()} · ${time}`;
 }
 
 /**
@@ -188,11 +199,25 @@ function kickoff(iso: string): string {
  * Market titles are full questions ("Will Sabah FK win on 2026-07-29?"), which
  * don't fit a third of a row. `yes_label` is the ingest-provided display label
  * where available; otherwise pull the subject out of the question.
+ *
+ * The Persian path can only use the translated label — the English fallbacks
+ * below parse English question grammar, so on an untranslated market they would
+ * emit an all-caps latin fragment into an otherwise Persian row. Better to show
+ * the untruncated English label than a mangled one.
  */
-function sideLabel(m: Market & { kind?: string | null }, drawLabel: string): string {
+function sideLabel(
+  m: Market & { kind?: string | null },
+  drawLabel: string,
+  locale: string,
+): string {
   if (m.kind === "draw") return drawLabel;
   const labels = m.outcome_labels;
-  if (labels && labels[0]) return labels[0].toUpperCase();
+  if (locale === "fa") {
+    if (labels?.yes_fa) return labels.yes_fa;
+    if (labels?.yes) return labels.yes;
+    return m.title_fa ?? m.title;
+  }
+  if (labels?.yes) return labels.yes.toUpperCase();
   const win = /^Will (.+?) win\b/i.exec(m.title);
   if (win) return win[1].toUpperCase();
   return m.title.replace(/^Will /i, "").slice(0, 18).toUpperCase();

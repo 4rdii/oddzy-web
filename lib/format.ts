@@ -50,6 +50,27 @@ export function shortDate(iso: string | null | undefined): string {
 }
 
 /**
+ * ISO -> "August 15, 2026" / «۱۵ اوت ۲۰۲۶» — a market deadline, spelled out.
+ *
+ * The Persian form is pinned to the GREGORIAN calendar. Plain "fa-IR" would
+ * render ۲۴ مرداد ۱۴۰۵ for the same instant, which contradicts the market's own
+ * translated title («تا تاریخ ۱۵ اوت») and would read as two different
+ * deadlines for one market. The translation worker refuses Jalali conversion
+ * for exactly this reason; display has to make the same promise.
+ */
+export function deadlineDate(iso: string | null | undefined, locale: string): string {
+  if (!iso) return "—";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "—";
+  return d.toLocaleDateString(locale === "fa" ? "fa-IR-u-ca-gregory" : "en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    timeZone: "UTC",
+  });
+}
+
+/**
  * Wording for the countdown below. Supplied by the caller from the active
  * dictionary — the thresholds are shared, the phrasing is not.
  */
@@ -93,4 +114,16 @@ export function untilClose(
 export function payoutFor(stake: number, price: number): number {
   if (!price || price <= 0) return 0;
   return stake / price;
+}
+
+/**
+ * Pick the field for the active locale, falling back to English.
+ *
+ * Every translated field on this API is nullable by design: the bot fills them
+ * asynchronously, so a market can exist for minutes before its Persian title
+ * does. Falling back beats blanking — a Persian reader would rather see the
+ * English question than an empty row.
+ */
+export function localized(locale: string, en: string, fa: string | null | undefined): string {
+  return locale === "fa" && fa ? fa : en;
 }
