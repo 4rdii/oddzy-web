@@ -6,11 +6,14 @@
  */
 export const en = {
   nav: {
+    updown: "Up or Down",
     howItWorks: "How it works",
     learn: "Learn",
     faq: "FAQ",
     signIn: "Sign in",
     primary: "Primary",
+    browseTopics: "Browse markets by topic",
+    baskets: "Baskets",
     footerPrimary: "Footer primary",
   },
   cta: {
@@ -174,6 +177,24 @@ export const en = {
     noSuccessor: "Every deadline for this question has passed.",
     viewLeg: "View this deadline →",
   },
+  updown: {
+    metaTitle: "Up or Down — 15-minute bitcoin, ethereum and solana markets",
+    metaDescription:
+      "Take a side on where BTC, ETH or SOL goes over the next fifteen minutes. Resolves on the average price across the window, not the closing price.",
+    h1: "Up or Down",
+    lead: "Pick a coin, pick a side. A window runs fifteen minutes, and your result lands a few minutes after it closes. Minutes, not months.",
+    rule:
+      "Resolves Up if the average price across the window is at or above the price when the window opened. Not where it ends — the average. A tie resolves Up.",
+    none: "No windows are open right now. They open continuously — check back in a minute.",
+    closesIn: "CLOSES IN",
+    up: "Up",
+    down: "Down",
+    volume: "VOL",
+    waiting: "tracking odds…",
+    resolved: "RECENTLY RESOLVED",
+    resolvedUp: "Up",
+    resolvedDown: "Down",
+  },
   basket: {
     indexMetaTitle: "Baskets — buy a whole thesis in one click",
     indexMetaDescription:
@@ -237,6 +258,8 @@ export const en = {
     h1: "{topic}: what the market says",
     lead:
       "Every question below is priced by people staking money on the answer. The percentage is the market's probability, and the volume tells you how much to trust it.",
+    ongoing: "Ongoing questions",
+    deadlines: "{count} deadlines so far",
     vol: "24h volume",
   },
   learn: {

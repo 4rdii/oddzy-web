@@ -1,0 +1,40 @@
+---
+title: "How a market resolves, and when you actually get paid"
+description: "Someone proposes the outcome and posts a bond. Anyone can challenge it for two hours. Undisputed markets pay out the same day — disputed ones can take the better part of a week."
+tag: GUIDE
+readingMinutes: 8
+publishedAt: "2026-08-10"
+lead: "Nobody at Polymarket decides who won. An outcome is proposed with money staked on it, anyone can challenge it for two hours, and only then do winning shares become redeemable for $1."
+---
+
+"Who decides the result?" is the question most people ask second, right after "is my money safe?". The answer is that no company decides it. Resolution runs through the UMA optimistic oracle, and the word doing the work is *optimistic*.
+
+## Someone proposes, with money at risk
+
+When a market reaches its end date, anyone can propose the outcome. To do it they post a bond — typically $750 — alongside the answer they are claiming is correct.
+
+That bond is the whole design. A proposer who reports the truth gets the bond back plus a reward. A proposer who lies stands to lose it. Nobody needs to be trusted, because being wrong is expensive.
+
+## Two hours for anyone to object
+
+Once proposed, the outcome sits in a **two-hour challenge window**. During that time anyone can dispute it by posting a matching bond of their own.
+
+If nobody objects, the market finalises and winning shares become redeemable for $1 each. This is what happens to the overwhelming majority of markets: a couple of hours after the event, it is settled and paid.
+
+## If someone does object
+
+A dispute does not mean the disputer wins. It opens a second proposal round. If that one is disputed too, the question escalates to UMA's DVM — a vote of token holders.
+
+At that point there is a debate period of roughly 24 to 48 hours where evidence is submitted publicly, followed by about 48 hours of voting. End to end, a genuinely contested market takes four to six days rather than two hours.
+
+The bonds settle with it: the side that turns out to be right gets its own bond back plus half of the loser's. In rare cases where the truth is genuinely unresolvable, a market can settle 50/50 and every share — YES and NO alike — redeems for 50¢.
+
+## What this means for you
+
+Two practical things follow.
+
+First, **the delay is a feature, not a fault.** If a market you hold has not paid out two hours after the event, it is usually because someone thought the proposed answer was wrong and staked $750 saying so. You would rather that happened than not.
+
+Second, **read the rules before the price.** The oracle resolves the question as written, not the question you had in mind. Most settlement surprises are definitional — a market about a leader "leaving office" turning on whether resignation counts, or a price market turning on which exchange's feed is authoritative. The resolution criteria sit on every market page. They are the shortest, highest-value thing to read before taking a position.
+
+Sources: [Polymarket resolution documentation](https://docs.polymarket.com/developers/resolution/UMA)

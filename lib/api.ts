@@ -411,3 +411,63 @@ export async function findMarketBySlug(slug: string): Promise<Market | null> {
 }
 
 export { ApiError };
+
+/**
+ * A live 15-minute crypto up/down window.
+ *
+ * No title field: the title is generated client-side from window_start/end in
+ * the reader's locale and timezone. Polymarket titles these in ET, and a string
+ * that changes every fifteen minutes cannot live in a translation table.
+ */
+export type UpDownWindow = {
+  market_id: string;
+  slug: string;
+  /** Ticker as stored in item_label — "BTC", "ETH", "SOL". */
+  asset: string;
+  up_price: number | null;
+  down_price: number | null;
+  up_label: string;
+  down_label: string;
+  window_start: string | null;
+  window_end: string | null;
+  seconds_left: number | null;
+  volume: number | null;
+};
+
+/** A resolved up/down window, shown as proof that these actually settle. */
+export type SettledUpDownWindow = {
+  market_id: string;
+  slug: string;
+  asset: string;
+  /** Winning SIDE — "YES" is Up (outcome index 0), not a price. */
+  outcome: string;
+  won: "up" | "down";
+  up_label: string;
+  down_label: string;
+  window_start: string | null;
+  window_end: string | null;
+  volume: number | null;
+};
+
+/**
+ * Live up/down windows.
+ *
+ * `revalidate: 0` — the only uncached call in this module, and deliberately so.
+ * Every other route here describes something that changes over hours; a window
+ * lives fifteen minutes, so even a 60s cache would serve markets that have
+ * already expired. The page polls this client-side as the countdown runs.
+ */
+export async function getUpDownWindows(
+  minSecondsLeft = 120,
+): Promise<{ windows: UpDownWindow[]; settled: SettledUpDownWindow[] }> {
+  try {
+    const data = await get<{ windows: UpDownWindow[]; settled: SettledUpDownWindow[] }>(
+      `/markets/updown?min_seconds_left=${minSecondsLeft}`,
+      0,
+    );
+    return { windows: data.windows ?? [], settled: data.settled ?? [] };
+  } catch {
+    // Same rule as getIndexableMarkets: a blinking API must not fail a build.
+    return { windows: [], settled: [] };
+  }
+}

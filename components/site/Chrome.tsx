@@ -4,6 +4,9 @@ import { ThemeToggle } from "./ThemeToggle";
 import { TelegramRedirect } from "./TelegramRedirect";
 import { brandFor, type Locale } from "@/lib/i18n";
 import { getDict } from "@/lib/dict";
+import { getTopics } from "@/lib/api";
+import { publishedTopicSlugs } from "@/lib/topic-slugs";
+import type { Topic } from "@/lib/taxonomy";
 
 /**
  * Marketing-site chrome. Wraps every crawlable page.
@@ -11,8 +14,15 @@ import { getDict } from "@/lib/dict";
  * Note what is NOT here: any link into /app's screens beyond the CTA, and no
  * Telegram-conditional rendering. This subtree must render identically for a
  * crawler and a human, because it is the SEO surface.
+ *
+ * The footer carries a topic directory, and that is load-bearing for indexing
+ * rather than decoration. Google follows links; a URL that appears only in a
+ * sitemap is a hint it is free to ignore, and on a young domain it usually
+ * does — which is how 221 submitted URLs ended up with 6 indexed. Topic pages
+ * each link ~34 markets, so linking the topics from every page puts the entire
+ * catalogue two hops from any entry point.
  */
-export function SiteChrome({
+export async function SiteChrome({
   lang,
   children,
 }: {
@@ -31,6 +41,23 @@ export function SiteChrome({
   const year = new Intl.DateTimeFormat(fa ? "fa-IR" : "en-US", {
     year: "numeric",
   }).format(new Date());
+
+  // Flattened so a crawler reaches every topic in one hop, not four. Sections
+  // that hold no markets of their own are still worth linking — they are the
+  // pages that link onward to the leaves. Empty on API failure, which degrades
+  // to today's footer rather than failing the page.
+  const [tree, published] = await Promise.all([
+    getTopics().catch(() => []),
+    publishedTopicSlugs().catch(() => new Set<string>()),
+  ]);
+  // Filtered against the pages that actually exist. The bot's topic tree is far
+  // larger than the set of prerendered hubs, and linking the difference put 14
+  // 404s in the footer of every page — worse for crawling than no links at all.
+  // Filter BEFORE capping: capping first lets unpublished nodes near the top of
+  // the tree consume the budget and push real hubs out of the footer entirely.
+  const topics = flattenTopics(tree)
+    .filter((x) => published.has(x.id))
+    .slice(0, FOOTER_TOPIC_LIMIT);
 
   return (
     <>
@@ -87,14 +114,39 @@ export function SiteChrome({
 
         <footer className="mt-20 border-t border-[var(--line)]">
           <div className="mx-auto max-w-5xl px-5 py-10">
+            {/* Not hidden at any breakpoint: the previous footer nav was
+                `sm:hidden`, so on desktop the site shipped a footer with no
+                links in it at all. */}
             <nav
-              className="flex flex-wrap gap-5 sm:hidden"
+              className="flex flex-wrap gap-x-5 gap-y-3"
               aria-label={t.nav.footerPrimary}
             >
               <NavLink href="/how-it-works">{t.nav.howItWorks}</NavLink>
               <NavLink href="/learn">{t.nav.learn}</NavLink>
+              <NavLink href="/updown">{t.nav.updown}</NavLink>
+              <NavLink href="/basket">{t.nav.baskets}</NavLink>
               <NavLink href="/faq">{t.nav.faq}</NavLink>
             </nav>
+
+            {topics.length > 0 && (
+              <nav className="mt-8" aria-label={t.nav.browseTopics}>
+                <h2 className="font-mono text-[11px] tracking-[0.06em] text-[var(--faint)]">
+                  {t.nav.browseTopics}
+                </h2>
+                <ul className="mt-3 flex flex-wrap gap-x-4 gap-y-2">
+                  {topics.map((topic) => (
+                    <li key={topic.id}>
+                      <Link
+                        href={`/topic/${topic.id}`}
+                        className="text-[13px] text-[var(--mute)] hover:text-[var(--ink)]"
+                      >
+                        {fa ? (topic.name_fa ?? topic.name) : topic.name}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </nav>
+            )}
             <p className="mt-4 text-[13px] text-[var(--mute)]">
               © {year} {brand.name} · {t.footer.rights}
             </p>
@@ -106,6 +158,28 @@ export function SiteChrome({
       </div>
     </>
   );
+}
+
+/**
+ * How many topic links the footer will carry.
+ *
+ * Capped because a footer is a link-equity divider as well as a crawl path —
+ * every link on a page shares the same budget, so an unbounded directory
+ * dilutes each entry and starts to look like a link farm.
+ */
+const FOOTER_TOPIC_LIMIT = 40;
+
+/** Depth-first flatten of the topic tree. Capping happens after filtering. */
+function flattenTopics(tree: Topic[]): Topic[] {
+  const out: Topic[] = [];
+  const walk = (nodes: Topic[]) => {
+    for (const n of nodes) {
+      out.push(n);
+      if (n.children?.length) walk(n.children);
+    }
+  };
+  walk(tree);
+  return out;
 }
 
 function NavLink({ href, children }: { href: string; children: React.ReactNode }) {

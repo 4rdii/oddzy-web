@@ -48,6 +48,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${siteUrl}/how-it-works`, priority: 0.8 },
     { url: `${siteUrl}/learn`, priority: 0.9 },
     { url: `${siteUrl}/faq`, priority: 0.7 },
+    // Listed even though its contents expire every 15 minutes: the PAGE is
+    // permanent and describes a standing product, the way a topic hub outlives
+    // the markets under it. The windows themselves are never listed.
+    { url: `${siteUrl}/updown`, priority: 0.8 },
     ...(baskets.length > 0 ? [{ url: `${siteUrl}/basket`, priority: 0.8 }] : []),
   ].map((r) => ({ ...r, lastModified: new Date(), changeFrequency: "weekly" as const }));
 
@@ -62,15 +66,25 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // Daily: the price genuinely changes every day, and lastModified is the
     // signal that earns a re-crawl. Claiming it for a static page would be
     // noise; here it is true.
-    ...standalone.map((m) => ({
-      url: `${siteUrl}/market/${m.slug}`,
-      lastModified: new Date(),
-      // A live market's price genuinely changes daily, which is what earns the
-      // re-crawl. A settled one is a fixed record — claiming daily change there
-      // would be a false signal.
-      changeFrequency: (m.status === "active" ? "daily" : "yearly") as "daily" | "yearly",
-      priority: m.status === "active" ? 0.7 : 0.5,
-    })),
+    //
+    // ACTIVE ONLY. Settled markets were 70 of the 228 URLs here and every one
+    // of them was orphaned: topic pages list what is trading, so nothing links
+    // a fixture once it has been played. Advertising URLs no page links to is
+    // how a sitemap teaches Google to discount the whole domain — and the
+    // pages themselves are dated instances ("...on August 5", "...on
+    // 2026-08-08") that nobody searches for afterwards. The evergreen version
+    // of a recurring question is its /question/<key> family page, which is
+    // listed below and does outlive each deadline.
+    //
+    // The pages stay live and indexable; they are simply no longer advertised.
+    ...standalone
+      .filter((m) => m.status === "active")
+      .map((m) => ({
+        url: `${siteUrl}/market/${m.slug}`,
+        lastModified: new Date(),
+        changeFrequency: "daily" as const,
+        priority: 0.7,
+      })),
     // Ranked above single markets: a family page carries the whole question's
     // history and outlives every individual deadline in it.
     ...series.map((s) => ({
