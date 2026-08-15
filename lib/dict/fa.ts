@@ -202,6 +202,12 @@ export const fa: Dict = {
     resolved: "نتایج اخیر",
     resolvedUp: "صعودی",
     resolvedDown: "نزولی",
+    closing: "در حال بسته شدن",
+    notStarted: "این بازه هنوز شروع نشده",
+    loadingPrices: "در حال دریافت قیمت‌ها…",
+    anchor: "قیمت شروع",
+    average: "میانگین",
+    price: "آخرین",
   },
   basket: {
     indexMetaTitle: "سبدها — یک پیش‌بینی کامل با یک کلیک",

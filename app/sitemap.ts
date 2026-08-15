@@ -16,6 +16,24 @@ import { brandFor, localeForHost } from "@/lib/i18n";
  * `proxy.ts` deliberately excludes /sitemap.xml from the locale rewrite, so this
  * is reached unprefixed on both hostnames.
  */
+/**
+ * Truthful `lastmod` for pages whose content genuinely changes on a daily cycle.
+ *
+ * NOT `new Date()`. That stamped every URL with the instant the sitemap was
+ * fetched, so all 284 dynamic entries claimed to have changed a second ago on
+ * every single request. Google treats lastmod as a hint it is free to distrust,
+ * and explicitly ignores the field when it looks unreliable — "everything
+ * changed just now, always" is precisely that pattern, and it discards the one
+ * signal we have for telling it which pages are worth re-crawling.
+ *
+ * Truncating to the UTC day is both honest and useful: a market page's odds do
+ * move every day, and the value now only changes when the content plausibly did.
+ */
+function dayStamp(): Date {
+  const d = new Date();
+  return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
+}
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const host = (await headers()).get("host");
   const locale = localeForHost(host);
@@ -53,13 +71,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // the markets under it. The windows themselves are never listed.
     { url: `${siteUrl}/updown`, priority: 0.8 },
     ...(baskets.length > 0 ? [{ url: `${siteUrl}/basket`, priority: 0.8 }] : []),
-  ].map((r) => ({ ...r, lastModified: new Date(), changeFrequency: "weekly" as const }));
+  ].map((r) => ({ ...r, lastModified: dayStamp(), changeFrequency: "weekly" as const }));
 
   return [
     ...staticRoutes,
     ...topicSlugs.map((slug) => ({
       url: `${siteUrl}/topic/${slug}`,
-      lastModified: new Date(),
+      lastModified: dayStamp(),
       changeFrequency: "daily" as const,
       priority: 0.8,
     })),
@@ -81,7 +99,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       .filter((m) => m.status === "active")
       .map((m) => ({
         url: `${siteUrl}/market/${m.slug}`,
-        lastModified: new Date(),
+        lastModified: dayStamp(),
         changeFrequency: "daily" as const,
         priority: 0.7,
       })),
@@ -89,14 +107,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // history and outlives every individual deadline in it.
     ...series.map((s) => ({
       url: `${siteUrl}/question/${s.key}`,
-      lastModified: new Date(),
+      lastModified: dayStamp(),
       changeFrequency: (s.status === "active" ? "daily" : "yearly") as "daily" | "yearly",
       priority: s.status === "active" ? 0.8 : 0.5,
     })),
     // A basket page's prices move with its legs, so daily while any leg trades.
     ...baskets.map((b) => ({
       url: `${siteUrl}/basket/${b.slug}`,
-      lastModified: new Date(),
+      lastModified: dayStamp(),
       changeFrequency: (b.status === "active" ? "daily" : "yearly") as "daily" | "yearly",
       priority: b.status === "active" ? 0.8 : 0.4,
     })),

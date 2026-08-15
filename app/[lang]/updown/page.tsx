@@ -91,6 +91,12 @@ export default async function UpDownPage(props: Params) {
             resolved: t.updown.resolved,
             resolvedUp: t.updown.resolvedUp,
             resolvedDown: t.updown.resolvedDown,
+            closing: t.updown.closing,
+            notStarted: t.updown.notStarted,
+            loadingPrices: t.updown.loadingPrices,
+            anchor: t.updown.anchor,
+            average: t.updown.average,
+            price: t.updown.price,
           }}
         />
       </div>

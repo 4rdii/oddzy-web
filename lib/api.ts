@@ -458,7 +458,14 @@ export type SettledUpDownWindow = {
  * already expired. The page polls this client-side as the countdown runs.
  */
 export async function getUpDownWindows(
-  minSecondsLeft = 120,
+  /**
+   * 0, not 120: the web board SHOWS the running window all the way to expiry and
+   * marks it closing, rather than having it vanish for its final two minutes —
+   * which is the market a viewer is most likely actually watching. The bot keeps
+   * the 120s guard, where the next step is a multi-step bet flow that can outlive
+   * the window. Here nothing is placed from the board itself.
+   */
+  minSecondsLeft = 0,
 ): Promise<{ windows: UpDownWindow[]; settled: SettledUpDownWindow[] }> {
   try {
     const data = await get<{ windows: UpDownWindow[]; settled: SettledUpDownWindow[] }>(
@@ -469,5 +476,36 @@ export async function getUpDownWindows(
   } catch {
     // Same rule as getIndexableMarkets: a blinking API must not fail a build.
     return { windows: [], settled: [] };
+  }
+}
+
+/** Price series for one up/down window: price, opening anchor, running average. */
+export type UpDownPrices = {
+  symbol: string;
+  anchor: number | null;
+  points: Array<{ t: number; p: number; twap: number }>;
+  started: boolean;
+  complete: boolean;
+};
+
+/**
+ * Window price history.
+ *
+ * Proxied through our own API rather than fetched from Binance here, because
+ * Binance geo-blocks at both ends: Iranian readers cannot reach it from the
+ * browser, and it returns 451 to US IPs, which is where these functions run.
+ * The VPS is neither.
+ *
+ * revalidate 0 — a running window gains a bar every second; the upstream caches
+ * finished windows itself.
+ */
+export async function getUpDownPrices(slug: string): Promise<UpDownPrices | null> {
+  try {
+    return await get<UpDownPrices>(
+      `/markets/updown/prices?slug=${encodeURIComponent(slug)}`,
+      0,
+    );
+  } catch {
+    return null;
   }
 }

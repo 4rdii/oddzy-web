@@ -194,6 +194,12 @@ export const en = {
     resolved: "RECENTLY RESOLVED",
     resolvedUp: "Up",
     resolvedDown: "Down",
+    closing: "CLOSING",
+    notStarted: "window hasn't opened yet",
+    loadingPrices: "loading prices…",
+    anchor: "open",
+    average: "avg",
+    price: "last",
   },
   basket: {
     indexMetaTitle: "Baskets — buy a whole thesis in one click",

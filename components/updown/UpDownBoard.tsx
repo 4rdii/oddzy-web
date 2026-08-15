@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { UpDownWindow, SettledUpDownWindow } from "@/lib/api";
+import { PriceChart } from "./PriceChart";
 
 /**
  * Live board for 15-minute crypto up/down windows.
@@ -47,10 +48,33 @@ export type UpDownCopy = {
   resolved: string;
   resolvedUp: string;
   resolvedDown: string;
+  closing: string;
+  notStarted: string;
+  loadingPrices: string;
+  anchor: string;
+  average: string;
+  price: string;
 };
 
 /** Upcoming windows shown per asset. Three, per the product decision. */
 const MAX_PER_ASSET = 3;
+
+/**
+ * Which timezone a brand renders window times in.
+ *
+ * PolyBaaz is pinned to Tehran rather than following the browser. Its audience
+ * is Iranian, every Farsi user in the database has a Tehran-or-adjacent zone,
+ * and a fixed zone means one published schedule that everybody reads the same
+ * way — a reader comparing the site against a screenshot or a channel post sees
+ * the same clock. Being fixed also lets these labels render on the SERVER, which
+ * removes the hydration gap entirely.
+ *
+ * Oddzy stays on the viewer's own zone: its audience is global, so there is no
+ * single correct clock to pin it to.
+ */
+function zoneFor(locale: "en" | "fa"): string | undefined {
+  return locale === "fa" ? "Asia/Tehran" : undefined;
+}
 
 export function UpDownBoard({
   initial,
@@ -69,6 +93,17 @@ export function UpDownBoard({
   // window rather than leaking into the next one.
   const series = useRef<Map<string, Point[]>>(new Map());
   const [, forceTick] = useState(0);
+  /**
+   * Time labels are rendered ONLY after mount.
+   *
+   * They are formatted in the viewer's timezone, and on the server that is UTC —
+   * so a server-rendered label said "17:30–17:45" to a reader in Tehran whose
+   * clock read 21:05. That does not just look untidy on a fifteen-minute market:
+   * it makes the running window read as one from hours ago, which is why the
+   * current window appeared to be missing entirely.
+   */
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
 
   const poll = useCallback(async () => {
     try {
@@ -142,12 +177,15 @@ export function UpDownBoard({
               points={series.current.get(w.market_id) ?? []}
               copy={copy}
               locale={locale}
+              mounted={mounted}
             />
           ))}
         </ul>
       )}
 
-      {settled.length > 0 && <ResolvedStrip rows={settled} copy={copy} locale={locale} />}
+      {settled.length > 0 && (
+        <ResolvedStrip rows={settled} copy={copy} locale={locale} mounted={mounted} />
+      )}
     </>
   );
 }
@@ -163,15 +201,19 @@ function ResolvedStrip({
   rows,
   copy,
   locale,
+  mounted,
 }: {
   rows: SettledUpDownWindow[];
   copy: UpDownCopy;
   locale: "en" | "fa";
+  mounted: boolean;
 }) {
+  const tz = zoneFor(locale);
   const fmt = new Intl.DateTimeFormat(locale === "fa" ? "fa-IR" : "en-US", {
     hour: "2-digit",
     minute: "2-digit",
     hour12: false,
+    timeZone: tz,
   });
   return (
     <section className="mt-8">
@@ -189,7 +231,7 @@ function ResolvedStrip({
               <span className="text-[14px] font-semibold">{r.asset}</span>
               <span className="font-mono text-[12px] text-[var(--faint)]">
                 <span className="ltr-num">
-                  {r.window_start && r.window_end
+                  {(tz || mounted) && r.window_start && r.window_end
                     ? `${fmt.format(new Date(r.window_start))}–${fmt.format(new Date(r.window_end))}`
                     : ""}
                 </span>
@@ -213,11 +255,13 @@ function WindowCard({
   points,
   copy,
   locale,
+  mounted,
 }: {
   w: UpDownWindow;
   points: Point[];
   copy: UpDownCopy;
   locale: "en" | "fa";
+  mounted: boolean;
 }) {
   const endMs = w.window_end ? new Date(w.window_end).getTime() : null;
   const left = endMs == null ? null : Math.max(0, Math.floor((endMs - Date.now()) / 1000));
@@ -227,20 +271,48 @@ function WindowCard({
   const cents = (p: number | null) =>
     p == null ? "—" : `${Math.round(p * 100)}¢`;
 
+  /**
+   * With a pinned zone (fa) this renders identically on server and client, so it
+   * is shown immediately. With the viewer's own zone (en) the server would emit
+   * UTC and hydration would rewrite it, so it waits for mount.
+   */
+  const tz = zoneFor(locale);
   const window = useMemo(() => {
     if (!w.window_start || !w.window_end) return "";
+    if (!tz && !mounted) return "";
     const f = new Intl.DateTimeFormat(locale === "fa" ? "fa-IR" : "en-US", {
       hour: "2-digit",
       minute: "2-digit",
       hour12: false,
+      timeZone: tz,
     });
     return `${f.format(new Date(w.window_start))}–${f.format(new Date(w.window_end))}`;
-  }, [w.window_start, w.window_end, locale]);
+  }, [w.window_start, w.window_end, locale, mounted, tz]);
+
+  /**
+   * Under two minutes the book has usually converged past anything worth
+   * taking, so the window is shown but not offered. Previously it was filtered
+   * out upstream, which meant the market a viewer is actually watching tick
+   * simply vanished from the board for its last two minutes.
+   */
+  const closing = left != null && left < 120;
+
+  // A window with no elapsed time has no price series to draw yet.
+  const startMs = w.window_start ? new Date(w.window_start).getTime() : null;
+  const started = startMs != null && Date.now() >= startMs;
+  const ended = left != null && left <= 0;
 
   return (
     <li className="rounded-2xl border border-[var(--line)] bg-[var(--card)] p-4">
       <div className="flex items-baseline justify-between gap-4">
-        <span className="text-[16px] font-bold tracking-[-0.02em]">{w.asset}</span>
+        <span className="flex items-baseline gap-2">
+          <span className="text-[16px] font-bold tracking-[-0.02em]">{w.asset}</span>
+          {closing && (
+            <span className="font-mono text-[10px] tracking-[0.06em] text-[var(--down)]">
+              {copy.closing}
+            </span>
+          )}
+        </span>
         <span className="font-mono text-[12px] text-[var(--faint)]">
           <span className="ltr-num">{window}</span>
         </span>
@@ -249,8 +321,13 @@ function WindowCard({
       <div className="mt-1 flex items-baseline justify-between gap-4">
         <span className="font-mono text-[11px] tracking-[0.06em] text-[var(--faint)]">
           {copy.closesIn}{" "}
-          <span className="ltr-num tabular-nums text-[var(--ink)]">
-            {left == null ? "—" : `${Math.floor(left / 60)}:${String(left % 60).padStart(2, "0")}`}
+          <span
+            className="ltr-num tabular-nums"
+            style={{ color: closing ? "var(--down)" : "var(--ink)" }}
+          >
+            {!mounted || left == null
+              ? "—"
+              : `${Math.floor(left / 60)}:${String(left % 60).padStart(2, "0")}`}
           </span>
         </span>
         {w.volume != null && (
@@ -260,9 +337,23 @@ function WindowCard({
         )}
       </div>
 
+      {/* Price, anchor and running average — the question the market asks.
+          The odds sparkline below is the market's answer to it. */}
+      <PriceChart
+        slug={w.slug}
+        live={started && !ended}
+        labels={{
+          notStarted: copy.notStarted,
+          loading: copy.loadingPrices,
+          anchor: copy.anchor,
+          average: copy.average,
+          price: copy.price,
+        }}
+      />
+
       <OddsSpark points={points} waiting={copy.waiting} />
 
-      <div className="mt-3 grid grid-cols-2 gap-2">
+      <div className="mt-3 grid grid-cols-2 gap-2" style={closing ? { opacity: 0.45 } : undefined}>
         <div className="rounded-xl border border-[var(--line)] px-3 py-2 text-center">
           <div className="text-[11px] font-medium text-[var(--mute)]">{copy.up}</div>
           <div className="ltr-num text-[20px] font-bold text-[var(--up)]">{cents(up)}</div>
