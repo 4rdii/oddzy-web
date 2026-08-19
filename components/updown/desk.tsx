@@ -46,16 +46,21 @@ const PAST_SLOTS = 2;
 const FUTURE_SLOTS = 2;
 
 /**
- * Seconds before close at which a window stops being offered.
+ * Seconds before close at which the RUNNING window stops being offered.
  *
- * Mirrors the bot's guard, and it is not cosmetic. These books converge hard
- * toward expiry — a market that opened near 0.51 is routinely 0.03 with two
- * minutes to run — so a bet placed in the last stretch is priced against a book
- * that has already decided. /webapp/v1/bet is a generic market endpoint and does
- * NOT enforce this, so wherever trading is offered, this is the only thing
- * standing between a user and an outcome that is already settled.
+ * Deliberately short. It exists to stop an order being submitted so late that
+ * the window closes while it is in flight — a FAK that lands after the bell is
+ * a failed bet, not a protected one — and for nothing else. It is NOT a view
+ * about whether a converged price is a sensible trade: the price is on screen,
+ * and buying the near-certain side for a few percent is a real strategy that
+ * Polymarket itself allows right up to the close.
+ *
+ * This was 120s, mirroring the bot's LISTING filter. That was wrong here. The
+ * bot's guard protects a multi-step chat flow that can outlive the window; the
+ * slip in the app is two taps, and a two-minute dead zone on a fifteen-minute
+ * market removes an eighth of its tradeable life for no benefit.
  */
-export const CUTOFF_S = 120;
+export const CUTOFF_S = 30;
 
 /** A position in the selected coin's timeline. */
 export type Slot =

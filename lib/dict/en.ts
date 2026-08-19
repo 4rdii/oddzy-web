@@ -469,7 +469,7 @@ export const en = {
       chartClose: "close",
       notStarted: "This window hasn't opened yet",
       loadingPrices: "loading prices…",
-      tooLate: "Too close to the bell to take a side — the book has already converged.",
+      tooLate: "This window closes in a few seconds — too late to place. The next one is already open.",
       nextOpens: "Next window opens in about {time} min.",
       volume: "vol",
       opensIn: "UNTIL OPEN",

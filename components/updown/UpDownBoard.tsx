@@ -145,8 +145,11 @@ export function UpDownBoard({
 
   const settledView = current.kind === "past";
   const resolvedUp = settledView ? current.row.won === "up" : null;
-  const upPrice = current.kind === "live" ? current.row.up_price : null;
-  const downPrice = current.kind === "live" ? current.row.down_price : null;
+  // A scheduled window quotes too — its book is open before the window starts.
+  // Only a resolved one has no price left to show.
+  const priced = settledView ? null : current.row;
+  const upPrice = priced?.up_price ?? null;
+  const downPrice = priced?.down_price ?? null;
   const effectiveSide = settledView ? (resolvedUp ? "up" : "down") : side;
   const sidePrice = effectiveSide === "up" ? upPrice : downPrice;
   const cents = (p: number | null) => (p == null ? "—" : `${Math.round(p * 100)}¢`);
@@ -234,7 +237,7 @@ export function UpDownBoard({
           upPrice={upPrice}
           downPrice={downPrice}
           activeSide={effectiveSide}
-          disabled={settledView || current.kind === "future"}
+          disabled={settledView}
           onPick={setSide}
           labels={{ up: copy.up, down: copy.down }}
         />

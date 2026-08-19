@@ -122,19 +122,30 @@ export function UpDownScreen({
   const settledView = current.kind === "past";
   const futureView = current.kind === "future";
   const resolvedUp = settledView ? current.row.won === "up" : null;
-  const upPrice = current.kind === "live" ? current.row.up_price : null;
-  const downPrice = current.kind === "live" ? current.row.down_price : null;
 
   /**
-   * Unknown time counts as closing, not as open.
-   *
-   * The failure directions are not symmetric: treating an unknown deadline as
-   * tradable can sell someone a window that has already decided, while treating
-   * it as closed costs them one refresh.
+   * A scheduled window is tradeable, and that is not a special case — its book
+   * is open on Polymarket before the window starts, it quotes (usually 51/49),
+   * and it takes volume. Treating "hasn't opened yet" as "can't be bought" made
+   * the app refuse a market that was visibly trading everywhere else. Only a
+   * RESOLVED window has no side left to take.
    */
-  const closing = secondsLeft == null || secondsLeft < CUTOFF_S;
+  const priced = settledView ? null : current.row;
+  const upPrice = priced?.up_price ?? null;
+  const downPrice = priced?.down_price ?? null;
+
+  /**
+   * The late-submission guard, and it applies to the running window only.
+   *
+   * For a scheduled window `secondsLeft` counts down to its OPEN, so reading it
+   * as "about to close" would block precisely the window with the most life left
+   * in it. Unknown time on a running window still counts as closing: treating an
+   * unknown deadline as tradable can submit an order into a window that has
+   * already gone, while treating it as closed costs one refresh.
+   */
+  const closing = current.kind === "live" && (secondsLeft == null || secondsLeft < CUTOFF_S);
   const price = side === "up" ? upPrice : downPrice;
-  const tradable = current.kind === "live" && !closing && price != null && price > 0;
+  const tradable = !settledView && !closing && price != null && price > 0;
   const shares = price != null && price > 0 ? stake / price : 0;
   const payout = price != null && price > 0 ? payoutFor(stake, price) : 0;
   const insufficient = balance != null && stake > balance;
@@ -142,7 +153,7 @@ export function UpDownScreen({
   const nextOpen = slots.find((s) => s.kind === "future");
 
   async function place() {
-    if (!current || current.kind !== "live" || !tradable) return;
+    if (!current || current.kind === "past" || !tradable) return;
     setSubmitting(true);
     setError(null);
     try {
@@ -153,7 +164,7 @@ export function UpDownScreen({
         orderId: string | null;
         txHash: string | null;
       }>("/webapp/v1/bet", {
-        marketId: current.row.market_id,
+        marketId: (current.row as { market_id: string }).market_id,
         side: side === "up" ? "YES" : "NO",
         sizeUsdc: stake,
       });
@@ -282,7 +293,7 @@ export function UpDownScreen({
           staying tappable and failing at the server. The next window is already
           open for business, so the screen says so instead of just refusing.
         */}
-        {current.kind === "live" && closing ? (
+        {closing ? (
           <div className="mt-4 rounded-xl border border-[var(--line)] bg-[var(--btn)] px-4 py-3 text-center">
             <p className="text-[13px] font-semibold text-[var(--down)]">{u.tooLate}</p>
             {nextOpen && (
@@ -300,10 +311,6 @@ export function UpDownScreen({
             <span style={{ color: resolvedUp ? "var(--up)" : "var(--down)" }}>
               {resolvedUp ? u.upWon : u.downWon}
             </span>
-          </div>
-        ) : futureView ? (
-          <div className="mt-4 rounded-xl border border-[var(--line)] bg-[var(--btn)] px-4 py-3 text-center text-[13px] text-[var(--mute)]">
-            {u.notStarted}
           </div>
         ) : (
           <SideButtons
@@ -335,7 +342,7 @@ export function UpDownScreen({
         />
       </div>
 
-      {sheetOpen && current.kind === "live" && (
+      {sheetOpen && !settledView && (
         <div
           className="fixed inset-x-0 bottom-0 z-50 mx-auto max-w-md rounded-t-3xl border-t border-[var(--line)] bg-[var(--paper)] p-4 pb-8"
           role="dialog"
