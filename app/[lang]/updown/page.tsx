@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { SiteChrome } from "@/components/site/Chrome";
 import { UpDownBoard } from "@/components/updown/UpDownBoard";
 import { getUpDownWindows } from "@/lib/api";
-import { BRANDS, isLocale, LOCALES } from "@/lib/i18n";
+import { brandFor, BRANDS, isLocale, LOCALES } from "@/lib/i18n";
 import { getDict } from "@/lib/dict";
 
 /**
@@ -49,11 +49,18 @@ export default async function UpDownPage(props: Params) {
   if (!isLocale(lang)) notFound();
 
   const t = getDict(lang);
+  const brand = brandFor(lang);
   const { windows, settled } = await getUpDownWindows();
 
   return (
     <SiteChrome lang={lang}>
-      <div className="mx-auto max-w-3xl px-5 pt-12 pb-4">
+      {/*
+        Wider than the rest of the site (max-w-3xl), because this page is the
+        only one that is an instrument rather than a document: the chart, the
+        timeline and the payout panel have to sit side by side to be read
+        together, and at 3xl the sidebar wraps under the chart on every desktop.
+      */}
+      <div className="mx-auto max-w-6xl px-5 pt-12 pb-4">
         <h1 className="text-[clamp(26px,4.5vw,38px)] font-bold tracking-[-0.03em]">
           {t.updown.h1}
         </h1>
@@ -73,30 +80,47 @@ export default async function UpDownPage(props: Params) {
         </p>
       </div>
 
-      <div className="mx-auto max-w-3xl px-5 pb-16">
+      <div className="mx-auto max-w-6xl px-5 pb-16">
         <UpDownBoard
           initial={windows}
           initialSettled={settled}
           locale={lang}
+          tgBot={brand.tgBot}
           copy={{
-            heading: t.updown.h1,
-            lead: t.updown.lead,
-            rule: t.updown.rule,
             none: t.updown.none,
             closesIn: t.updown.closesIn,
+            opensIn: t.updown.opensIn,
             up: t.updown.up,
             down: t.updown.down,
             volume: t.updown.volume,
-            waiting: t.updown.waiting,
-            resolved: t.updown.resolved,
             resolvedUp: t.updown.resolvedUp,
             resolvedDown: t.updown.resolvedDown,
+            finalResult: t.updown.finalResult,
             closing: t.updown.closing,
             notStarted: t.updown.notStarted,
             loadingPrices: t.updown.loadingPrices,
             anchor: t.updown.anchor,
             average: t.updown.average,
             price: t.updown.price,
+            chartOpen: t.updown.chartOpen,
+            chartNow: t.updown.chartNow,
+            chartClose: t.updown.chartClose,
+            priceToBeat: t.updown.priceToBeat,
+            startPrice: t.updown.startPrice,
+            currentPrice: t.updown.currentPrice,
+            finalPrice: t.updown.finalPrice,
+            live: t.updown.live,
+            resolvedTag: t.updown.resolvedTag,
+            nextTag: t.updown.nextTag,
+            interval: t.updown.interval,
+            payoutHeading: t.updown.payoutHeading,
+            payoutLead: t.updown.payoutLead,
+            win: t.updown.win,
+            cta: t.updown.cta,
+            terms: t.updown.terms,
+            otherMarkets: t.updown.otherMarkets,
+            upWon: t.updown.upWon,
+            downWon: t.updown.downWon,
           }}
         />
       </div>

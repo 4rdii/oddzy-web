@@ -31,6 +31,12 @@
   --down: #d2544a;
   --accent: #2d5bff;
   --accent-hover: #1b41cc;
+  /* Label colour for anything sitting ON --accent. Both names exist because the
+     codebase reaches for both; they are the same value. Previously neither was
+     defined at all, so accent buttons rendered their label in the inherited ink
+     colour — dark text on saturated blue, around 3.4:1. */
+  --on-accent: #ffffff;
+  --accent-ink: #ffffff;
 }
 
 /* Explicit night selection. */
@@ -132,7 +138,9 @@
   --font-num: var(--font-vazir);
   /* PolyBaaz is gold-on-dark rather than Oddzy's blue. */
   --accent: #f0b429;
+  /* Gold takes dark ink, not white — white on #f0b429 is about 1.9:1. */
   --accent-ink: #14161a;
+  --on-accent: #14161a;
 }
 
 /* Persian does not take the heavy negative tracking the latin display face is
@@ -406,4 +414,18 @@
 }
 [data-locale="fa"] [lang="en"] .oz-prose ol {
   list-style-type: decimal;
+}
+
+/* Live head dot on the up/down chart: a ring that expands and fades once per
+   two seconds. Purely decorative, so it yields to reduced-motion. */
+@keyframes updownPulse {
+  0%   { opacity: 0.8; transform: scale(1); }
+  70%  { opacity: 0;   transform: scale(2.8); }
+  100% { opacity: 0;   transform: scale(2.8); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  @keyframes updownPulse {
+    0%, 100% { opacity: 0.35; transform: scale(1); }
+  }
 }
