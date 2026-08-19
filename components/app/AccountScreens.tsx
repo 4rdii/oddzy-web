@@ -147,6 +147,25 @@ export function PositionsScreen({ onOpenMarket }: { onOpenMarket: (slug: string)
   // awaiting its claim); "Settled" comes from the persistent history endpoint.
   const held = state.data.positions;
   const openOnly = held.filter((p) => !p.settled);
+
+  /*
+   * A resolved LOSER is not an open position, and it cannot be left in the list.
+   *
+   * Losing shares stay in the wallet forever — nothing burns them — and the data
+   * API reports them redeemable (the market did resolve) at curPrice 0. So the
+   * row never ages out: it sits under Open at $0 offering a Manage button whose
+   * only possible outcome is "this market resolved against your position —
+   * nothing to redeem". The result it belongs to is already in the Settled tab.
+   *
+   * The test is deliberately conservative rather than simply `!p.won`. `won` is
+   * derived from a live CLOB price, which can be missing on a market that has
+   * already resolved, so trusting it alone risks hiding a WINNER and taking away
+   * the only route to their claim. Requiring the position to be worthless AND
+   * at a loss means the failure direction is a dead row shown, never a claim
+   * hidden.
+   */
+  const deadLoss = (p: Position) => p.settled && !p.won && p.value < 0.01 && p.pnl < 0;
+  const shown = held.filter((p) => !deadLoss(p));
   const openValue = openOnly.reduce((a, p) => a + p.value, 0);
   const unrealized = openOnly.reduce((a, p) => a + p.pnl, 0);
 
@@ -183,13 +202,13 @@ export function PositionsScreen({ onOpenMarket }: { onOpenMarket: (slug: string)
       </div>
 
       {tab === "open" ? (
-        held.length === 0 ? (
+        shown.length === 0 ? (
           <p className="py-12 text-center text-[14px] text-[var(--mute)]">
             {t.app.positions.emptyOpen}
           </p>
         ) : (
           <ul className="mt-4 flex flex-col gap-2.5">
-            {held.map((p) => (
+            {shown.map((p) => (
               <PositionCard
                 key={`${p.marketId}-${p.side}`}
                 p={p}
