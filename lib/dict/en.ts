@@ -205,7 +205,7 @@ export const en = {
     chartClose: "close",
     priceToBeat: "Price to beat",
     startPrice: "Price to beat",
-    currentPrice: "Average so far",
+    currentPrice: "Current price",
     finalPrice: "Final average",
     live: "live",
     resolvedTag: "resolved",
@@ -471,6 +471,19 @@ export const en = {
       loadingPrices: "loading prices…",
       tooLate: "Too close to the bell to take a side — the book has already converged.",
       nextOpens: "Next window opens in about {time} min.",
+      volume: "vol",
+      opensIn: "UNTIL OPEN",
+      finalResult: "final result",
+      resolvedUp: "Up ✓",
+      resolvedDown: "Down ✓",
+      resolvedTag: "resolved",
+      nextTag: "next window",
+      currentPrice: "Current price",
+      live: "live",
+      seeNext: "See the next window",
+      upWon: "Up won",
+      downWon: "Down won",
+      otherMarkets: "Other coins",
       recent: "RECENT RESULTS",
     },
 
@@ -574,12 +587,19 @@ export const en = {
       dismiss: "Dismiss",
       copy: "Copy",
       copied: "Copied",
-      depositTitle: "Deposit USDC",
+      depositTitle: "Add money",
       depositNetwork: "Polygon network only",
       qrAlt: "QR code for deposit address {address}",
       copyAddress: "Copy address",
       depositWarning:
-        "USDC on Polygon only. Another network or another token means the funds are gone for good — no one can reverse it. Your balance updates the moment the transfer confirms.",
+        "Send on the selected network only. Another network or another token means the funds are gone for good — no one can reverse it. Your balance updates the moment the transfer confirms.",
+      /**
+       * Polygon-specific, and the contract address is not decoration.
+       * Polygon has two tokens called USDC; only the bridged one credits, and
+       * native USDC is what most exchanges send by default.
+       */
+      depositWarningPolygon:
+        "USDC.e only — contract 0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174. Polygon also has a second, different token called USDC (0x3c499c54…): it will NOT be credited. Check the contract address before you send, or use another network above and we'll convert it for you.",
       depositWarningVault:
         "Send on the selected network only. A transfer on any other network cannot be recovered by anyone. Your balance updates automatically once it lands — usually a couple of minutes.",
       /**
@@ -603,7 +623,7 @@ export const en = {
         },
         polygon: {
           title: "Polygon",
-          blurb: "Send USDC.e on Polygon straight to your account address.",
+          blurb: "Send USDC.e (0x2791…) straight to your account address. Not native USDC.",
         },
         evm: {
           title: "Ethereum & EVM",

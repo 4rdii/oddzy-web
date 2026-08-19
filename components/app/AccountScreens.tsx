@@ -824,8 +824,25 @@ function DepositSheet({
             {copied ? t.app.wallet.copied : t.app.wallet.copyAddress}
           </button>
 
+          {/*
+            The Polygon rail gets its OWN warning, naming the token and its
+            contract address.
+            
+            "USDC on Polygon" is ambiguous in the one way that costs money:
+            Polygon has TWO tokens with that name, and only the bridged one
+            (USDC.e, 0x2791…) is watched. Native USDC (0x3c49…) is what almost
+            every exchange sends by default, it lands in the proxy, and the
+            watcher never sees it — the money arrives and the balance never
+            moves. That has already happened once. The generic warning below
+            said "USDC on Polygon only", which a sender of native USDC reads as
+            confirmation they did the right thing.
+          */}
           <p className="mt-3 text-[11px] leading-relaxed text-[var(--faint)]">
-            {rail?.vault ? t.app.wallet.depositWarningVault : t.app.wallet.depositWarning}
+            {rail?.vault
+              ? t.app.wallet.depositWarningVault
+              : picked === "polygon" || rails?.length === 0
+                ? t.app.wallet.depositWarningPolygon
+                : t.app.wallet.depositWarning}
           </p>
         </div>
       </div>

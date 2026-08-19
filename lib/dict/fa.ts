@@ -213,7 +213,7 @@ export const fa: Dict = {
     chartClose: "پایان",
     priceToBeat: "قیمت مبنا",
     startPrice: "قیمت مبنا",
-    currentPrice: "میانگین تا این لحظه",
+    currentPrice: "قیمت فعلی",
     finalPrice: "میانگین نهایی",
     live: "زنده",
     resolvedTag: "تسویه‌شده",
@@ -454,6 +454,19 @@ export const fa: Dict = {
       loadingPrices: "در حال دریافت قیمت‌ها…",
       tooLate: "برای انتخاب طرف خیلی به پایان نزدیک است — بازار عملاً تصمیمش را گرفته.",
       nextOpens: "بازهٔ بعدی حدود {time} دقیقه دیگر باز می‌شود.",
+      volume: "حجم",
+      opensIn: "تا شروع",
+      finalResult: "نتیجهٔ نهایی",
+      resolvedUp: "صعودی ✓",
+      resolvedDown: "نزولی ✓",
+      resolvedTag: "تسویه‌شده",
+      nextTag: "بازهٔ بعدی",
+      currentPrice: "قیمت فعلی",
+      live: "زنده",
+      seeNext: "دیدن بازهٔ بعدی",
+      upWon: "صعودی برد",
+      downWon: "نزولی برد",
+      otherMarkets: "ارزهای دیگر",
       recent: "نتایج اخیر",
     },
 
@@ -553,12 +566,19 @@ export const fa: Dict = {
       dismiss: "بستن",
       copy: "کپی",
       copied: "کپی شد",
-      depositTitle: "واریز USDC",
+      depositTitle: "افزایش موجودی",
       depositNetwork: "فقط شبکهٔ پلی‌گان",
       qrAlt: "کد QR آدرس واریز {address}",
       copyAddress: "کپی آدرس",
       depositWarning:
-        "فقط USDC روی شبکهٔ پلی‌گان. اگر روی شبکهٔ دیگری یا با توکن دیگری بفرستید، پول برای همیشه از دست می‌رود و هیچ‌کس نمی‌تواند برش گرداند. به‌محض تأیید انتقال، موجودی شما همین‌جا به‌روز می‌شود.",
+        "فقط روی همان شبکه‌ای که انتخاب کرده‌اید بفرستید. اگر روی شبکهٔ دیگری یا با توکن دیگری بفرستید، پول برای همیشه از دست می‌رود و هیچ‌کس نمی‌تواند برش گرداند. به‌محض تأیید انتقال، موجودی شما همین‌جا به‌روز می‌شود.",
+      /**
+       * Polygon-specific, and the contract address is not decoration.
+       * Polygon has two tokens called USDC; only the bridged one credits, and
+       * native USDC is what most exchanges send by default.
+       */
+      depositWarningPolygon:
+        "فقط USDC.e — قرارداد 0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174. روی پلی‌گان توکن دیگری هم به نام USDC وجود دارد (0x3c499c54…) که به حساب شما اضافه نمی‌شود. پیش از ارسال، آدرس قرارداد را بررسی کنید یا از شبکه‌های بالا استفاده کنید تا خودمان تبدیلش کنیم.",
       depositWarningVault:
         "فقط روی همان شبکه‌ای که انتخاب کرده‌اید بفرستید. انتقال روی شبکهٔ دیگر را هیچ‌کس نمی‌تواند برگرداند. بعد از رسیدن وجه، موجودی به‌صورت خودکار به‌روز می‌شود — معمولاً چند دقیقه.",
       rails: {
@@ -576,7 +596,7 @@ export const fa: Dict = {
         },
         polygon: {
           title: "پلی‌گان",
-          blurb: "USDC.e را روی شبکهٔ پلی‌گان مستقیم به آدرس حساب خود بفرستید.",
+          blurb: "فقط USDC.e (۰x2791…) را مستقیم به آدرس حساب خود بفرستید، نه USDC معمولی.",
         },
         evm: {
           title: "اتریوم و EVM",
