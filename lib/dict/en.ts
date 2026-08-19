@@ -329,6 +329,7 @@ export const en = {
       positions: "Positions",
       wallet: "Wallet",
       baskets: "Baskets",
+      updown: "Up/Down",
     },
 
     baskets: {
@@ -445,6 +446,32 @@ export const en = {
       showLess: "Show less",
       viewOnPolymarket: "View on Polymarket ↗",
       risk: "Prediction markets carry risk of loss. 18+. Oddzy is an interface to Polymarket — it never holds your funds.",
+    },
+
+    updown: {
+      title: "Up or Down",
+      rule:
+        "Resolves Up if the AVERAGE price across the window is at or above the price when it opened. Not where it ends — the average.",
+      loading: "Loading…",
+      none: "No window is open for this coin right now. They open continuously.",
+      interval: "15 min",
+      closesIn: "CLOSES IN",
+      closing: "CLOSING",
+      up: "Up",
+      down: "Down",
+      priceToBeat: "Price to beat",
+      averageSoFar: "Average so far",
+      anchorShort: "open",
+      averageShort: "avg",
+      spot: "spot",
+      chartOpen: "open",
+      chartNow: "now",
+      chartClose: "close",
+      notStarted: "This window hasn't opened yet",
+      loadingPrices: "loading prices…",
+      tooLate: "Too close to the bell to take a side — the book has already converged.",
+      nextOpens: "Next window opens in about {time} min.",
+      recent: "RECENT RESULTS",
     },
 
     bet: {

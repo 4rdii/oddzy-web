@@ -15,6 +15,7 @@ import { MarketDetail, type PlacedBet } from "./MarketDetail";
 import { Receipt } from "./Receipt";
 import { PositionsScreen, WalletScreen } from "./AccountScreens";
 import { BasketsScreen, BasketReceiptScreen, type BasketReceipt } from "./BasketsScreen";
+import { UpDownScreen } from "./UpDownScreen";
 import { WebLogin } from "./WebLogin";
 import { SignInButton } from "./SignInButton";
 import { PRIVY_ENABLED } from "./PrivyRoot";
@@ -27,6 +28,7 @@ type Screen =
   | { name: "positions" }
   | { name: "wallet" }
   | { name: "baskets" }
+  | { name: "updown" }
   | { name: "basketDone"; receipt: BasketReceipt };
 
 /**
@@ -101,6 +103,11 @@ export function MiniApp({
     // Baskets read the balance and then spend it, so they need an account for
     // the same reason the detail screen does.
     screen.name === "baskets" ||
+    // Up/Down reads the balance and then spends it, same as the detail screen.
+    // Gating the whole screen rather than only the slip is deliberate: on a
+    // fifteen-minute market, discovering you need an account AFTER picking a
+    // side burns the window you were trying to trade.
+    screen.name === "updown" ||
     screen.name === "basketDone";
   const needsLogin = inTelegram === false && PRIVY_ENABLED && webAuth === "needed";
 
@@ -113,7 +120,9 @@ export function MiniApp({
           ? "browse"
           : screen.name === "baskets" || screen.name === "basketDone"
             ? "baskets"
-            : "markets";
+            : screen.name === "updown"
+              ? "updown"
+              : "markets";
 
   return (
     <>
@@ -216,6 +225,13 @@ export function MiniApp({
               />
             )}
 
+            {screen.name === "updown" && (
+              <UpDownScreen
+                balance={balance}
+                onPlaced={(bet) => setScreen({ name: "done", bet })}
+              />
+            )}
+
             {screen.name === "positions" && <PositionsScreen onOpenMarket={openMarketBySlug} />}
             {screen.name === "wallet" && <WalletScreen />}
           </>
@@ -242,6 +258,12 @@ export function MiniApp({
             icon="▨"
             label={t.app.nav.baskets}
             onClick={() => setScreen({ name: "baskets" })}
+          />
+          <TabButton
+            active={tab === "updown"}
+            icon="◮"
+            label={t.app.nav.updown}
+            onClick={() => setScreen({ name: "updown" })}
           />
           <TabButton
             active={tab === "positions"}
