@@ -23,7 +23,18 @@ import { compactUsd, localized, pct } from "@/lib/format";
  * described has resolved. Hubs compete for head terms; market pages take the
  * long tail.
  */
-export const revalidate = 600;
+/**
+ * ISR window. Deliberately an hour, and deliberately matched by the fetch
+ * inside the page: a route revalidates at the LOWEST revalidate of any fetch it
+ * makes, so raising this number alone would have changed nothing.
+ *
+ * Every regeneration is a billed ISR write, and this route is ~54 of them
+ * across the two locales — enough that ordinary crawler traffic, not users,
+ * exhausted a 200k/month quota in August 2026. Nothing here needs 10-minute
+ * freshness: the upstream snapshot only moves every ~30 min, and the live
+ * numbers are in the mini-app, which is not cached at all.
+ */
+export const revalidate = 3600;
 
 /** Only hubs that actually have indexable content under them get prerendered. */
 export async function generateStaticParams() {
@@ -64,7 +75,7 @@ export default async function TopicPage(props: Params) {
   const t = getDict(lang);
   const name = localized(lang, topic.name, topic.name_fa);
   const [{ markets }, indexable, allSeries] = await Promise.all([
-    getMarkets({ category: slug, limit: 40 }),
+    getMarkets({ category: slug, limit: 40, revalidate: 3600 }),
     getIndexableMarkets(),
     getQuestionSeriesIndex(),
   ]);

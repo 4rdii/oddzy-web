@@ -22,7 +22,18 @@ import { SeriesTimeline } from "@/components/site/SeriesTimeline";
  *
  * The individual /market/<slug> pages stay reachable and canonicalize here.
  */
-export const revalidate = 600;
+/**
+ * ISR window. Deliberately an hour, and deliberately matched by the fetch
+ * inside the page: a route revalidates at the LOWEST revalidate of any fetch it
+ * makes, so raising this number alone would have changed nothing.
+ *
+ * Every regeneration is a billed ISR write, and this route is ~116 of them
+ * across the two locales — enough that ordinary crawler traffic, not users,
+ * exhausted a 200k/month quota in August 2026. Nothing here needs 10-minute
+ * freshness: the upstream snapshot only moves every ~30 min, and the live
+ * numbers are in the mini-app, which is not cached at all.
+ */
+export const revalidate = 3600;
 
 export async function generateStaticParams() {
   const series = await getQuestionSeriesIndex();

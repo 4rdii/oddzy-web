@@ -15,7 +15,18 @@ import { compactUsd, deadlineDate, localized, pct, usd } from "@/lib/format";
  * 17% is a position costing 83¢, and showing 17 next to it would misstate the
  * cost of every such row.
  */
-export const revalidate = 600;
+/**
+ * ISR window. Deliberately an hour, and deliberately matched by the fetch
+ * inside the page: a route revalidates at the LOWEST revalidate of any fetch it
+ * makes, so raising this number alone would have changed nothing.
+ *
+ * Every regeneration is a billed ISR write, and this route is ~22 of them
+ * across the two locales — enough that ordinary crawler traffic, not users,
+ * exhausted a 200k/month quota in August 2026. Nothing here needs 10-minute
+ * freshness: the upstream snapshot only moves every ~30 min, and the live
+ * numbers are in the mini-app, which is not cached at all.
+ */
+export const revalidate = 3600;
 
 /**
  * The single payout figure when every winner pays the same, else null.

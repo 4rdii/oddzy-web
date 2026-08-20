@@ -104,6 +104,23 @@ async function get<T>(path: string, revalidate: number): Promise<T> {
 }
 
 /**
+ * Cache window for the per-entity detail calls that back a prerendered page.
+ *
+ * One number because it is really one budget. Each of ~500 markets, 58 question
+ * families and 11 baskets is prerendered in BOTH locales, so these three calls
+ * stand behind ~1200 ISR pages — and an ISR write is billed every time one of
+ * them regenerates, whether or not the odds actually moved. At the old 600s a
+ * page needed traffic in only a fraction of its 10-minute windows to blow a
+ * 200k/month quota; an hour makes the same traffic cost a sixth as much.
+ *
+ * An hour is also honest about the data: the upstream snapshot moves every ~30
+ * min, so a market page was never fresher than this, it was just rebuilt more
+ * often. The live, second-by-second numbers live in the mini-app, which is not
+ * ISR at all.
+ */
+const DETAIL_TTL = 3600;
+
+/**
  * The navigation tree, exactly as the bot models it (see /topics upstream).
  * Cached for 15 min — the shape changes when topics are added, not per-request.
  */
@@ -120,12 +137,21 @@ export async function getMarkets(opts: {
   category?: string;
   limit?: number;
   offset?: number;
+  /**
+   * Cache window, seconds. Default 300, for the surfaces a person watches (the
+   * hero feed, the app shell). Pass a longer one from a PRERENDERED page: a
+   * route's revalidation period is the LOWEST revalidate of any fetch inside
+   * it, so a 300s call here silently overrides that page's `export const
+   * revalidate` and doubles or sextuples its ISR writes. See the note on
+   * `revalidate` in app/[lang]/topic/[slug]/page.tsx.
+   */
+  revalidate?: number;
 } = {}): Promise<Snapshot> {
   const params = new URLSearchParams();
   if (opts.category) params.set("category", opts.category);
   params.set("limit", String(opts.limit ?? 30));
   if (opts.offset) params.set("offset", String(opts.offset));
-  return get<Snapshot>(`/markets/snapshot?${params}`, 300);
+  return get<Snapshot>(`/markets/snapshot?${params}`, opts.revalidate ?? 300);
 }
 
 /**
@@ -174,7 +200,7 @@ export type IndexableMarket = {
 /** One market plus its price history — the market page's only data source. */
 export async function getMarketDetail(slug: string): Promise<MarketDetail | null> {
   try {
-    return await get<MarketDetail>(`/markets/${encodeURIComponent(slug)}`, 600);
+    return await get<MarketDetail>(`/markets/${encodeURIComponent(slug)}`, DETAIL_TTL);
   } catch (e) {
     if (e instanceof ApiError && e.status === 404) return null;
     throw e;
@@ -256,7 +282,7 @@ export async function getQuestionSeriesIndex(): Promise<SeriesSummary[]> {
 
 export async function getQuestionSeries(key: string): Promise<QuestionSeries | null> {
   try {
-    return await get<QuestionSeries>(`/markets/series/${encodeURIComponent(key)}`, 600);
+    return await get<QuestionSeries>(`/markets/series/${encodeURIComponent(key)}`, DETAIL_TTL);
   } catch (e) {
     if (e instanceof ApiError && e.status === 404) return null;
     throw e;
@@ -362,7 +388,7 @@ export async function getBaskets(): Promise<BasketSummary[]> {
 
 export async function getBasket(slug: string): Promise<BasketDetail | null> {
   try {
-    return await get<BasketDetail>(`/baskets/${encodeURIComponent(slug)}`, 600);
+    return await get<BasketDetail>(`/baskets/${encodeURIComponent(slug)}`, DETAIL_TTL);
   } catch (e) {
     if (e instanceof ApiError && e.status === 404) return null;
     throw e;
