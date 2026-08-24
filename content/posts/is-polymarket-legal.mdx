@@ -1,42 +1,73 @@
 ---
 title: "Is Polymarket legal?"
-description: "Polymarket now runs a CFTC-regulated US exchange alongside its international crypto venue — but several state regulators disagree, and the answer where you live depends on your own jurisdiction."
+description: "Polymarket runs a CFTC-regulated US exchange alongside its international crypto venue — but state regulators disagree, and the answer depends on where you live."
 tag: BASICS
 readingMinutes: 7
 publishedAt: "2026-08-10"
+updatedAt: "2026-08-24"
 lead: "Polymarket now runs a CFTC-regulated exchange in the US alongside its international crypto venue. Several state regulators disagree that this settles the question, and outside the US the answer varies country by country."
+keywords:
+  - "is Polymarket legal"
+  - "Polymarket legal in the US"
+  - "Polymarket CFTC regulated"
+  - "Polymarket Nevada injunction"
+  - "prediction market legality"
+takeaways:
+  - "At the federal level Polymarket US is a CFTC-designated contract market — the same legal category as a futures exchange — after the CFTC approved its amended Order of Designation in November 2025."
+  - "\"Polymarket\" now means two venues: the original crypto-settled global site, which is not available to US users, and the regulated US exchange reached through intermediaries."
+  - "Federal designation is not a shield against state gaming law. A Nevada court barred Polymarket's sports, election and entertainment contracts in the state in late May 2026."
+  - "The federal appeals courts disagree: the Third Circuit held in April 2026 that the CFTC's jurisdiction preempts New Jersey gaming law, while the Ninth Circuit let Nevada's case proceed."
+  - "Outside the US there is no single rule. The platform enforces availability by jurisdiction, and a block where you live is itself the answer to whether you may trade."
+faq:
+  - q: "Can I use Polymarket in the US right now?"
+    a: "It depends on your state, not just on federal law. Polymarket US is a CFTC-designated contract market open to US residents through regulated intermediaries, but individual states have gone to court to stop event contracts on sports and similar outcomes, and at least one court order is in force. The platform applies those restrictions itself, so the practical test is whether it lets you open a position where you are."
+  - q: "What happens to my open positions if my state blocks event contracts?"
+    a: "Court orders of this kind bar a venue from offering new contracts in the state; they do not usually cancel positions people already hold. In practice a platform in that position typically stops new trading for affected users and lets existing positions run to resolution or be closed out. Because the details differ case by case, the platform's own notice to users is the only authoritative answer, not general reporting about the ruling."
+  - q: "Does CFTC regulation mean my money is protected if the exchange fails?"
+    a: "Not in the way bank deposit insurance protects a savings account. A designated contract market brings market surveillance, clearing and reporting obligations, and customer funds at a licensed clearing house are subject to segregation rules, but there is no federal guarantee that makes you whole if something goes wrong. None of it applies to the international crypto venue, which is not the regulated entity."
+  - q: "Can I use a VPN to reach the venue that is not available where I live?"
+    a: "We will not help with that, and you should not. Geographic restrictions are how the platform complies with the rules of the places it does and does not operate in, and routing around them breaches the terms of service you agreed to as well as whatever local rule prompted the block. The realistic consequence is a frozen account and a withdrawal you cannot complete, which costs more than the trade was worth."
+  - q: "Will the disagreement between the federal courts be settled?"
+    a: "Probably, but not quickly. Two federal appeals courts have now reached different conclusions about whether the Commodity Exchange Act leaves any room for state gaming enforcement, and a split of that kind is the usual route to the Supreme Court. Until it is resolved, the honest description is that the question is open and the answer varies by which state and which court you are in."
 ---
 
 This is the most-asked question about prediction markets, and it has no single answer. The status changed substantially during 2025 and 2026, it differs between the United States and everywhere else, and inside the United States it differs between federal and state law.
 
+If the mechanics are new to you, start with [what a prediction market is and how the odds get set](/learn/what-is-a-prediction-market).
+
 Nothing here is legal advice. It is a summary of where the public record stands, so you know which question to ask about your own situation.
 
-## The federal position in the US
+## Is Polymarket legal under US federal law?
 
-Polymarket left the US market in 2022 after a settlement with the Commodity Futures Trading Commission. It returned through the regulated route: it acquired QCEX, a CFTC-licensed exchange and clearing house, and in November 2025 the CFTC approved an [amended Order of Designation](https://www.cftc.gov/media/12806/Polymarket%20US%20Amended%20Order%20of%20Designation/download) for the entity now trading as Polymarket US.
+At the federal level, yes. Polymarket US operates a designated contract market — the same legal category as a futures exchange — which brings market surveillance obligations, clearing rules and regular reporting to the regulator. Whatever else is true, this is not an unregulated venue at the federal level.
 
-A designated contract market is the same legal category as a futures exchange. It brings market surveillance obligations, clearing rules and regular reporting to the regulator. Whatever else is true, this is not an unregulated venue at the federal level.
+It got there the slow way. Polymarket left the US market in 2022 after a settlement with the Commodity Futures Trading Commission, then returned through the regulated route: it acquired QCEX, a CFTC-licensed exchange and clearing house, and in November 2025 the CFTC approved an [amended Order of Designation](https://www.cftc.gov/media/12806/Polymarket%20US%20Amended%20Order%20of%20Designation/download) for the entity now trading as Polymarket US.
 
-## Two separate venues
+## What is the difference between Polymarket US and global Polymarket?
 
-The consequence most people miss is that "Polymarket" now means two different things.
+They are two separate venues that share a brand, not a rulebook. **Global Polymarket** is the original crypto-settled site — USDC on-chain, international users, and **not available to US users**. **Polymarket US** is the CFTC-regulated exchange, accessed through the regulated intermediaries the designation contemplates.
 
-**Global Polymarket** is the original crypto-settled venue — USDC on-chain, international users, and **not available to US users**. **Polymarket US** is the CFTC-regulated exchange, accessed through the regulated intermediaries the designation contemplates.
+|  | Global Polymarket | Polymarket US |
+| --- | --- | --- |
+| Who can use it | International users; not US residents | US residents, via regulated intermediaries |
+| Settlement | USDC on-chain | Through a CFTC-licensed clearing house |
+| Federal regulator | None in the US | CFTC, as a designated contract market |
+| Markets and liquidity | Its own book | Not necessarily the same list or depth |
 
-They share a brand, not a rulebook. They do not necessarily share liquidity, market lists or settlement mechanics either, so a market you read about may simply not exist on the venue you can reach. Which venue that is gets determined by where you are, and the platform decides it, not you.
+They do not necessarily share liquidity, market lists or settlement mechanics, so a market you read about may simply not exist on the venue you can reach. Which venue that is gets determined by where you are, and the platform decides it, not you.
 
-## The states do not all agree
+## Do state regulators accept that federal approval settles it?
 
-Federal designation has not ended the argument. In January 2026 the Nevada Gaming Control Board sued Polymarket's operating company in state court, arguing that event contracts on sports and similar outcomes amount to unlicensed wagering under Nevada law. A temporary restraining order followed in February, and in June 2026 the court granted a [preliminary injunction](https://www.ktnv.com/news/nevada-judge-issues-preliminary-injunction-against-polymarket) barring those contracts in the state while the case proceeds.
+Several of them do not. In January 2026 the Nevada Gaming Control Board sued Polymarket's operating company in state court, arguing that event contracts on sports and similar outcomes amount to unlicensed wagering under Nevada law — the same argument a state makes about [any product that looks like a sportsbook](/learn/prediction-markets-vs-sportsbooks). A temporary restraining order followed in February, and in late May 2026 the court granted a [preliminary injunction](https://www.ktnv.com/news/nevada-judge-issues-preliminary-injunction-against-polymarket) barring those contracts in the state while the case proceeds.
 
 The reasoning matters more than the result. The judge found the regulator "reasonably likely to prevail on the merits" and **rejected the argument that the Commodity Exchange Act places these contracts solely under CFTC jurisdiction** — holding that federal law does not preclude state enforcement. Federal designation, on that reading, is not a shield against state gaming law.
 
-That is one court in one state, and comparable arguments elsewhere have gone differently. But it is a concrete answer to the question people assume is settled: being CFTC-regulated at the federal level did not, in Nevada, make the state question go away.
+The federal appeals courts have not agreed with each other either. In April 2026 the Third Circuit [ruled that New Jersey could not enforce its gaming laws](https://www.cnbc.com/2026/04/07/new-jersey-cannot-regulate-kalshis-prediction-market-us-appeals-court-rules.html) against Kalshi's sports event contracts, holding the CFTC's jurisdiction exclusive; weeks later the Ninth Circuit declined to pause the Nevada and Washington cases. That is a live split, and it is the reason nobody can honestly tell you the US question is closed.
 
-## Outside the United States
+## Is Polymarket legal outside the United States?
 
 There is no global rule. Some jurisdictions regulate event contracts as financial instruments; some treat them as gambling requiring a local licence; some have not addressed them at all. Availability is enforced by the platform, which restricts access from jurisdictions where it does not operate.
 
-Two practical points. First, if a venue is not available where you are, that unavailability is the answer to your question — we will not help you work around it, and doing so typically breaches the platform's terms as well as whatever local rule prompted the block. Second, tax treatment is a separate question from legality, and one that catches people out even where trading is plainly permitted.
+Two practical points. First, if a venue is not available where you are, that unavailability is the answer to your question — we will not help you work around it, and doing so typically breaches the platform's terms as well as whatever local rule prompted the block. Second, tax treatment is a separate question from legality, and one that catches people out even where trading is plainly permitted; so is custody, which is worth understanding before you fund anything — see [where your money actually sits](/learn/is-it-safe-where-your-money-sits) and [how trading works here](/how-it-works).
 
 If you need certainty rather than a summary, the only reliable source is a lawyer who knows your jurisdiction.
