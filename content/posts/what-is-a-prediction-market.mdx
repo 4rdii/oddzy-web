@@ -2,16 +2,40 @@
 title: "What is a prediction market, and how are odds set?"
 description: "A prediction market lets you buy shares in an outcome. When YES trades at 62¢, the crowd is pricing that outcome at 62% — here's why that number is usually close to right."
 tag: BASICS
-readingMinutes: 8
+readingMinutes: 5
 publishedAt: "2026-07-20"
+updatedAt: "2026-08-24"
 lead: "A prediction market lets you buy shares in an outcome. When YES trades at 62¢, the crowd is pricing that outcome at 62% — and decades of research show these prices are remarkably well calibrated."
+keywords:
+  - "prediction market"
+  - "what is a prediction market"
+  - "how prediction market odds are set"
+  - "prediction market price as probability"
+  - "Polymarket"
+takeaways:
+  - "A prediction market share pays $1 if the event happens and $0 if it doesn't, and that single rule is what turns a price into a probability."
+  - "No bookmaker sets the line. The price is whatever the last trade cleared at, and it moves whenever someone is willing to stake money on it being wrong."
+  - "Judge a market on calibration across many questions, not on single results — a market priced at 70¢ is supposed to resolve NO about 30% of the time."
+  - "Your return if correct is $1 divided by the price you paid, so 62¢ pays about 1.61× and 85¢ pays about 1.18×."
+  - "A prediction market position can be sold at the current price before the event ends, which is something a fixed-odds bet never lets you do."
+faq:
+  - q: "Can a prediction market price go above $1 or below $0?"
+    a: "No. A share settles at exactly $1 or $0, so it can only trade somewhere between the two. A price above a dollar would be an offer to pay more than the maximum payout, and traders would sell it immediately. In practice prices sit between a fraction of a cent and 99-point-something cents."
+  - q: "Where does the $1 come from when a share wins?"
+    a: "It comes from the losing side of the same market, not from the platform's own money. Every YES share exists because someone else holds the matching NO share, and the dollar that settles the winner is the dollar the two sides put in between them. That is why a prediction market has no incentive to want you to lose."
+  - q: "Why do prediction market prices sometimes disagree with the polls?"
+    a: "A poll measures stated intention at one moment in time. A market price measures what people will risk money on, and it updates continuously as news arrives. When the two disagree, the market is usually pricing something the poll cannot — turnout assumptions, a known polling bias, or information that arrived after the fieldwork closed."
+  - q: "Can a few traders move a prediction market price?"
+    a: "On a thin market, yes — a few thousand dollars can shift a price several cents and hold it there for a while. On a market turning over hundreds of thousands of dollars a day, a trader pushing the price away from consensus is just offering everyone else a good trade, and it gets pulled back. Check the 24-hour volume before you read a price as a crowd forecast."
+  - q: "Does a 99¢ price mean the outcome is certain?"
+    a: "No. It means the market is pricing roughly a one-in-a-hundred chance of being wrong, and that you are risking 99 cents to make one. Outcomes priced at a cent or two do resolve YES occasionally — that is exactly what being calibrated at those prices requires."
 ---
 
 A prediction market is a place to buy and sell shares in whether something happens. Each share pays **$1 if the event occurs** and **$0 if it doesn't**. That single rule is what turns a price into a probability.
 
 If a share in "Will the Fed hold rates in September?" trades at 62¢, buyers are willing to pay 62 cents for a claim worth a dollar only if it happens. In aggregate, the market is saying: about a 62% chance.
 
-## Where the price comes from
+## Where does the price come from if there is no bookmaker?
 
 There is no bookmaker setting a line. The price is whatever the last trade cleared at, and it moves whenever someone thinks it's wrong:
 
@@ -20,23 +44,36 @@ There is no bookmaker setting a line. The price is whatever the last trade clear
 
 Because being right pays and being wrong costs, the people with the strongest information have the strongest incentive to trade. That's the mechanism: **the price aggregates what many people know, weighted by how much they'll stake on it.**
 
-## Why calibration matters more than accuracy
+You can watch it happen on a live question. As of 24 August 2026 on Oddzy, [the market on whether the Fed leaves rates unchanged after its September 2026 meeting](/market/will-there-be-no-change-in-fed-interest-rates-after-the-september-2026-meeting-615) was trading at 67¢ on roughly $344,000 of 24-hour volume. Nobody published that number. It is where the buyers and sellers met.
+
+## Why does calibration matter more than being right?
 
 A single market being "wrong" proves nothing — a 70% forecast is *supposed* to be wrong 30% of the time. The right test is calibration across many markets: of everything priced at 70¢, roughly 70% should resolve YES.
 
-Prediction markets score well on this. Across large samples, market prices have consistently beaten pundits and often matched or beaten polling aggregates, particularly as the resolution date approaches and more information arrives.
+Prediction markets score well on this. Across large samples, market prices have consistently beaten pundits and often matched or beaten polling aggregates, particularly as the resolution date approaches and more information arrives. We went through the 2025 record question by question in [how accurate were prediction markets in 2025](/learn/how-accurate-were-prediction-markets-2025).
 
-## Reading a price correctly
+## How do you read a price correctly?
 
-> A price is a probability, not a prediction. "62¢" does not mean the market thinks it will happen. It means the market thinks it's a bit more likely than not.
+Read a price as a probability, not a prediction. "62¢" does not mean the market thinks it will happen. It means the market thinks it's a bit more likely than not.
 
 Two habits help:
 
 1. **Think in cents, not odds.** 62¢ costs you 62 cents and returns a dollar. Your return if correct is $1 ÷ 0.62 ≈ 1.61×.
 2. **Watch the movement, not the level.** A market drifting from 40¢ to 62¢ over a week is new information arriving. That's usually the more interesting signal.
 
-## What you're actually trading
+The arithmetic is the same at every price:
+
+| Price you pay | Implied probability | Return if correct | $10 stake returns |
+| --- | --- | --- | --- |
+| 20¢ | 20% | 5.00× | $50.00 |
+| 40¢ | 40% | 2.50× | $25.00 |
+| 62¢ | 62% | 1.61× | $16.13 |
+| 85¢ | 85% | 1.18× | $11.76 |
+
+The cheap-looking row is cheap for a reason: it is the one that pays nothing four times out of five. [How to size a position](/learn/how-to-size-a-position) is the other half of reading a price.
+
+## What are you actually trading on Oddzy?
 
 On Oddzy the underlying markets are [Polymarket](https://polymarket.com) markets, settled on-chain on Polygon. Shares are real tokens in your own wallet — you can exit a position before resolution by selling at the current price, which is something a fixed-odds bet never lets you do.
 
-That exit option is worth dwelling on. A sportsbook bet is locked until the event ends. A prediction market position can be closed at any time, at a price that reflects everything known so far.
+That exit option is worth dwelling on. A sportsbook bet is locked until the event ends. A prediction market position can be closed at any time, at a price that reflects everything known so far — though [what you get for it is the best bid, not the price on the card](/learn/can-you-sell-before-a-market-resolves). If you want to see the whole path from deposit to first position, [how it works](/how-it-works) walks through it.
