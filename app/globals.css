@@ -320,6 +320,111 @@
 }
 
 /* Long-form article typography (blog — web-only surface). */
+/* ---------------------------------------------------------------------------
+   Article answer-engine blocks: key takeaways, table of contents, FAQ.
+
+   Deliberately quiet. These are structural aids, not decoration — a loud box
+   above the lead competes with the article for the reader's first look, which
+   is the opposite of what an answer-first layout is for. All three use logical
+   properties (padding-inline, border-inline-start) so they mirror correctly on
+   the RTL PolyBaaz side without a single [dir] override.
+--------------------------------------------------------------------------- */
+.oz-callout {
+  border: 1px solid var(--line);
+  border-inline-start: 3px solid var(--accent);
+  border-radius: 6px;
+  background: var(--btn);
+  padding: 1.1rem 1.25rem;
+}
+.oz-callout-title {
+  font-family: var(--font-plex), ui-monospace, monospace;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+.oz-callout-list {
+  margin-top: 0.7rem;
+  padding-inline-start: 1.1em;
+  list-style: disc;
+  color: var(--text2);
+  font-size: 15.5px;
+  line-height: 1.65;
+}
+.oz-callout-list li + li {
+  margin-top: 0.5em;
+}
+
+.oz-toc {
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  padding-block: 0.9rem;
+}
+.oz-toc-title {
+  font-family: var(--font-plex), ui-monospace, monospace;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+.oz-toc-list {
+  margin-top: 0.6rem;
+  /* Numbered, because the order is the argument's order. counter() rather than
+     list-style so the marker can be dimmed independently of the link. */
+  counter-reset: oz-toc;
+  list-style: none;
+}
+.oz-toc-list li {
+  counter-increment: oz-toc;
+  font-size: 15px;
+  line-height: 1.6;
+}
+.oz-toc-list li + li {
+  margin-top: 0.3em;
+}
+.oz-toc-list li::before {
+  content: counter(oz-toc) ".";
+  color: var(--faint);
+  font-family: var(--font-plex), ui-monospace, monospace;
+  font-size: 12px;
+  margin-inline-end: 0.5em;
+}
+.oz-toc-list a {
+  color: var(--text2);
+  text-decoration: none;
+}
+.oz-toc-list a:hover {
+  color: var(--ink);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.oz-faq-item + .oz-faq-item {
+  margin-top: 1.4rem;
+  border-top: 1px solid var(--line);
+  padding-top: 1.4rem;
+}
+.oz-faq dt {
+  color: var(--ink);
+  font-weight: 600;
+  font-size: 16.5px;
+  line-height: 1.5;
+}
+.oz-faq dd {
+  margin-top: 0.5rem;
+  margin-inline-start: 0;
+  color: var(--text2);
+  font-size: 16px;
+  line-height: 1.7;
+}
+
+/* Anchored headings must clear the sticky header when a TOC link jumps to one,
+   otherwise the heading lands underneath it and the reader sees the paragraph
+   before the one they asked for. */
+.oz-prose h2[id] {
+  scroll-margin-top: 5rem;
+}
+
 .oz-prose {
   color: var(--text2);
   font-size: 17px;

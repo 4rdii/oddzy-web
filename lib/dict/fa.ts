@@ -286,6 +286,13 @@ export const fa: Dict = {
     lead: "بازار پیش‌بینی چطور کار می‌کند، قیمت‌ها واقعاً چه معنایی دارند، و چطور بدون اشتباه در مبانی شروع کنیم.",
     backToAll: "→ همهٔ مقاله‌ها",
     minRead: "دقیقه مطالعه",
+    keyTakeaways: "نکته‌های کلیدی",
+    onThisPage: "در این مقاله",
+    faqTitle: "پرسش‌های پرتکرار",
+    related: "خواندن ادامه",
+    breadcrumbBlog: "آموزش",
+    updated: "به‌روزرسانی",
+    words: "کلمه",
   },
   footer: {
     rights: "رابط کاربری بازارهای پیش‌بینی Polymarket.",

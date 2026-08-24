@@ -2,6 +2,7 @@ import "server-only";
 import fs from "node:fs/promises";
 import path from "node:path";
 import matter from "gray-matter";
+import GithubSlugger from "github-slugger";
 import { DEFAULT_LOCALE, type Locale } from "./i18n";
 
 /**
@@ -40,7 +41,27 @@ export type PostMeta = {
   lead: string;
   /** False when this locale fell back to the English file. */
   translated: boolean;
+
+  /**
+   * The answer-engine blocks. All optional: the eleven launch articles predate
+   * them, and every one renders correctly with these empty rather than being
+   * held back until someone backfills it.
+   */
+
+  /** 4-5 sentence-length claims shown in a box under the lead. */
+  takeaways: string[];
+  /** Q&A pairs rendered at the foot AND emitted as FAQPage JSON-LD. */
+  faq: FaqItem[];
+  /** Emitted as BlogPosting.keywords; not rendered. */
+  keywords: string[];
+  /** H2s of the body, with the ids rehype-slug will put on them. */
+  headings: Heading[];
+  /** Body words, emitted as BlogPosting.wordCount. */
+  wordCount: number;
 };
+
+export type FaqItem = { q: string; a: string };
+export type Heading = { id: string; text: string };
 
 const POSTS_DIR = path.join(process.cwd(), "content", "posts");
 
@@ -89,7 +110,7 @@ async function read(slug: string, locale: Locale): Promise<PostMeta | null> {
   }
   if (raw === null) return null;
 
-  const { data } = matter(raw);
+  const { data, content } = matter(raw);
   return {
     slug,
     title: String(data.title ?? ""),
@@ -100,7 +121,54 @@ async function read(slug: string, locale: Locale): Promise<PostMeta | null> {
     updatedAt: data.updatedAt ? String(data.updatedAt) : undefined,
     lead: String(data.lead ?? data.description ?? ""),
     translated,
+    takeaways: strings(data.takeaways),
+    faq: faqItems(data.faq),
+    keywords: strings(data.keywords),
+    headings: headingsOf(content),
+    wordCount: content.trim().split(/\s+/).filter(Boolean).length,
   } satisfies PostMeta;
+}
+
+/** Frontmatter arrays are author-written, so coerce rather than trust. */
+function strings(v: unknown): string[] {
+  if (!Array.isArray(v)) return [];
+  return v.map((x) => String(x).trim()).filter(Boolean);
+}
+
+function faqItems(v: unknown): FaqItem[] {
+  if (!Array.isArray(v)) return [];
+  return v
+    .map((x) => {
+      const o = x as Record<string, unknown>;
+      return { q: String(o?.q ?? "").trim(), a: String(o?.a ?? "").trim() };
+    })
+    .filter((x) => x.q && x.a);
+}
+
+/**
+ * The H2s of the body, with the ids `rehype-slug` will assign them.
+ *
+ * Derived from the raw MDX rather than the compiled output because the body is
+ * a lazily-imported component — the index would have to render it to inspect
+ * its headings, which defeats the point of a cheap frontmatter-only index.
+ *
+ * The ids must match rehype-slug exactly or every TOC link is a dead anchor, so
+ * this uses github-slugger, which is what rehype-slug uses internally. One
+ * slugger per document: it carries the dedup counter that turns a repeated
+ * heading into `-1`, `-2`, and sharing an instance across files would leak
+ * those suffixes between articles.
+ */
+function headingsOf(content: string): Heading[] {
+  const slugger = new GithubSlugger();
+  return [...content.matchAll(/^##[ \t]+(.+?)[ \t]*$/gm)].map((m) => {
+    // rehype-slug sees rendered TEXT, not markdown source, so inline syntax has
+    // to come off first or `## What is **mark price**?` would slug the asterisks.
+    const text = m[1]
+      .replace(/\[([^\]]*)\]\([^)]*\)/g, "$1")
+      .replace(/[*_`]/g, "")
+      .trim();
+    return { id: slugger.slug(text), text };
+  });
 }
 
 async function readFile(file: string): Promise<string | null> {

@@ -17,7 +17,11 @@ const withMDX = createMDX({
     // Named as a string, not imported: plugins reach the Turbopack loader across
     // a Rust boundary that can't take JavaScript functions.
     remarkPlugins: ["remark-frontmatter"],
-    rehypePlugins: [],
+    // rehype-slug puts an `id` on every heading so the table of contents can
+    // link into the body. lib/posts.ts derives the same ids from the raw MDX
+    // with github-slugger, which is the algorithm rehype-slug uses — the two
+    // must agree or every TOC link is a dead anchor.
+    rehypePlugins: ["rehype-slug"],
   },
 });
 

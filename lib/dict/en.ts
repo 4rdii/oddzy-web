@@ -295,6 +295,13 @@ export const en = {
     lead: "How prediction markets work, what the prices actually mean, and how to trade them without getting the basics wrong.",
     backToAll: "← All articles",
     minRead: "MIN READ",
+    keyTakeaways: "Key takeaways",
+    onThisPage: "On this page",
+    faqTitle: "Common questions",
+    related: "Keep reading",
+    breadcrumbBlog: "Learn",
+    updated: "Updated",
+    words: "words",
   },
   footer: {
     rights: "An interface to Polymarket prediction markets.",
