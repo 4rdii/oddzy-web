@@ -1,36 +1,74 @@
 ---
 title: "How to size a position"
-description: "How much to put on a market matters more than which market you pick. A guide to staking what you can lose, reading what a price says about how often you'll be wrong, and why longshots feel cheap."
+description: "How much to put on a market matters more than which market you pick. Read a price as a loss rate, size to the losing streak, and know why longshots feel cheap."
 tag: GUIDE
 readingMinutes: 7
 publishedAt: "2026-08-10"
+updatedAt: "2026-08-24"
 lead: "How much you put on a market matters more than which market you pick. Sizing is where most accounts are actually won or lost — and the arithmetic is simpler than people expect."
+keywords:
+  - "how to size a position"
+  - "prediction market position sizing"
+  - "favourite-longshot bias"
+  - "bankroll management prediction markets"
+  - "what does a 5 cent share mean"
+takeaways:
+  - "Stake only what you can lose entirely. A prediction market share pays nothing at all when it goes against you, and it does so on a scheduled date."
+  - "A price is a loss rate. Buy at 5¢ and you should expect to be wrong nineteen times out of twenty, even when every purchase is correctly priced."
+  - "Size to the losing streak, not to the payoff. If ten losses in a row would make you change your rules mid-flight, the position is already too big."
+  - "Low-priced outcomes are systematically overpriced and heavy favourites slightly underpriced — the favourite–longshot bias is a feeling, not a maths error."
+  - "Size down when the spread is wide and when the resolution criteria leave room for interpretation, because both are costs you cannot forecast away."
+  - "Judge an approach across dozens of positions. Five trades cannot distinguish a good method from a lucky one; the sample size is part of the strategy."
+faq:
+  - q: "What percentage of my balance should a single position be?"
+    a: "There is no universal number, but the useful way to pick one is backwards from the losing streak rather than forwards from the payoff. Choose a fraction small enough that ten consecutive losses would leave you willing to keep following the same rules, and hold that fraction constant. For most people trading low-priced outcomes that means a low single-digit percentage per position."
+  - q: "Should I size a 5¢ position the same as a 50¢ one?"
+    a: "In dollars staked, usually yes — the cheap share is not a smaller risk just because it costs less. What changes is how the losses arrive. A book of 5¢ positions produces long unbroken runs of zeros punctuated by rare large wins, so the same dollar size feels far worse to hold even when the pricing is fair."
+  - q: "Does averaging down work in a prediction market?"
+    a: "It works differently than in stocks, because there is no waiting it out. A share that resolves against you is worth exactly nothing on a known date, so adding to a losing position raises the amount you lose entirely rather than lowering your cost basis for a recovery that may come later. Add only if your view of the probability has genuinely changed, not because the price fell."
+  - q: "How many positions should I hold at once?"
+    a: "Enough that no single resolution decides your quarter, and few enough that you can still read the resolution rules on each one. Diversification only helps when the positions are genuinely independent — ten shares on ten legs of the same tournament are close to one position, since a single upstream result moves all of them together."
+  - q: "How long does it take to know whether my approach works?"
+    a: "Dozens of resolved positions, not a handful. Across five trades a sound method can easily look terrible and an unsound one brilliant, and the lower the prices you buy, the longer it takes for the arithmetic to show through the noise. Judge the process on a run of results, not on the last position that settled."
+  - q: "Is a wide spread a reason not to trade at all?"
+    a: "Not always, but it is a reason to trade smaller. A wide spread means you pay to enter and pay again to leave, so the market has to move further in your favour before you break even. If your edge is thin and the spread is wide, the spread will usually eat the edge before the outcome does."
 ---
 
 Choosing a market is the fun part. Choosing how much to put on it is the part that decides whether you are still trading in six months.
 
 Start with the rule that has no exceptions: **stake only what you can lose entirely.** A share can go to zero, and unlike a stock it does so on a scheduled date. There is no recovery, no waiting it out, no partial value. That is not a warning about a rare tail case — it is the ordinary, expected outcome for roughly half of everything you ever buy.
 
-## What the price tells you about being wrong
+## What does the price tell you about how often you'll be wrong?
 
 A price is a probability, and a probability is a promise about how often you should expect to lose.
 
 Buy at 50¢ and you should expect to be wrong about half the time. Buy at 5¢ and you should expect to be wrong nineteen times out of twenty — that is what 5¢ means. Both can be good trades. But a portfolio of 5¢ positions will show you a long, unbroken run of losses even when every single purchase was correctly priced, and most people abandon the strategy before the arithmetic gets a chance to work.
 
+| Entry price | Expected to lose | Payout per $1 staked | Odds of ten straight losses |
+| --- | --- | --- | --- |
+| 5¢ | 19 times in 20 | $20 | about 60% |
+| 20¢ | 4 times in 5 | $5 | about 11% |
+| 50¢ | 1 time in 2 | $2 | about 1 in 1,000 |
+| 88¢ | 1 time in 8 | $1.14 | vanishingly rare |
+
+Read the last column before the third. At 5¢, ten losses in a row is not bad luck — it is the single most likely thing that happens next, and it happens to correctly priced positions.
+
 So size to the losing streak, not to the payoff. If a string of ten losses would make you stop trading or change your rules mid-flight, your position size is already too big, regardless of how good the position is.
 
-## Why favourites feel safe and longshots feel cheap
+## Why do longshots feel cheap and favourites feel safe?
 
-There is a well-documented pattern in betting and prediction markets called the **favourite–longshot bias**: outcomes at very low prices tend to be overpriced relative to how often they occur, and heavy favourites slightly underpriced.
+Outcomes at very low prices tend to be overpriced relative to how often they actually occur, and heavy favourites tend to be slightly underpriced. The pattern is well documented in betting and prediction markets and has a name: the **favourite–longshot bias**.
 
 The reason is psychological rather than mathematical. A 3¢ share costs almost nothing and pays thirty-three times — it reads as a lottery ticket, and lottery tickets attract more money than their odds deserve. Meanwhile an 88¢ share feels like an expensive way to make twelve cents, so it attracts less.
 
-Both feelings mislead. The 88¢ share loses one time in eight, which will hurt far more than you have imagined. The 3¢ share is cheap in dollars and expensive in probability.
+Both feelings mislead. The 88¢ share loses one time in eight, which will hurt far more than you have imagined. The 3¢ share is cheap in dollars and expensive in probability. You can watch this on any long-horizon question: as of 24 August 2026, [Ethereum dipping to $1,000 before the end of the year](/market/will-ethereum-dip-to-1000-by-december-31-2026-273-175) trades around 5.5¢ on Oddzy — a price that says the answer is no nineteen times out of twenty, and which is still attracting real volume for exactly that reason.
 
-## A sizing habit that works
+## How much should you put on a single position?
 
 Pick a total you are willing to lose over a season — a month, a quarter, whatever period you think in. Divide it so that no single position is more than a small fraction, and hold that fraction constant instead of raising it when you feel certain. Certainty is not information; it is a mood, and it peaks right before the expensive trades.
 
-Two adjustments are worth making. Size down when the spread is wide, because you are paying to enter and will pay again to leave. And size down when the resolution criteria leave room for interpretation, because that is risk you cannot forecast away.
+Two adjustments are worth making. Size down when the spread is wide, because you are paying to enter and will pay again to leave — that gap is the same one behind [an order that fills at a worse price than the one you clicked](/learn/why-did-my-order-fill-at-a-worse-price). And size down when the resolution criteria leave room for interpretation, because that is risk you cannot forecast away; [reading the rules before the price](/learn/read-the-resolution-rules-first) is what tells you which markets those are.
 
 Then let the results accumulate over dozens of positions before you judge anything. Fewer than that and you are reading noise: a good approach can easily look terrible across five trades, and a bad one can look brilliant. The sample size is the strategy.
+
+Sizing assumes you intend to hold to resolution, and mostly you do not have to — [a position can be sold while the market is still open](/learn/can-you-sell-before-a-market-resolves), which caps a loss before it goes to zero. If you have not placed a first trade yet, [how it works](/how-it-works) covers the mechanics the arithmetic above sits on top of.
