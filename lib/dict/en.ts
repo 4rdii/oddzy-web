@@ -19,6 +19,7 @@ export const en = {
   cta: {
     startTrading: "Start trading",
     openTelegram: "Open in Telegram",
+    tradeThisMarket: "Trade this market",
   },
   home: {
     metaTitle: "Oddzy — Prediction markets, in your pocket",

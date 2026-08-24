@@ -425,6 +425,30 @@
   scroll-margin-top: 5rem;
 }
 
+/* Justified body text, Persian only.
+   Justification is the normal setting for Persian typesetting: the script has
+   no capital letters and joins within words, so an even right edge reads as
+   finished rather than as a stunt. English is left ragged on purpose — without
+   hyphenation, justifying a ~80-character measure opens white "rivers" down the
+   column, and CSS hyphenation of English is still too crude to rely on.
+
+   Keyed off data-locale rather than [lang], because <html lang> is the BCP-47
+   tag ("fa-IR") and because an untranslated article on polybaaz.com carries
+   lang="en" on its own <article> — that English fallback body must stay ragged
+   even though the surrounding site is Persian. The second rule below is what
+   protects it. */
+html[data-locale="fa"] .oz-prose,
+html[data-locale="fa"] .oz-faq dd,
+html[data-locale="fa"] .oz-callout-list {
+  text-align: justify;
+  /* Stops the last line of a justified paragraph being stretched, and keeps a
+     lone short word from being spaced across the full measure. */
+  text-align-last: start;
+}
+html[data-locale="fa"] [lang="en"] .oz-prose {
+  text-align: start;
+}
+
 .oz-prose {
   color: var(--text2);
   font-size: 17px;

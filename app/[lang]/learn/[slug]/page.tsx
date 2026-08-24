@@ -156,7 +156,7 @@ export default async function ArticlePage(props: ArticleParams) {
           keeps the paragraphs left-aligned and stops a screen reader reading
           English with a Persian voice. */}
       <article
-        className="mx-auto max-w-2xl px-5 pt-10 pb-8"
+        className="mx-auto max-w-3xl px-5 pt-10 pb-8"
         {...(post.translated ? {} : { lang: "en", dir: "ltr" as const })}
       >
         {/* A real trail rather than a bare back-link, because the page emits

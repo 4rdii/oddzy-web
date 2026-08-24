@@ -30,6 +30,7 @@ export const fa: Dict = {
   cta: {
     startTrading: "شروع کنید",
     openTelegram: "باز کردن در تلگرام",
+    tradeThisMarket: "پیش‌بینی این بازار",
   },
   home: {
     metaTitle: "پلی‌باز — بازارهای پیش‌بینی، داخل تلگرام",

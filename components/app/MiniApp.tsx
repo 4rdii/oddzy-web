@@ -53,6 +53,42 @@ export function MiniApp({
   const [topic, setTopic] = useState<Topic | null>(null);
   const { inTelegram } = useTelegram();
 
+  /**
+   * Deep link from a market page: `/app?market=<slug>` opens that market.
+   *
+   * Handled on the client on purpose. `/app` is ISR and both hostnames share
+   * one Vercel cache, so reading searchParams on the server would opt the whole
+   * route into dynamic rendering for every visitor just to serve the minority
+   * who arrive via a deep link.
+   *
+   * The param is stripped immediately, before the fetch resolves: it has done
+   * its job once it is read, and leaving it in the URL means Back re-opens the
+   * market instead of returning to the feed.
+   */
+  useEffect(() => {
+    const slug = new URLSearchParams(window.location.search).get("market");
+    if (!slug) return;
+
+    const url = new URL(window.location.href);
+    url.searchParams.delete("market");
+    window.history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
+
+    let cancelled = false;
+    fetch(`/api/markets/by-slug/${encodeURIComponent(slug)}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((m: Market | null) => {
+        // Silently falling back to the feed is correct here: the market may
+        // have settled between the page being cached and the tap. An empty
+        // detail screen would be worse than the normal landing.
+        if (!cancelled && m) setScreen({ name: "detail", market: m });
+      })
+      .catch(() => {});
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   // null means "unknown", which renders the slip without a balance line rather
   // than claiming a fake $0 and blocking the stake as insufficient.
   const [balance, setBalance] = useState<number | null>(null);

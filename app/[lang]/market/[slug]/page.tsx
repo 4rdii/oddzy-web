@@ -245,12 +245,15 @@ export default async function MarketPage(props: Params) {
 
         <section className="mt-8 rounded-2xl border border-[var(--line)] bg-[var(--card)] p-5">
           <p className="text-[15px] leading-relaxed">{t.market.ctaLead}</p>
-          <a
-            href={`https://t.me/${brand.tgBot}`}
+          {/* Opens the mini-app on THIS market, not a bare bot start screen.
+              Someone who read a page about one question and tapped through to a
+              generic feed had to find it again from scratch. */}
+          <Link
+            href={`/app?market=${encodeURIComponent(slug)}`}
             className="mt-4 inline-block rounded-xl bg-[var(--accent)] px-5 py-3 text-[15px] font-semibold text-[var(--on-accent)]"
           >
-            {t.cta.openTelegram}
-          </a>
+            {t.cta.tradeThisMarket}
+          </Link>
         </section>
 
         <p className="mt-6 font-mono text-[11px] text-[var(--faint)]">
