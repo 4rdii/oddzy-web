@@ -1,36 +1,70 @@
 ---
 title: "Why did my order fill at a worse price than I saw?"
-description: "The price on the card is usually a midpoint. You don't trade at the midpoint — you trade against the best offer on the book, and on a thin market that gap costs more than any fee."
+description: "The price on the card is usually a midpoint, and nobody trades at the midpoint. You buy at the best offer on the book — on a thin market that gap costs more than fees."
 tag: GUIDE
-readingMinutes: 6
+readingMinutes: 4
 publishedAt: "2026-08-10"
+updatedAt: "2026-08-24"
 lead: "The price shown on a market card is usually a midpoint, and nobody trades at the midpoint. You buy at the best offer on the book — on a thin market, that gap costs far more than fees ever will."
+keywords:
+  - "why did my order fill at a worse price"
+  - "prediction market slippage"
+  - "bid ask spread prediction markets"
+  - "order book depth"
+  - "slippage limit"
+takeaways:
+  - "The price on a market card is usually the midpoint between the best bid and the best ask, and no trade ever happens at the midpoint."
+  - "You buy at the best ask and sell at the best bid, so the spread is a real cost you pay on entry and again on exit."
+  - "The best ask is only good for the size that seller offered; a larger order walks up the book and fills at a worse average price."
+  - "On a market trading a few hundred dollars a day, the spread can be five or ten cents — far more than any fee on the trade."
+  - "A slippage limit trades certainty of price against certainty of fill: a tight cap can leave you with no position at all."
+faq:
+  - q: "Is slippage a fee that Oddzy charges me?"
+    a: "No. Slippage is not a charge at all — it is the difference between the summary price shown on a market card and the price another trader is actually willing to sell to you at. The money goes to the counterparty on the other side of the order book, not to the platform, and it exists on every order book everywhere."
+  - q: "Does the same thing happen when I sell?"
+    a: "Yes, and in the same direction against you. Selling hands your shares to another trader at the best bid, which sits below the midpoint, and a large sell order walks down the book to lower bids as it consumes each level. A market thin enough to make your entry expensive will usually make your exit expensive too."
+  - q: "How do I see the spread before I trade?"
+    a: "Open the order book on the market page rather than reading the single price on the card. It lists the bids below and the asks above, with the size available at each level, so you can see both the gap between the two sides and how much you can buy before your order moves the price."
+  - q: "Why did my order only fill partially?"
+    a: "A partial fill means the book ran out of offers inside the price cap you set. You bought everything available at or under your limit and the rest of the order had nowhere to go. That is the cap doing its job, not an error, and the unfilled part can be re-entered at a higher price if you still want the position."
+  - q: "Does a wide spread mean the market is broken or unfair?"
+    a: "No. A wide spread usually just means few people are trading that market, so nobody is competing to quote a tighter price. It is a signal about liquidity rather than about fairness, and the practical response is to size smaller, use a price cap, or place a resting order inside the spread and wait."
 ---
 
 You saw 42¢. You bought, and the receipt says 45¢. Nothing went wrong, and nothing was taken from you. You were reading a number that was never a purchase price.
 
-## The midpoint is a summary, not an offer
+## Why is the price on the card not the price you pay?
 
-Every market has two sides. Someone is willing to sell at a price — the **ask**. Someone is willing to buy at a lower one — the **bid**. Between them is empty space, the **spread**, where no trade exists.
+Because a market card shows one number and a market has two prices. The number displayed is usually the midpoint between the best bid and the best ask, or the last trade that happened — both are summaries, and neither is available to you. You buy at the ask and you sell at the bid.
 
-A single displayed price has to come from somewhere, so it is usually the midpoint between the best bid and the best ask, or the last trade that happened. Both are summaries. Neither is available to you. If the book shows a best bid of 39¢ and a best ask of 45¢, the "42¢" you saw is the average of two prices, and you can transact at exactly one of them: 45¢ to buy, 39¢ to sell.
+Every market has two sides. Someone is willing to sell at a price — the **ask**. Someone is willing to buy at a lower one — the **bid**. Between them is empty space, the **spread**, where no trade exists. If the book shows a best bid of 39¢ and a best ask of 45¢, the "42¢" you saw is the average of two prices, and you can transact at exactly one of them: 45¢ to buy, 39¢ to sell.
 
 On a busy market the spread is a cent or less and the distinction barely registers. On a market that trades a few hundred dollars a day it can be five or ten cents wide, and it is the single biggest cost of your trade.
 
-## Depth: the second price you didn't see
+## What is depth, and why does a bigger order fill worse?
 
-The best ask is only good for as much size as that seller offered. If someone is selling 50 shares at 45¢ and the next offer up is 52¢, an order for 200 shares clears the first 50 at 45¢ and then walks up the book. Your average fill is worse than the top of the book, and the bigger your order relative to the market, the worse it gets.
+Depth is how many shares are on offer at each price, and it is the second price you didn't see. The best ask is only good for as much size as that seller posted; once your order takes all of it, the remainder walks up to the next offer. Your average fill is worse than the top of the book, and the bigger your order relative to the market, the worse it gets.
 
-This is why the same market can feel cheap at $10 and expensive at $500. The price you can get is a function of how much you are buying.
+Say someone is selling 50 shares at 45¢ and the next offer up is 52¢. An order for 200 shares fills like this:
 
-## Slippage limits and partial fills
+| Book level | Shares taken | Price | Cost |
+| --- | --- | --- | --- |
+| Best ask | 50 | 45¢ | $22.50 |
+| Next offer | 150 | 52¢ | $78.00 |
+| **Total** | **200** | **50.25¢ average** | **$100.50** |
 
-The defence is a price cap: state the worst average price you will accept. If the book can fill you inside it, you trade. If it can't, you get filled partially, or not at all.
+You read 42¢ on the card and paid 50.25¢, and every cent of that gap was visible in the book before you pressed the button.
+
+This is why the same market can feel cheap at $10 and expensive at $500. The price you can get is a function of how much you are buying, which makes [sizing and liquidity the same decision](/learn/how-to-size-a-position). Volume is the rough proxy: as of 24 August 2026 on Oddzy, [the market on whether Ethereum dips to $1,000 by 31 December 2026](/market/will-ethereum-dip-to-1000-by-december-31-2026-273-175) had turned over about $393,000 in 24 hours, and a book with that much traffic absorbs an ordinary order without moving. A league-outsider market trading a few hundred dollars a day will not.
+
+## What does a slippage limit actually protect you from?
+
+A slippage limit is a price cap: you state the worst average price you will accept, and the order only executes inside it. If the book can fill you under that cap, you trade. If it can't, you get filled partially, or not at all.
 
 That is the trade-off, and it is worth stating plainly: **a tight cap protects you from a bad price and exposes you to no position.** A loose cap guarantees you get filled and lets a thin book decide what you pay. A partial fill is not a failure — it means the market genuinely had nothing more to sell you at a price you agreed to.
 
-## What to do about it
+## What should you check before you size a trade?
 
-Look at the book, not the card, before sizing anything. If the spread is wide, ask whether your edge is bigger than the spread — often it isn't, and the trade you thought was good is only good at the midpoint you can't have.
+Look at the book, not the card. If the spread is wide, ask whether your edge is bigger than the spread — often it isn't, and the trade you thought was good is only good at the midpoint you can't have. Check the depth on the other side too, because the same walk up the book happens in reverse [when you want to sell out early](/learn/can-you-sell-before-a-market-resolves).
 
-You can also be the other side of it. Placing a resting order inside the spread means waiting instead of paying, and sometimes the market comes to you. Sometimes it doesn't, and the news arrives without you.
+You can also be the other side of it. Placing a resting order inside the spread means waiting instead of paying, and sometimes the market comes to you. Sometimes it doesn't, and the news arrives without you. Either way the order book is on every market page next to the price, and [how it works](/how-it-works) shows where to find it.
