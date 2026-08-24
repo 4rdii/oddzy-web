@@ -1,0 +1,137 @@
+---
+title: "What the Strait of Hormuz markets are actually pricing"
+description: "The Hormuz reopening markets don't settle on news. They settle on one number published by IMF PortWatch — and until you know that number, you are trading the wrong question."
+tag: ANALYSIS
+readingMinutes: 7
+publishedAt: "2026-08-24"
+lead: "Every headline about a Hormuz deal moves these markets. None of them settle one. The reopening contracts resolve on a single figure from IMF PortWatch, and reading the prices without reading that rule is how people lose money on a view that turns out to be right."
+keywords:
+  - "Strait of Hormuz prediction market"
+  - "Hormuz reopening odds"
+  - "IMF PortWatch transit calls"
+  - "Iran Hormuz fees market"
+  - "hedging oil with prediction markets"
+takeaways:
+  - "The reopening markets settle on one number: a 7-day moving average of Strait of Hormuz transit calls published by IMF PortWatch, at 60 or above."
+  - "That average only has to print once, on any date before the deadline — it is not a requirement that traffic hold at 60 for seven straight days."
+  - "PortWatch counts only ships it can see, so traffic can genuinely recover while the market still resolves NO. The error in this data source runs one way."
+  - "The market prices Iran charging tolls as more likely than the strait reopening — 35.5c against 13.5c for October, which is not the story the headlines tell."
+  - "Two markets on the same 2026 question disagree by 13.5 cents, and the cheaper side is the one almost nobody is trading."
+faq:
+  - q: "What exactly makes a Hormuz reopening market resolve YES?"
+    a: "IMF PortWatch has to publish a 7-day moving average of transit calls for the Strait of Hormuz equal to or above 60, on any date between the market being created and its deadline. Transit calls cover container, dry bulk, roll-on/roll-off, general cargo and tanker ships. The market resolves as soon as that value is published, so it does not matter what happens afterwards."
+  - q: "Does a peace deal make these markets resolve YES?"
+    a: "No. A signed agreement is not the settlement condition, and none of the deadlines so far have been decided by one. The 15 July, 31 July and 15 August reopening markets all resolved NO, and a separate market on a US-Iran Hormuz agreement by 15 August settled at under one cent, two weeks after headlines suggested a deal was imminent. Minesweeping, war-risk insurance and the actual return of shipping take weeks after any signature."
+  - q: "Can shipping return to normal and the market still resolve NO?"
+    a: "Yes, and this is the most underrated risk in the whole complex. The resolution rules state that ships not reported by IMF PortWatch will not be considered, and PortWatch counts vessels from public tracking signals. Any ship transiting with its transponder off is invisible to the settlement source, so measured traffic can stay far below real traffic. The bias only runs in one direction: against YES."
+  - q: "Why is the fee market priced higher than the reopening market?"
+    a: "Because the market's central expectation is a controlled corridor rather than a return to normal. As of 24 August 2026, Iran charging Hormuz fees by 31 October trades at 35.5 cents while traffic returning to normal by the same date trades at 13.5 cents. The right to levy tolls is also the main point of contention in the negotiations, which is why it is priced as the more likely outcome."
+  - q: "Is buying NO on these markets a low-risk trade?"
+    a: "No. Selling a near-certainty repeatedly is a premium-collection trade: small frequent gains against a rare large loss, and one political event can erase several months of them at once. The near deadlines pay very little for that risk — 1.5 cents on the September 15 contract — so the compensation only appears at the deadlines where the outcome is genuinely uncertain."
+  - q: "How can a prediction market hedge an oil position?"
+    a: "An oil long is exposed to exactly one thing here: the strait reopening and the war premium coming out of the price. A YES position on reopening pays precisely when that happens, so it offsets the loss. Unlike an oil option it prices the cause rather than the price, which means no volatility crush and no strike or expiry to manage — but it also pays nothing if oil falls for an unrelated reason."
+---
+
+Every few weeks a headline says a Hormuz deal is close, and the prediction markets on it move. None of those headlines has settled a single contract. The reopening markets resolve on one number, published by one institution, and the gap between that number and the news cycle is where most of the mispricing lives.
+
+All figures below are from Oddzy's market data as of 24 August 2026. Prices move daily — check the market page before acting on any of them.
+
+## What is actually being traded on Hormuz?
+
+Four distinct families of market, and they are not the same question:
+
+| Family | The question it settles | Example, 24 Aug 2026 |
+| --- | --- | --- |
+| Dated reopening | Does traffic return to normal by a date? | [31 December](/market/strait-of-hormuz-traffic-returns-to-normal-by-december-31) — 34.5c |
+| Full-year | Does it fail to return at all in 2026? | 52.0c |
+| Fees | Does Iran charge for passage? | [31 October](/market/iran-charges-hormuz-fees-by-october-31) — 35.5c |
+| Ship counts | How many vessels transit in a day? | Zero ships on any day by 31 Aug — 32.6c |
+
+Together the ten contracts quoted in this article carry about **$15.7 million** of lifetime volume, most of it concentrated in the September and December reopening markets.
+
+The families settle independently. A deal, a toll and a return of traffic are three separate events with three separate prices, and conflating them is the single most common error here.
+
+## What actually settles a reopening market?
+
+This is the part worth reading twice. From the resolution rules themselves:
+
+> The market resolves YES if IMF PortWatch publishes a 7-day moving average of transit calls ("Arrivals of Ships") for the Strait of Hormuz equal to or above 60, for any date between market creation and the deadline.
+
+Two things follow, and one of them is commonly got wrong.
+
+First, it is a **moving average**, not a single day. One convoy does not clear the bar; you need roughly a week of sustained traffic averaging 60 arrivals a day. On 16 August 2026, PortWatch recorded a single transit — about 1% of typical levels. Getting from there to a 60-average is a very large move.
+
+Second — and this is the correction — the average has to print **once, on any date** before the deadline. It is not a requirement that traffic hold at 60 for seven consecutive days, and it does not matter if traffic collapses again the following week. Once the number is published, the market resolves and stays resolved.
+
+A signature is not a settlement. Minesweeping, the return of war-risk insurance and the physical return of fleets all take weeks. That is why every deadline so far has resolved NO: 15 July, 31 July and 15 August all settled at a tenth of a cent. A separate contract on a US-Iran Hormuz agreement by 15 August settled at 0.8 cents, a fortnight after headlines put a deal at 48 hours away.
+
+If you take one habit from this article, make it the one in [read the resolution rules first](/learn/read-the-resolution-rules-first).
+
+## Why can traffic recover and the market still say no?
+
+The rules contain a sentence that does more work than anything else in them: *ships not reported by IMF PortWatch will not be considered.*
+
+PortWatch counts vessels it can observe through public tracking signals. A vessel crossing with its transponder switched off — a rational thing to do in a conflict zone — does not exist as far as settlement is concerned. Real traffic can therefore recover substantially while the measured 7-day average stays far below 60.
+
+This error is not random. It runs one way, and it runs in favour of NO. Anyone buying YES is betting not only that shipping returns, but that it returns *visibly*.
+
+## What does the NO ladder actually pay?
+
+Buying NO is the expression of "this does not reopen by then":
+
+| Deadline | NO costs | Return if right | Days left |
+| --- | --- | --- | --- |
+| [15 September](/market/strait-of-hormuz-traffic-returns-to-normal-by-september-15-20260810150912478) | 98.5c | +1.5% | 22 |
+| [30 September](/market/strait-of-hormuz-traffic-returns-to-normal-by-september-30-20260702154339440) | 94.5c | +5.8% | 37 |
+| [31 October](/market/strait-of-hormuz-traffic-returns-to-normal-by-october-31-20260810151043583) | 86.5c | +15.6% | 68 |
+| [30 November](/market/strait-of-hormuz-traffic-returns-to-normal-by-november-30-20260810151158765) | 70.0c | +42.9% | 98 |
+| [31 December](/market/strait-of-hormuz-traffic-returns-to-normal-by-december-31) | 65.5c | +52.7% | 129 |
+
+Because settlement needs a week-long average, the near deadlines are close to arithmetically decided rather than merely unlikely: from an average near 1, reaching 60 before 15 September is not a forecast, it is a calculation. The market pays 1.5 cents for that certainty.
+
+The compensation only appears where the outcome is genuinely open — November and December. That is also where the risk is real, so size it as risk rather than as yield. This is a premium-collection trade: small repeated gains against one large sudden loss, and the correct way to think about it is in [how to size a position](/learn/how-to-size-a-position).
+
+## Two markets, one question, thirteen cents apart
+
+The December contract at 34.5c implies NO at 65.5c. A separate full-year contract asking whether traffic fails to return at all in 2026 trades at 52.0c. These are close to the same claim, and they disagree by 13.5 cents.
+
+Before treating that as free money: the December market carries about $9.1 million of volume and the full-year one about $150,000. A gap of that size on a thin book usually means the thin side has not been updated rather than that the liquid side is wrong, and the depth to trade it may simply not be there. Check the book, not the midpoint — see [why orders fill at a worse price](/learn/why-did-my-order-fill-at-a-worse-price).
+
+## What the prices say that the headlines do not
+
+Set the fee markets against the reopening markets on matching dates:
+
+| 24 Aug 2026 | 30 September | 31 October |
+| --- | --- | --- |
+| Iran charges fees | 17.5c | 35.5c |
+| Traffic returns to normal | 5.5c | 13.5c |
+
+On both dates the market thinks a toll is roughly two and a half times likelier than normality. The central expectation being priced is a **controlled corridor with a fee attached** — not a reopening. And the right to levy that fee is precisely the sticking point in the negotiations.
+
+## Using it as an oil hedge
+
+Brent traded around $94 in late August 2026, well above pre-conflict levels, with a large war premium embedded. If you are long oil or energy equities, the strait reopening is your single largest downside — and a YES position pays exactly when that happens.
+
+Suppose a $10,000 oil position, hedged with $1,000 of December YES at 34.5c, which buys about 2,899 shares.
+
+| | Strait reopens | It does not |
+| --- | --- | --- |
+| Oil position (assume $94 to $72) | −$2,340 | war premium holds |
+| Hedge (2,899 shares) | +$1,899 | −$1,000 |
+| **Net** | **−$441** | **−$1,000** |
+
+Ten percent of the position covers about 81% of the assumed drawdown. The advantage over an oil put is that you are pricing the *cause* — a ship count — rather than a volatile price, so there is no volatility crush and no strike or expiry to manage.
+
+Be clear about what that table is: the $94-to-$72 move is an **assumption**, not a market price. Pick your own and the numbers change. The hedge also pays nothing if oil falls for an unrelated reason.
+
+## Before you trade any of this
+
+1. Read the price on the market page, not from a screenshot.
+2. Read the full resolution rules — the settlement source and the numeric threshold are the trade.
+3. Check order-book depth. The midpoint is not the price you get.
+4. Size small, and do not concentrate on one deadline.
+5. Decide your exits in advance. Minesweeping operations, a formal agreement and any sudden jump in PortWatch arrivals are the three signals to act on.
+
+New to how any of this settles? Start with [how a market resolves and when you get paid](/learn/how-markets-resolve-and-when-you-get-paid), or see [how it works](/how-it-works).
+
+*This is analysis of market prices, not financial advice and not a political position. Prediction markets carry the risk of losing your entire stake.*
