@@ -2,55 +2,91 @@
 title: "Getting started on Polymarket from Telegram in 10 minutes"
 description: "No exchange account, no app install. Your wallet is created when you open the mini app — from first deposit to first position, step by step."
 tag: GUIDE
-readingMinutes: 10
+readingMinutes: 4
 publishedAt: "2026-07-15"
+updatedAt: "2026-08-24"
 lead: "No exchange account, no app install. Your wallet is created the moment you open the mini app — this guide walks from first deposit to first position in ten minutes."
+keywords:
+  - "how to use Polymarket on Telegram"
+  - "Polymarket Telegram bot"
+  - "prediction market wallet setup"
+  - "deposit USDC to a prediction market"
+  - "first prediction market position"
+takeaways:
+  - "Signing up is opening the bot: the mini app creates a self-custodial wallet through Privy, so there is no seed phrase to write down and no extension to install."
+  - "The keys are yours — Oddzy signs only the orders you approve, you can export the private key at any time, and your balance is never held by us."
+  - "Deposit only to the address the Deposit button gives you for the network you are sending from; the two fixed addresses on the wallet screen exist so you can look your account up on-chain."
+  - "The minimum stake is $1, so a first position can be small enough that being wrong costs nothing that matters."
+  - "Every share pays $1 if it wins and nothing if it loses, so $10 at 25¢ returns $40 and the same $10 at 65¢ returns $15.38."
+  - "You do not have to wait for resolution: a position can be sold back at the current market price whenever your view changes."
+faq:
+  - q: "Do I need to verify my identity or upload documents to start?"
+    a: "No. Your Telegram account is the login, and the wallet is generated from it when you first open the mini app, so there is no signup form, no email confirmation and no document upload between you and your first market. The trade-off is that the wallet is only as protected as the Telegram account behind it, which is why exporting the private key is worth doing before you fund it seriously."
+  - q: "What happens if I send a deposit on the wrong network?"
+    a: "It does not arrive, and there is no support queue that can pull it back for you — the address you were given only covers the network you selected on the Deposit screen. Pick the network in the mini app first, copy the address it gives you for exactly that network, and set the same network at the sending end. On a first deposit from a new exchange, send a small test amount before the real one."
+  - q: "Can I take my money out again, and where does it go?"
+    a: "Yes. The balance sits in a wallet you control, so a withdrawal sends from your wallet to any address you provide, with the same network rule as deposits: the receiving address has to be on the network you send over. Because the private key is exportable, you are also not dependent on the bot to reach the funds — any wallet software that accepts a private key can hold the same account."
+  - q: "What happens to my wallet if I lose access to my Telegram account?"
+    a: "The wallet is tied to your Telegram login, so that account is part of your security and worth protecting with two-factor authentication. The backup that does not depend on Telegram is the exported private key: keep it offline, and you can reach the funds from other wallet software whatever happens to the messaging account."
+  - q: "Does this work on a desktop computer?"
+    a: "Yes, with one exception. The Telegram Desktop webview on Linux has a known problem initialising a new wallet, so do the wallet setup step on your phone or in a browser. Once the wallet exists, desktop behaves normally for browsing markets, placing positions and checking P&L."
 ---
 
 The usual path onto a prediction market involves an exchange account, a browser wallet, a seed phrase, and a bridge. This one doesn't.
 
-## 1. Open the bot
+## 1. How do you sign up?
 
-Start [@poly_sport_bet_bot](https://t.me/poly_sport_bet_bot) in Telegram and tap **Start**. That's the whole signup.
+Signing up is opening the bot. Start [@poly_sport_bet_bot](https://t.me/poly_sport_bet_bot) in Telegram and tap **Start**. That's the whole signup — no email, no exchange account, nothing to install.
 
-## 2. Your wallet creates itself
+If you'd rather see the whole mechanism before you touch it, [how it works](/how-it-works) is the one-page version.
+
+## 2. Where does your wallet come from?
 
 Opening the mini app generates a self-custodial wallet through Privy, tied to your Telegram login. There's no seed phrase to write down and no extension to install.
 
-**Self-custodial** is the important word: the keys are yours. Oddzy can sign orders you approve, and you can export the private key or revoke that permission at any time. Your balance is never held by us.
+**Self-custodial** is the important word: the keys are yours. Oddzy can sign orders you approve, and you can export the private key or revoke that permission at any time. Your balance is never held by us — [where your money actually sits](/learn/is-it-safe-where-your-money-sits) goes through that in detail.
 
 > If you're on Telegram Desktop for Linux, use your phone or a browser for wallet setup — the desktop webview has a known issue initialising the wallet.
 
-## 3. Fund it
+## 3. How do you fund the account?
 
-The **Deposit** button asks which network you're sending from, then gives you the address for that network. Deposits are picked up automatically and your balance updates in the bot.
+The **Deposit** button asks which network you're sending from, then gives you the address for that network. Deposits are picked up automatically and your balance updates in the bot. A small first deposit is fine: the minimum stake is $1.
 
 - **Always use the address the Deposit button just gave you.** The two fixed addresses on the wallet screen are there so you can look your account up on-chain — never send funds to them.
 - Sending from an exchange? Double-check the network at withdrawal. Anything sent on a network the address doesn't cover won't arrive.
-- Small first deposit is fine. The minimum stake is $1.
 
-## 4. Find a market
+## 4. How do you find a market worth trading?
 
 Browse by category, or open the mini app for the full feed sorted by 24-hour volume. Each market shows the YES and NO price in cents, the volume traded, and when it resolves.
 
-Start where you actually know something. An informational edge is the only durable one.
+Start where you actually know something. An informational edge is the only durable one — and two things are worth reading before your first position: [how a price gets set](/learn/what-is-a-prediction-market), because the price is a probability, and [the resolution rules](/learn/read-the-resolution-rules-first), because they decide what counts as YES.
 
-## 5. Place a position
+## 5. What happens when you place a position?
 
-Pick a side, choose a stake, and check the payout preview before confirming:
+Pick a side, choose a stake, and check the payout preview before confirming. Confirm, and the order is signed and submitted on-chain — you get a receipt with the transaction hash.
+
+The preview holds three numbers:
 
 - **Price** — what one share costs, in cents.
 - **Shares** — how many you get for your stake.
 - **Payout if correct** — what those shares pay at $1 each.
 
-Confirm, and the order is signed and submitted on-chain. You get a receipt with the transaction hash.
+The price is the whole arithmetic. A $10 stake buys very different things depending on what the market thinks:
 
-## 6. Manage it
+| Price you pay | Shares for $10 | Payout if correct | Profit |
+| --- | --- | --- | --- |
+| 25¢ | 40 | $40.00 | $30.00 |
+| 40¢ | 25 | $25.00 | $15.00 |
+| 65¢ | 15.38 | $15.38 | $5.38 |
 
-Your position appears under **Positions** with live P&L. You can hold to resolution, or exit early at the current market price if your view changes.
+The price you get can be worse than the one on screen if the market is thin — [why an order fills at a worse price](/learn/why-did-my-order-fill-at-a-worse-price) explains when that happens and how to avoid the worst of it.
 
-When the market resolves, winning shares pay $1 each straight to your wallet.
+## 6. Can you get out before the market resolves?
 
-## A note on risk
+Yes. Your position appears under **Positions** with live P&L, and you can exit at the current market price whenever your view changes rather than waiting for the outcome. Holding to resolution is the other option: when the market resolves, winning shares pay $1 each straight to your wallet.
+
+Exiting early is not free — you sell at whatever the market is paying now, which may be less than you paid. [Selling before a market resolves](/learn/can-you-sell-before-a-market-resolves) covers when it's worth it.
+
+## What can go wrong?
 
 You can lose your entire stake. Prices move against you, thin markets can fill worse than the quote suggests, and a market you were "sure" about resolves the other way often enough to matter. Stake accordingly. 18+.
