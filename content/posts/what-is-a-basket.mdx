@@ -1,38 +1,73 @@
 ---
 title: "What is a basket, and why is it not a parlay?"
-description: "A basket buys several positions in one tap, each at its own weight. Unlike a parlay, every leg settles on its own — you don't need them all to come in, and you can sell any one of them."
+description: "A basket buys several positions in one tap, each at its own weight. Unlike a parlay, every leg settles on its own — and you can sell any one of them."
 tag: BASICS
 readingMinutes: 7
 publishedAt: "2026-08-10"
+updatedAt: "2026-08-24"
 lead: "A basket buys several positions in one tap, each at its own weight. Unlike a parlay, every leg settles on its own — you don't need them all to come in, and you can sell any one without touching the rest."
+keywords:
+  - "what is a basket"
+  - "prediction market basket"
+  - "basket vs parlay"
+  - "how basket weights work"
+  - "Polymarket basket"
+takeaways:
+  - "A basket buys several ordinary positions in one tap. Each leg resolves on its own schedule and pays independently, so two winners and three losers is a perfectly normal result."
+  - "A parlay is worth nothing the moment one leg fails. A basket has no all-or-nothing condition — a losing leg costs you only that leg's share of the stake."
+  - "Every leg carries a weight: a basket weighted 40 / 35 / 25 puts $40, $35 and $25 of a $100 stake to work in its three legs."
+  - "Because each leg must clear the minimum bet on its own, the smallest weight sets the basket's minimum stake — which is why some baskets have a higher floor than others."
+  - "If one leg finds no seller, the others still fill and that leg's share stays in your balance instead of being pushed into the legs that did fill."
+faq:
+  - q: "Can I sell a whole basket in one action?"
+    a: "No. Once the basket is placed you hold several separate positions, and you exit them the way you would exit any position — one order book at a time, at whatever the best bid on each leg is. There is no single basket ticket to hand back. That is the same property that lets you keep the legs you still believe in and sell only the one you have changed your mind about."
+  - q: "Can more than one leg of a basket win?"
+    a: "It depends on what the basket is built from. If the legs are separate questions, any number of them can pay out, including all of them. If the basket collects the contenders for one outcome, such as five clubs chasing the same trophy, then at most one leg can win by construction and the rest settle at zero. The basket page tells you which kind you are buying before you commit."
+  - q: "What if the legs resolve at different times?"
+    a: "That is the normal case, and each leg pays you as it settles rather than waiting for the slowest one. A basket mixing a match that ends this weekend with a year-end question will pay out in stages over months. Nothing is held back: money from a resolved leg lands in your balance and is yours to use while the other legs are still open."
+  - q: "Do I get a better price by buying a basket instead of the legs individually?"
+    a: "No. Every leg is placed as an ordinary order against its own order book, at whatever that book is showing at that moment, so a basket costs the same as buying the same positions one by one. What you save is decisions and time, not money. The prices you see quoted on the basket before you confirm are the live prices for each leg."
+  - q: "Does a basket make a position less risky?"
+    a: "It spreads your stake so that no single outcome decides everything, which is genuinely different from putting the whole amount on one market. But the legs of a good basket usually express one view, so they tend to move together and can lose together. Treat a basket as one sized decision about a theme, not as five unrelated bets that cancel each other's risk out."
 ---
 
 A basket is a curated set of positions bought together. One tap places every leg, and your stake is split across them according to weights the author chose.
 
 If you have used a sportsbook, this will look like a parlay. It is the opposite of one, and the difference decides what you actually own.
 
-## Not a parlay
-
-A parlay is a single bet with several conditions. All of them must land, and if one fails the whole thing is worth nothing.
+## How is a basket different from a parlay?
 
 A basket is not one bet. It is several ordinary positions bought at the same moment. Each leg becomes its own position, resolves on its own schedule, and pays independently of the others. Two legs winning and three losing is a completely normal outcome — you keep what the two paid.
 
-You can also sell any single leg before it resolves without disturbing the rest. A parlay has no such exit; it is one ticket, alive or dead.
+A parlay works the other way round. It is a single bet with several conditions: all of them must land, and if one fails the whole thing is worth nothing.
 
-## How the stake is split
+You can also sell any single leg before it resolves without disturbing the rest, exactly as you would [sell a position you bought on its own](/learn/can-you-sell-before-a-market-resolves). A parlay has no such exit; it is one ticket, alive or dead.
+
+| | Parlay | Basket |
+|---|---|---|
+| What you own | One ticket with several conditions | Several independent positions |
+| If one leg loses | The whole ticket pays nothing | Only that leg pays nothing |
+| Settlement | All at once, at the end | Each leg on its own schedule |
+| Selling early | Not possible | Any single leg, at market price |
+
+## How is your stake split across the legs?
 
 Every leg carries a weight — its share of whatever you put in. A basket weighted 40 / 35 / 25 puts $40, $35 and $25 of a $100 stake into its three legs.
 
 Because each leg must clear the minimum bet, the *smallest* weight sets the basket's minimum stake. A leg weighted 10% needs the basket to be at least ten times the minimum, which is why some baskets have a higher floor than others. The floor is always shown before you buy.
 
-Some baskets are sized differently: instead of splitting the money evenly, they buy the same **number of shares** in each leg. That matters when only one leg can win — five clubs chasing one trophy, say. Splitting the money equally there would buy fewer shares of the favourite than of the outsider, so the favourite winning would pay less than the underdog. Buying equal shares makes every winner pay the same.
+Some baskets are sized differently: instead of splitting the money evenly, they buy the same **number of shares** in each leg. That matters when only one leg can win — five clubs chasing [the same trophy](/topic/ucl-winner), say. Splitting the money equally there would buy fewer shares of the favourite than of the outsider, so the favourite winning would pay less than the underdog. Buying equal shares makes every winner pay the same.
 
-## What can go wrong
+The weights are someone else's sizing decision, so it is worth reading them the way you would read [your own position sizing](/learn/how-to-size-a-position) — the number you choose for the basket as a whole is still yours.
 
-Legs are placed as separate orders against separate order books, so they can succeed independently. If one leg has no seller at the price shown, the others still go through and that leg's share stays in your balance. It is never quietly moved into the legs that did fill — you would end up holding more of something you never sized up.
+## What happens if one leg doesn't fill?
 
-You always get a receipt showing exactly which legs filled, at what price, and how much came back unspent.
+The other legs still go through, and the unfilled leg's share stays in your balance. Legs are placed as separate orders against separate order books, so they succeed or fail independently — if one leg has no seller at the price shown, that is a problem for that leg only.
 
-## Why bother
+The unspent money is never quietly moved into the legs that did fill — you would end up holding more of something you never sized up. You always get a receipt showing exactly which legs filled, at what price, and how much came back unspent. Individual legs can still fill a cent or two away from the price on the card, for the [same order-book reasons a single order does](/learn/why-did-my-order-fill-at-a-worse-price).
+
+## Why use a basket instead of buying the markets yourself?
 
 A basket is a way to express one view with several instruments, at sizes someone has already thought about. "Rates hold through the year" is not one market — it is three or four, each capturing a different part of the same idea. A basket makes that a single decision instead of four.
+
+Nothing stops you assembling the same positions by hand, and the outcome is identical if you do. What the [basket page](/basket) gives you is the weighting, the minimum, and one confirmation screen instead of four.
