@@ -16,7 +16,13 @@ const withMDX = createMDX({
     //
     // Named as a string, not imported: plugins reach the Turbopack loader across
     // a Rust boundary that can't take JavaScript functions.
-    remarkPlugins: ["remark-frontmatter"],
+    // remark-gfm is what gives MDX pipe tables. Without it the base CommonMark
+    // parser treats `| a | b |` as an ordinary paragraph and the table renders
+    // as literal pipes — which is exactly what shipped once. globals.css has
+    // styled `.oz-prose table` since launch, so the styling was waiting for a
+    // parser that never got wired up. It also brings strikethrough, task lists
+    // and autolinks, all of which are safe here.
+    remarkPlugins: ["remark-frontmatter", "remark-gfm"],
     // rehype-slug puts an `id` on every heading so the table of contents can
     // link into the body. lib/posts.ts derives the same ids from the raw MDX
     // with github-slugger, which is the algorithm rehype-slug uses — the two
