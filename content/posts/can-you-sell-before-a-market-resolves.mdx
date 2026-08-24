@@ -4,36 +4,70 @@ description: "Yes — you can sell any time the market is open. But you sell int
 tag: GUIDE
 readingMinutes: 4
 publishedAt: "2026-08-24"
+updatedAt: "2026-08-24"
 lead: "You can sell before a prediction market resolves, at any point while the market is still trading. What decides whether that is a good idea is not the rule — it is who is on the other side of the book when you want out."
+keywords:
+  - "sell a prediction market position early"
+  - "cash out of a prediction market"
+  - "exit before a market resolves"
+  - "selling into the bid"
+  - "prediction market early exit cost"
+takeaways:
+  - "You can sell a prediction market position at any time while the market is open — nothing has to be approved, and the cash reaches your balance immediately."
+  - "Selling transfers your contract to another trader, so the price is whatever someone will pay for it, not a cash-out figure a bookmaker decides to offer you."
+  - "You sell into the best bid, not the midpoint shown on the market card, so the exit is always a little below the number you were looking at."
+  - "On a deep book that gap costs a cent or less; on a market trading a few hundred dollars a day the same exit can cost five or ten cents."
+  - "Selling early buys certainty and time — capital in an open position is unusable until that market closes, which on a year-end question means months."
+  - "Once a market closes the exit is gone: the only remaining route is resolution and payout, so the option to sell has to be used while the book is open."
+faq:
+  - q: "Can I sell only part of a position?"
+    a: "Yes. Shares are individual contracts, so you can sell as many of them as you like and keep the rest. Selling half a winning position is a common way to take the cost of the trade off the table while leaving some exposure to the outcome. The same book mechanics apply to the part you sell: a smaller order is more likely to be absorbed by the best bid alone, so scaling out in pieces on a thin market often gets a better average price than dumping the lot at once."
+  - q: "What if there is no bid anywhere near the price I want?"
+    a: "You do not have to accept the best bid on the screen. Instead of selling into it, you can leave a resting sell order inside the spread and wait for a buyer to come to you, which on a slow market is frequently the difference between an acceptable exit and a bad one. The trade-off is that a resting order may never fill, and if news arrives while you are waiting the price can move away from you entirely. Waiting is cheaper than paying, but it is not free."
+  - q: "Is selling my YES shares the same as buying NO?"
+    a: "They are close in exposure but not the same trade. Selling your YES shares closes the position and returns the cash to your balance. Buying NO leaves the YES shares where they are and opens a second, offsetting position alongside them, which ties up more capital rather than freeing it. Both cost you the spread. If your intention is to get out, selling is the cleaner and usually the cheaper of the two."
+  - q: "Can I buy the position back after I sell it?"
+    a: "Yes, at any point while the market is still open, at whatever the best ask is at that moment. The thing to be aware of is that you pay the spread twice — once selling into the bid on the way out and once buying at the ask on the way back in. On a market with a one-cent spread that round trip is trivial. On a market five or ten cents wide it can cost more than the move you were trying to trade."
+  - q: "Does a slippage limit work when I am selling?"
+    a: "Yes, and it works in the same way, just in the other direction. Instead of capping the worst average price you will pay, it sets the worst average price you will accept to sell at. If the bids on the book can fill you inside that floor, the order goes through; if they cannot, you get a partial fill or none at all. On a thin market that partial fill is the honest answer, and it is better information than a complete fill at a price you would not have agreed to in advance."
 ---
 
 Yes. You can sell a prediction market position at any time while the market is open, without waiting for the event to happen. Selling means handing your shares to another trader, so what you receive is the best bid on the order book at that moment — not the price displayed on the market card.
 
 That one sentence is where most of the confusion lives, so it is worth taking apart.
 
-## What selling a position actually does
+## What does selling a position actually do?
 
-A share is a contract that pays $1 if its outcome happens and $0 if it doesn't. When you sell, you transfer that contract to another trader at whatever they are willing to pay right now, and the cash lands in your balance immediately.
+Selling transfers your contract to another trader at whatever they are willing to pay right now, and the cash lands in your balance immediately. A share is a contract that pays $1 if its outcome happens and $0 if it doesn't; when you sell, the buyer inherits that contract and the exposure that comes with it.
 
-Nothing is settled, cancelled or refunded. The market carries on without you and the buyer inherits your exposure. This is the structural difference from a sportsbook, where the slip is yours until the whistle unless the book chooses to offer you a cash-out at a price it sets. Here the price is set by whoever wants the position, and [that distinction runs through everything](/learn/prediction-markets-vs-sportsbooks).
+Nothing is settled, cancelled or refunded, and nobody has to approve the sale. The market carries on without you. This is the structural difference from a sportsbook, where the slip is yours until the whistle unless the book chooses to offer you a cash-out at a price it sets. Here the price is set by whoever wants the position, and [that distinction runs through everything](/learn/prediction-markets-vs-sportsbooks).
 
-## You sell into the bid
+## Why do you sell into the bid and not the price on the card?
 
 The number on a market card is usually the midpoint between the best bid and the best ask. You cannot sell at the midpoint. You sell at the bid, which is lower — and if you are selling more shares than the best bid will absorb, the rest goes to the next bid down.
 
 On a heavily traded market that costs a cent or less. As of 24 August 2026 on Oddzy, [the market on whether Bitcoin reaches $110,000 by 31 December 2026](/market/will-bitcoin-reach-110000-by-december-31-2026-658-339-969) was pricing at 17¢ on roughly $119,000 of 24-hour volume — a book with real depth on both sides. On a market trading a few hundred dollars a day, the same exit can cost five or ten cents. The mechanics are the same ones that make [your buy fill worse than the price you saw](/learn/why-did-my-order-fill-at-a-worse-price); they simply run in the other direction on the way out.
 
-## When selling early is the right call
+## When is selling early the right call?
 
 Selling early buys back two things: certainty and time.
 
-Certainty is obvious — a position sold at 90¢ is 90¢, and one held to resolution is either $1 or nothing. Time is the part people underweight. Money in an open position is money you cannot use elsewhere until the market closes. As of 24 August 2026, Oddzy's Bitcoin and Ethereum year-end markets do not close until 1 January 2027, so the last few cents of a winning position there take four months to collect. Compare that with the September Fed meeting markets, which close on 16 September 2026 — three weeks, on a question with around $340,000 of 24-hour volume behind the no-change outcome. The same 10¢ of remaining upside is worth chasing in one and usually not in the other.
+Certainty is obvious — a position sold at 90¢ is 90¢, and one held to resolution is either $1 or nothing. Time is the part people underweight. Money in an open position is money you cannot use elsewhere until the market closes, and how long that is depends entirely on the question:
+
+| Holding a 90¢ position | Sell now | Hold to resolution |
+| --- | --- | --- |
+| What you get | 90¢, certain | $1 or nothing |
+| When you get it | Immediately | After the market closes and pays out |
+| Fed September meeting market | 90¢ today | up to three weeks — closes 16 September 2026 |
+| Bitcoin year-end market | 90¢ today | about four months — closes 1 January 2027 |
+
+As of 24 August 2026, Oddzy's Bitcoin and Ethereum year-end markets do not close until 1 January 2027, so the last few cents of a winning position there take four months to collect. The September Fed meeting markets close on 16 September 2026 — three weeks, on a question with around $340,000 of 24-hour volume behind the no-change outcome. The same 10¢ of remaining upside is worth chasing in one and usually not in the other.
 
 The other honest reason to sell is that your view changed. Holding to resolution because you already own it is not a thesis.
 
-## When you may not get out cleanly
+## When might you not get out cleanly?
 
-Three cases, and all of them are worth knowing before you enter rather than after.
+Three cases: a thin order book, a position that has already collapsed, and a market that has closed. All of them are worth knowing before you enter rather than after.
 
 The first is a thin book. If the market barely trades, there may be no bid near the last price, and the only way out is to accept a much lower one. Check the depth before you size up, not when you want to leave — [position sizing and liquidity are the same decision](/learn/how-to-size-a-position).
 
