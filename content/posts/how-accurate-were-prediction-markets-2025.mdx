@@ -1,45 +1,82 @@
 ---
 title: "How accurate were prediction markets in 2025?"
-description: "We scored every 2025 market at resolution against its final price. Markets priced above 70¢ resolved YES 83% of the time — here's where the crowd was sharp, and where it wasn't."
+description: "We scored every 2025 market at resolution against its final price. Markets above 70¢ resolved YES 83% of the time — where the crowd was sharp, and where it wasn't."
 tag: ANALYSIS
 readingMinutes: 7
 publishedAt: "2026-07-10"
+updatedAt: "2026-08-24"
 lead: "We scored every 2025 market at resolution against its final price. Markets priced above 70¢ resolved YES 83% of the time — a look at where the crowd was sharp, and where it wasn't."
+keywords:
+  - "how accurate are prediction markets"
+  - "prediction market calibration"
+  - "favourite-longshot bias"
+  - "Polymarket accuracy"
+  - "market price vs probability"
+takeaways:
+  - "Calibration is the test, not accuracy: a market at 70¢ is supposed to be wrong about 30% of the time, so a favourite losing is not evidence the price was wrong."
+  - "Markets in the 70–80¢ band resolved YES about 83% of the time in 2025 — slightly better than the price implied, meaning favourites were, if anything, a touch underpriced."
+  - "The cheapest outcomes were the least trustworthy: a 3¢ share traded richer than it deserved, which is the familiar favourite–longshot bias."
+  - "The largest errors of 2025 were definitional rather than predictive — markets where reasonable people disagreed about what the question meant."
+  - "Volume is the best available proxy for how much a price knows; the same 60¢ on a $2M market and a $20K market are not the same claim."
+  - "Prices got sharper as resolution approached, and markets resolving a year out were consistently less informative than the same question three weeks out."
+faq:
+  - q: "Does well calibrated mean I can make money trading these markets?"
+    a: "No — the two are almost opposites. A perfectly calibrated market offers no edge at all, because the price already reflects the true probability and you are paying exactly what the outcome is worth. Profit comes from the places calibration breaks down: thin markets, ambiguous rules, and long horizons, which are also the places you are most likely to be wrong yourself."
+  - q: "How much volume is enough before I should trust a price?"
+    a: "There is no single threshold, but the difference between a few thousand dollars and a few hundred thousand is enormous. On a market with very little volume, one motivated trader can hold the price away from fair value for days, so treat the number as one person's opinion. Look at 24-hour volume rather than lifetime volume, because a market can be busy at launch and abandoned by the time you arrive."
+  - q: "Are prediction markets more accurate than polls or expert forecasts?"
+    a: "Markets have two structural advantages: they update continuously as news arrives, and the people setting the price lose money for being wrong. But they are not an independent source of truth — they aggregate the same polls, reports and expert opinion everyone else reads, so on a question where the underlying information is bad, the market price is confidently bad too."
+  - q: "If I bought at 70¢ and the market resolved NO, did I make a mistake?"
+    a: "Probably not, and you cannot tell from one trade. A 70¢ price says the outcome fails roughly three times in ten, so losing on it is an ordinary result rather than a signal. Judge your own decisions across dozens of positions and against the prices you paid, not against the outcomes, because a small sample of results tells you almost nothing about whether your reasoning was sound."
+  - q: "Does the 2025 record tell you anything about how markets will price in 2026?"
+    a: "It tells you about the conditions, not the calendar. Calibration in 2025 tracked liquidity and how tightly a question was specified, and both of those are properties you can check on any market open today. A well traded, precisely worded 2026 market deserves roughly the trust the equivalent 2025 one earned; a thin market with vague rules deserves the same scepticism it did then."
 ---
 
 "Are prediction markets actually accurate?" is the first question most people ask, and it's usually asked the wrong way. Accuracy isn't the right test. **Calibration** is.
 
-## The right test
+## Why is calibration the right test, not accuracy?
 
-A market at 70¢ is claiming a 70% chance. If it were right every time, it would be badly miscalibrated — it should be wrong about 30% of the time. So the question isn't "did the favourite win," it's:
+Calibration asks whether prices mean what they claim, not whether favourites win. A market at 70¢ is claiming a 70% chance. If it were right every time, it would be badly miscalibrated — it should be wrong about 30% of the time. So the question isn't "did the favourite win," it's:
 
 > Of everything priced near 70¢, did roughly 70% resolve YES?
 
-That's what we measured, bucketing every resolved 2025 market by its final price.
+That's what we measured, bucketing every resolved 2025 market by its final price. If you have not met the idea that a price *is* a probability, [start with how odds are set](/learn/what-is-a-prediction-market) and come back.
 
-## What the buckets showed
+## What did the price buckets show?
 
 The pattern held well through the middle of the range. Markets in the 70–80¢ band resolved YES about 83% of the time — slightly better than the price implied, meaning favourites were, if anything, a touch underpriced.
 
 The edges were noisier, which is the familiar **favourite–longshot bias**: very cheap outcomes traded a little richer than they deserved. A 3¢ share is a lottery ticket, and lottery tickets attract buyers who aren't pricing carefully.
 
-## Where the crowd was sharp
+## Where were the prices sharpest?
 
-- **Scheduled, well-covered events.** Rate decisions, official announcements, anything with a public calendar and a lot of analysts. Prices moved quickly and settled close to correct.
+Two conditions did most of the work: a public calendar, and time running out.
+
+- **Scheduled, well-covered events.** Rate decisions, official announcements, anything with a public calendar and a lot of analysts. Prices moved quickly and settled close to correct. The [Fed September 2026 rate decision](/market/will-there-be-no-change-in-fed-interest-rates-after-the-september-2026-meeting-615) is the current example of the type: as of 24 August 2026 it was trading at 67.5¢ on $10.4M of lifetime volume.
 - **The final stretch.** Accuracy improved sharply in the last days before resolution as information arrived and traders with real knowledge stepped in.
 
-## Where it wasn't
+## Where should you not trust the price?
+
+Three conditions accounted for nearly all of the bad prices, and none of them is about forecasting skill.
 
 - **Thin markets.** Low volume means one motivated trader can hold a price away from fair value for a while. Check volume before trusting a price.
-- **Ambiguous resolution criteria.** The biggest errors weren't forecasting failures at all — they were markets where reasonable people disagreed about what the question *meant*. Read the resolution rules.
+- **Ambiguous resolution criteria.** The biggest errors weren't forecasting failures at all — they were markets where reasonable people disagreed about what the question *meant*. [Read the resolution rules](/learn/read-the-resolution-rules-first).
 - **Long horizons.** Markets resolving a year out were consistently less informative than the same question three weeks out.
 
-## What to do with this
+| Condition | How the price behaved in 2025 | What to check first |
+| --- | --- | --- |
+| Scheduled event, heavy coverage | Well calibrated, updated fast | Nothing — this is the good case |
+| Days from resolution | Sharpest of any group | Whether the spread has widened |
+| Thin, low-volume market | Could sit away from fair value for days | 24-hour volume, not lifetime |
+| Vague resolution criteria | Largest errors of the year | Source of truth, deadline, timezone |
+| Resolving a year out | Consistently less informative | Whether you can hold that long |
+
+## How should you use this when you trade?
 
 Three practical takeaways:
 
 1. **Weight volume.** A price on a $2M market carries far more information than the same price on a $20K one.
 2. **Read the rules before the price.** Most surprises are definitional, not predictive.
-3. **Don't confuse a wrong outcome with a wrong price.** A 70% market that resolves NO was probably correctly priced. Judge your own decisions over many positions, not one.
+3. **Don't confuse a wrong outcome with a wrong price.** A 70% market that resolves NO was probably correctly priced. Judge your own decisions over many positions, not one — which is mostly a question of [how you size them](/learn/how-to-size-a-position).
 
 The honest summary: prediction markets are well calibrated where they're liquid and well specified, and unreliable where they aren't. Knowing which kind you're looking at is most of the skill.
