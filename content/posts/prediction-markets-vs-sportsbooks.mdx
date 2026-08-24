@@ -1,15 +1,39 @@
 ---
 title: "Prediction markets vs. sportsbooks: the real difference"
-description: "A sportsbook hides its margin inside the odds and trades against you. On a prediction market your counterparty is another trader, the price is transparent, and you can exit early."
+description: "A sportsbook hides its margin inside the odds and trades against you. On a prediction market your counterparty is another trader and you can exit at a visible price."
 tag: COMPARE
 readingMinutes: 6
 publishedAt: "2026-07-18"
+updatedAt: "2026-08-24"
 lead: "A sportsbook hides its margin inside the odds and always trades against you. On a prediction market your counterparty is another trader, the price is transparent, and you can exit a position before resolution."
+keywords:
+  - "prediction market vs sportsbook"
+  - "prediction markets vs betting"
+  - "what is the vig"
+  - "sportsbook overround"
+  - "Polymarket"
+takeaways:
+  - "At a sportsbook the house is your counterparty and profits when you lose. On a prediction market another trader is your counterparty and the venue only takes a fee."
+  - "Sportsbook odds imply probabilities summing to more than 100%, and that 4–8% overround is the house edge, priced invisibly into the line."
+  - "On a prediction market YES and NO sum to about 100¢ by construction, so what you pay above fair value is an explicit fee rather than a hidden shift."
+  - "A prediction market position can be sold at the going price at any time, while a sportsbook bet is locked in unless the book offers cash out on its own terms."
+  - "A sportsbook still wins on niche liquidity, familiar formats like parlays and boosts, and not needing a wallet or on-chain settlement."
+faq:
+  - q: "Is a prediction market cheaper than a sportsbook?"
+    a: "Usually, but not automatically. A sportsbook's 4–8% overround is charged on every bet whether you win or lose, while a prediction market charges an explicit fee that is typically smaller. The catch is the spread: on a thin market the gap between the best bid and the best ask can cost you more than a bookmaker's margin would have. Compare the fee plus the spread, not the fee alone."
+  - q: "Can I lose more than I put in on a prediction market?"
+    a: "No. A share costs what you pay for it and settles at either $1 or $0, so the most you can lose on a position is the amount you spent opening it. There is no borrowing, no margin call and no negative balance. That is the same downside profile as a sportsbook stake, and unlike leveraged trading products."
+  - q: "Why would anyone take the other side of my trade?"
+    a: "Because they disagree about the probability, or because they are hedging something else. Every YES share exists only because someone holds the matching NO share, and both sides believe they are getting a good price. This is why the platform does not care who wins: the dollar that pays the winner came from the loser, not from the venue's own money."
+  - q: "Do prediction markets have better prices than a sportsbook on sports?"
+    a: "On heavily traded fixtures the prices are usually close, because arbitrage between the two keeps them honest, and the prediction market's transparent cost structure means you keep more of any edge. On obscure events the sportsbook is often the only place with a price at all. Check the 24-hour volume before assuming a market price is meaningful."
+  - q: "What happens to my position if a market has no buyers when I want to sell?"
+    a: "You keep it until resolution and get paid $1 or $0 like anyone else. The ability to exit early is a feature of liquidity, not a guarantee written into the product, so a market with almost no trading may leave you holding to the end. This is why market depth matters more than the headline fee when you pick where to trade."
 ---
 
 They look similar — pick a side, risk money, get paid if you're right. Structurally they are not the same product.
 
-## Who is on the other side
+## Who is on the other side of your bet?
 
 At a sportsbook, the house is your counterparty. It profits when you lose, and it sets the odds itself.
 
@@ -17,11 +41,13 @@ On a prediction market, another trader is your counterparty. The venue matches y
 
 That difference drives everything below.
 
-## The margin, and where it hides
+## Where does the margin hide?
 
 Sportsbook odds are shifted so the implied probabilities sum to more than 100%. That excess — the *vig* or *overround* — is the house edge, and it's typically 4–8% baked invisibly into the price.
 
-On a prediction market, YES and NO sum to roughly 100¢ by construction. If YES is 62¢, NO is about 38¢. Costs are an explicit fee, not a hidden shift in the line.
+On a prediction market, YES and NO sum to roughly 100¢ by construction. If YES is 62¢, NO is about 38¢. Costs are an explicit fee, not a hidden shift in the line. That is also why the price doubles as a forecast, which is the subject of [what is a prediction market](/learn/what-is-a-prediction-market).
+
+You can check the arithmetic on a live question. As of 24 August 2026 on Oddzy, [the market on whether the Fed leaves rates unchanged after its September 2026 meeting](/market/will-there-be-no-change-in-fed-interest-rates-after-the-september-2026-meeting-615) was trading at 67¢ on roughly $343,000 of 24-hour volume — leaving NO at about 33¢, the two sides adding to a dollar rather than to a dollar and change.
 
 | | Sportsbook | Prediction market |
 |---|---|---|
@@ -30,24 +56,22 @@ On a prediction market, YES and NO sum to roughly 100¢ by construction. If YES 
 | Exit early | Rarely, at a penalty | Yes, at market price |
 | Price meaning | Odds plus margin | Crowd probability |
 
-## Exiting before the end
+## Can you get out before the event ends?
 
-This is the practical difference people notice first.
+On a prediction market, yes — at the going market price, for as long as somebody is bidding. A sportsbook bet is locked in; some books offer "cash out," priced at the book's discretion and generally in the book's favour.
 
-A sportsbook bet is locked in. Some offer "cash out," priced at the book's discretion and generally in the book's favour.
+A prediction market position is a token you hold. If your side moves from 40¢ to 70¢, you can sell into that move and realise the gain without waiting for resolution — or cut a loser at 20¢ instead of riding it to zero. This is the practical difference people notice first, and [what selling before resolution actually looks like](/learn/can-you-sell-before-a-market-resolves) goes through the mechanics.
 
-A prediction market position is a token you hold. If your side moves from 40¢ to 70¢, you can sell into that move and realise the gain without waiting for resolution — or cut a loser at 20¢ instead of riding it to zero.
+## Where does a sportsbook still win?
 
-## Where a sportsbook still wins
-
-Being fair about it:
+On three things, and it is worth being fair about them:
 
 - **Liquidity on niche events.** A book will quote almost anything. A thin prediction market may have nobody on the other side.
 - **Familiar formats.** Parlays, boosts, and promotional pricing don't have clean market equivalents.
 - **Simplicity.** No wallet, no on-chain settlement, no self-custody to think about.
 
-## The framing that helps
+## Which one is right for you?
 
 A sportsbook sells you a bet. A prediction market lets you take a position on a probability, at a price you can see, that you can leave whenever you want.
 
-If you mostly want action on a game, that distinction may not matter to you. If you think a price is *wrong* and want to be paid for being right about it, it matters a lot.
+If you mostly want action on a game, that distinction may not matter to you. If you think a price is *wrong* and want to be paid for being right about it, it matters a lot — and then the next thing worth reading is [how to size a position](/learn/how-to-size-a-position), because a transparent price only helps if you stake an amount you can survive being wrong about.
