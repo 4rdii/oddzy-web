@@ -1,31 +1,64 @@
 ---
 title: "How a market resolves, and when you actually get paid"
-description: "Someone proposes the outcome and posts a bond. Anyone can challenge it for two hours. Undisputed markets pay out the same day — disputed ones can take the better part of a week."
+description: "Someone proposes the outcome and posts a bond. Anyone can challenge it for two hours. Undisputed markets pay out the same day — disputed ones take days."
 tag: GUIDE
 readingMinutes: 8
 publishedAt: "2026-08-10"
+updatedAt: "2026-08-24"
 lead: "Nobody at Polymarket decides who won. An outcome is proposed with money staked on it, anyone can challenge it for two hours, and only then do winning shares become redeemable for $1."
+keywords:
+  - "how prediction markets resolve"
+  - "when do prediction markets pay out"
+  - "UMA optimistic oracle"
+  - "Polymarket resolution"
+  - "market dispute window"
+takeaways:
+  - "No company decides the result. An outcome is proposed by whoever gets there first, backed by a bond — typically $750 — that they lose if the answer is wrong."
+  - "A proposed outcome sits in a two-hour challenge window. If nobody disputes it, the market finalises and each winning share is redeemable for $1."
+  - "A disputed market escalates to a token-holder vote and takes four to six days end to end, not two hours."
+  - "If a payout is late, it is usually because someone staked a matching bond saying the proposed answer was wrong — that delay is the check working."
+  - "The oracle resolves the question exactly as written, so most settlement surprises are definitional rather than factual."
+faq:
+  - q: "Do I have to claim my winnings, or do they arrive automatically?"
+    a: "Once a market finalises, each winning share is redeemable for $1 and the proceeds land in your balance without any action on your part. Losing shares simply become worthless — there is nothing to close out and no separate settlement step to complete."
+  - q: "Can a market resolve before its stated end date?"
+    a: "Yes. Many questions can be answered the moment the event happens rather than when the calendar runs out — a match that has been played or an election that has been called can be proposed as soon as the outcome is public. The end date is a deadline, not a wait."
+  - q: "What happens to my money while a market is disputed?"
+    a: "Your shares stay in your wallet and the collateral backing the market stays locked until the oracle finalises. You cannot redeem during a dispute, and trading has normally closed by then, so the position is genuinely frozen for the four to six days an escalated dispute takes."
+  - q: "Who pays the proposer's reward, and does it come out of my payout?"
+    a: "The reward comes from the market's own resolution budget, not from traders' winnings. A winning share always redeems for exactly $1 regardless of how long resolution took or whether the outcome was disputed on the way there."
+  - q: "Can a market resolve in a way that contradicts the news?"
+    a: "It can, if the resolution criteria are written more narrowly than the headline. The oracle answers the written question, so a market can settle NO on something widely reported as having happened when the criteria required a specific source, threshold or date that was not met."
+  - q: "What does a 50/50 resolution mean for a position I hold?"
+    a: "It means the question was judged genuinely unresolvable, and every share redeems for 50¢ whether it is YES or NO. If you bought at less than 50¢ you come out ahead, and if you bought above it you take a partial loss — nobody is made whole and nobody is wiped out."
 ---
 
 "Who decides the result?" is the question most people ask second, right after "is my money safe?". The answer is that no company decides it. Resolution runs through the UMA optimistic oracle, and the word doing the work is *optimistic*.
 
-## Someone proposes, with money at risk
+## Who decides how a prediction market resolves?
 
-When a market reaches its end date, anyone can propose the outcome. To do it they post a bond — typically $750 — alongside the answer they are claiming is correct.
+Nobody at the exchange does. When a market reaches its end date, anyone can propose the outcome, and to do it they post a bond — typically $750 — alongside the answer they are claiming is correct.
 
 That bond is the whole design. A proposer who reports the truth gets the bond back plus a reward. A proposer who lies stands to lose it. Nobody needs to be trusted, because being wrong is expensive.
 
-## Two hours for anyone to object
+## How long is the challenge window?
 
-Once proposed, the outcome sits in a **two-hour challenge window**. During that time anyone can dispute it by posting a matching bond of their own.
+Two hours. Once an outcome is proposed it sits in a **two-hour challenge window**, during which anyone can dispute it by posting a matching bond of their own.
 
 If nobody objects, the market finalises and winning shares become redeemable for $1 each. This is what happens to the overwhelming majority of markets: a couple of hours after the event, it is settled and paid.
 
-## If someone does object
+## What happens if someone disputes the outcome?
 
-A dispute does not mean the disputer wins. It opens a second proposal round. If that one is disputed too, the question escalates to UMA's DVM — a vote of token holders.
+A dispute does not mean the disputer wins — it opens a second proposal round. If that one is disputed too, the question escalates to UMA's DVM, a vote of token holders.
 
 At that point there is a debate period of roughly 24 to 48 hours where evidence is submitted publicly, followed by about 48 hours of voting. End to end, a genuinely contested market takes four to six days rather than two hours.
+
+| Path | What happens | Time from outcome to payout |
+| --- | --- | --- |
+| Undisputed | Proposal stands, market finalises | ~2 hours |
+| Disputed once | A second proposal round opens | Hours to a day |
+| Escalated to the DVM | Public evidence, then a token-holder vote | 4–6 days |
+| Judged unresolvable | Market settles 50/50 | 4–6 days, 50¢ a share |
 
 The bonds settle with it: the side that turns out to be right gets its own bond back plus half of the loser's. In rare cases where the truth is genuinely unresolvable, a market can settle 50/50 and every share — YES and NO alike — redeems for 50¢.
 
@@ -33,8 +66,10 @@ The bonds settle with it: the side that turns out to be right gets its own bond 
 
 Two practical things follow.
 
-First, **the delay is a feature, not a fault.** If a market you hold has not paid out two hours after the event, it is usually because someone thought the proposed answer was wrong and staked $750 saying so. You would rather that happened than not.
+First, **the delay is a feature, not a fault.** If a market you hold has not paid out two hours after the event, it is usually because someone thought the proposed answer was wrong and staked $750 saying so. You would rather that happened than not. If you did not want to wait for any of this, the exit was [selling the position while the book was still open](/learn/can-you-sell-before-a-market-resolves) — once trading closes, resolution is the only route out.
 
-Second, **read the rules before the price.** The oracle resolves the question as written, not the question you had in mind. Most settlement surprises are definitional — a market about a leader "leaving office" turning on whether resignation counts, or a price market turning on which exchange's feed is authoritative. The resolution criteria sit on every market page. They are the shortest, highest-value thing to read before taking a position.
+Second, **read the rules before the price.** The oracle resolves the question as written, not the question you had in mind. Most settlement surprises are definitional — a market about a leader "leaving office" turning on whether resignation counts, or a price market turning on which exchange's feed is authoritative. The resolution criteria sit on every market page. They are the shortest, highest-value thing to read before taking a position, and [what to look for in them](/learn/read-the-resolution-rules-first) takes about a minute to learn.
+
+None of this touches custody: the shares and the payout sit in [a wallet whose keys you hold](/learn/is-it-safe-where-your-money-sits), not on a company ledger. If you have not placed a first trade yet, [how it works](/how-it-works) covers the buy side, and everything above is what happens at the other end of it.
 
 Sources: [Polymarket resolution documentation](https://docs.polymarket.com/developers/resolution/UMA)
