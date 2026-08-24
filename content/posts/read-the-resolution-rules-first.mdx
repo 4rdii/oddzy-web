@@ -4,33 +4,73 @@ description: "Most settlement surprises are definitional, not predictive. You we
 tag: GUIDE
 readingMinutes: 7
 publishedAt: "2026-08-10"
+updatedAt: "2026-08-24"
 lead: "Most settlement surprises are not forecasting failures. You were right about what happened and wrong about what the market counted — and every one of those losses is avoidable by reading a few hundred words first."
+keywords:
+  - prediction market resolution rules
+  - resolution criteria
+  - how prediction markets settle
+  - settlement disputes
+  - reading market rules
+takeaways:
+  - "A market title is a headline; the resolution criteria are the contract. Where the two disagree, the criteria decide who gets paid."
+  - "Most painful losses are definitional rather than predictive — you read the world correctly and misread what the market was counting."
+  - "Any market on a number names a source of truth, and feeds, indices and closing prints disagree constantly, so the figure on your screen may not be the one that settles."
+  - "A deadline is a date plus a clock: the same event can land on opposite sides of 31 December in US Eastern, UTC and Tehran time."
+  - "Vague rules are a reason to pay less for the position, not a detail to sort out after the event happens."
+faq:
+  - q: "Where do I find the resolution criteria on a market page?"
+    a: "They sit on the market page itself, alongside the close time and the order book, usually under a rules or resolution heading. The habit worth building is opening them before you look at the price, because once you have seen a number your reading turns into a search for confirmation rather than a check on what the contract actually says."
+  - q: "Can the resolution rules change after a market opens?"
+    a: "The criteria are written when the market is created and are meant to stay fixed, because they are the contract everyone traded against. What can move is the interpretation applied at settlement — someone proposes an outcome and anyone can challenge it — so an ambiguous clause is settled by the dispute process rather than by rewriting the rules."
+  - q: "Who decides whether the criteria were actually met?"
+    a: "A proposer posts the outcome along with a bond, and anyone who disagrees can challenge it within the challenge window. If nobody objects, the proposed outcome stands and the market pays out. If someone does object, the question goes to a dispute process and payout waits until that resolves, which takes days rather than hours."
+  - q: "What if the source named in the rules never publishes a number?"
+    a: "Well-written criteria say what happens in that case — a named fallback source, a postponement, or resolution to NO. If the rules are silent on it, that gap is unpriced risk you are carrying, and it is one of the more common reasons a market ends up in dispute instead of settling quietly on the day."
+  - q: "Do resolution rules matter on short sports markets too?"
+    a: "Yes, and they are easy to skip precisely because the question looks obvious. A match market has to say what happens if the fixture is abandoned, postponed or awarded, and whether extra time and penalties count towards the result. Those clauses decide a small fraction of markets, but the ones they decide are total losses rather than near misses."
+  - q: "Is a badly worded market simply worth avoiding?"
+    a: "Not always. Ambiguity has a direction: it usually favours one side of the contract, because a rule that could be read two ways still has a default reading at settlement. If you can work out which side the vagueness protects and the price does not reflect that, the market is tradeable. If you cannot, you are guessing at the contract as well as the event."
 ---
 
 The painful losses in prediction markets are rarely the ones where you misjudged the world. They are the ones where the world did what you expected and the market settled the other way, because the rules meant something narrower than the title suggested.
 
 A market title is a headline. The resolution criteria are the contract. When they disagree, the criteria win.
 
-## The title is not the question
+## Why isn't the market title the real question?
+
+Because a title is written to be read in a second, and the contract underneath it usually contains several questions the title compressed into one. Each of those has a defensible answer, and the criteria will pick one — which is why you can be entirely correct about events and still hold a worthless share.
 
 Consider a market titled "Will the minister leave office by 30 June?" That reads as one question and contains at least four. Does a resignation count, or only a formal dismissal? What about announcing a departure in June that takes effect in August? Does moving to a different ministry count as leaving? If the government falls and every post is vacated at once, is that the same event?
 
-Each of those has a defensible answer, and the criteria will pick one. If you buy YES because you are confident a resignation is coming, and the rules require the office to be formally vacated, you can be entirely correct and still hold a worthless share.
+If you buy YES because you are confident a resignation is coming, and the rules require the office to be formally vacated, you were right about the world and wrong about the contract.
 
-## Which source, and whose clock
+## Which source and whose clock does the market use?
 
-Two details cause more disputes than anything else.
+Whichever ones the criteria name — and if they name neither, that is the finding, not a loose end. Two details cause more disputes than anything else.
 
 **The source.** A market on an asset's price has to name where the price comes from — a specific exchange feed, an index, a closing print at a stated time. Those disagree with each other constantly. A market resolving on one venue's close can settle NO while the number on your screen, from a different venue, printed above the threshold minutes earlier.
 
-**The timezone.** "By 31 December" is not a date, it is a date plus a clock. UTC, US Eastern and Tehran time can land an event on different sides of a deadline. If the criteria don't say, look for what they do say — and treat a genuinely ambiguous deadline as a reason to price the market lower, not as a detail to settle later.
+**The timezone.** "By 31 December" is not a date, it is a date plus a clock. The same instant sits on different sides of that deadline depending on which clock the rules run on:
 
-## What counts as the event
+| Clock the rules name | When "by 31 December 2026" expires | An event at 21:00 New York, 31 Dec |
+| --- | --- | --- |
+| US Eastern (UTC−5) | 31 Dec, 23:59 New York | Inside the deadline |
+| UTC | 31 Dec, 23:59 UTC | Missed it — already 02:00 on 1 Jan |
+| Tehran (UTC+3:30) | 31 Dec, 23:59 Tehran | Missed it — already 05:30 on 1 Jan |
 
-The third trap is the threshold itself. A market on "an official announcement" needs to define official — a press release, a filing, a confirmed report, a post on a personal account? A market on a company "acquiring" another might resolve on a signed agreement, or only on a completed deal, and those can be a year apart.
+If the criteria don't say, look for what they do say — and treat a genuinely ambiguous deadline as a reason to price the market lower, not as a detail to settle later.
 
-## How to read the rules quickly
+## What counts as the event actually happening?
 
-Open the resolution criteria before the price, every time, and look for four things: the exact wording of the condition, the named source of truth, the deadline with its timezone, and what happens if the source doesn't report. If any of the four is missing or vague, that is real risk in the position — often a bigger risk than the underlying event.
+The threshold itself is the third trap, and it is the one that survives careful reading of everything else. A market on "an official announcement" needs to define official — a press release, a filing, a confirmed report, a post on a personal account? A market on a company "acquiring" another might resolve on a signed agreement, or only on a completed deal, and those can be a year apart.
+
+The same question hides inside price markets. [Whether Ethereum dips to $1,000 by 31 December 2026](/market/will-ethereum-dip-to-1000-by-december-31-2026-273-175) turns on whether a momentary wick to that level counts or whether the rules want a close below it — two different questions wearing one title.
+
+## How do you read the resolution rules quickly?
+
+Open the resolution criteria before the price, every time, and look for four things: the exact wording of the condition, the named source of truth, the deadline with its timezone, and what happens if the source doesn't report. If any of the four is missing or vague, that is real risk in the position — often a bigger risk than the underlying event, and a reason to [size the position smaller](/learn/how-to-size-a-position) rather than to skip the market.
 
 Then ask the question that separates careful traders from confident ones: **what is the most annoying way this could resolve against me while I turn out to be right?** If you can describe that scenario in one sentence, you have understood the market. If you can't, you haven't finished reading.
+
+Reading the rules early also tells you what your exits look like: a market whose criteria you no longer believe in is one you can [sell before it resolves](/learn/can-you-sell-before-a-market-resolves), and what happens once the criteria are met is covered in [how a market resolves and when you get paid](/learn/how-markets-resolve-and-when-you-get-paid). If you are still finding your way around a market page, [how it works](/how-it-works) shows where the rules sit relative to the price.
