@@ -1,0 +1,198 @@
+---
+title: "Why the House and Senate midterm markets are 38 cents apart"
+description: "One election, one electorate, one date — and two prices 38 cents apart. That gap is not a mispricing; it is the whole structure of the 2026 midterm board."
+tag: ANALYSIS
+readingMinutes: 9
+publishedAt: "2026-08-27"
+lead: "Four outcomes are priced on the midterm board, but only one variable sits behind all of them: how big the Democratic wave gets. Until you see that, you think you are spreading risk when you are really betting twice on the same thing."
+keywords:
+  - "2026 midterm prediction market"
+  - "Balance of Power Polymarket"
+  - "House Senate midterm odds"
+  - "correlated prediction market positions"
+  - "split government trade"
+takeaways:
+  - "The House and Senate are the same election, but the House market trades at 88.5c and the Senate at 50.5c — because only a third of the Senate is up, and the map decides which third."
+  - "The four Balance of Power outcomes are not four scenarios. They are three rungs of one ladder, and 97.5 cents of the board sits on those three rungs."
+  - "Democrats winning the Senate while losing the House is priced at 0.95c — near-impossible, and that single cell is what tells you the two chambers are stacked, not independent."
+  - "Buying the House and the Senate separately feels like two positions. It is one view expressed twice, at roughly the same expected value and a much worse shape of risk."
+  - "The board contains a 1.5-cent midpoint arbitrage that is smaller than the ~1 cent of spread each leg costs to cross — a worked example of why midpoint edges are not edges."
+faq:
+  - q: "Why is the House almost decided while the Senate is a coin flip?"
+    a: "Because all 435 House seats are contested every cycle, so the House price is close to a direct reading of the national political mood. Only about a third of the Senate is up in any given year — 2026 has roughly 35 seats — and which third matters more than how many. Republicans are defending 22 of them, but 20 of those 22 sit in states Trump carried by double digits, so a national swing that flips the House comfortably can still leave the Senate map intact."
+  - q: "Does defending more seats mean Republicans are in more trouble in the Senate?"
+    a: "Not here, and this is the counterintuitive part. Republicans defend 22 seats to the Democrats' 13, which normally signals exposure. But only Maine, where Susan Collins is running for a sixth term, is a Republican-held seat in a state the Democratic ticket won in 2024. After Maine the clearest target is North Carolina, and then the list thins out fast. Meanwhile Democrats have to hold Georgia with Jon Ossoff and an open seat in Michigan where Gary Peters is retiring."
+  - q: "What does the 0.95-cent cell on the board actually tell you?"
+    a: "That winning the Senate is strictly harder than winning the House. Democrats taking the Senate while losing the House is priced at roughly one cent, which means the market sees essentially no path to the Senate that does not run through a House win first. That is why the four outcomes collapse into a single ladder: no wave, medium wave, big wave. It also means the two chambers are heavily correlated, not independent events."
+  - q: "How much does correlation actually change the numbers?"
+    a: "If the two chambers were independent you would multiply: 0.885 times 0.505 gives 44.7 percent for Democrats winning both. The board prices that outcome at 48.5 cents instead. Those extra 3.8 points are the correlation, quoted directly. You can read conditional probabilities off the same board: the chance of a Democratic Senate given a Democratic House is 48.5 divided by 86.0, or about 56 percent — much better than the 50.5 the standalone Senate market shows."
+  - q: "Is there a real arbitrage on the Balance of Power board?"
+    a: "At midpoints there appears to be one, and it is a useful thing to work through. Buying both outcomes that contain a Democratic House costs 86.0 cents, and the standalone Republican House contract at 12.5 cents completes the set, so 98.5 cents buys a guaranteed 100. But the same board shows House YES at 88.5 and House NO at 12.5, summing to 101 — about a cent of overround per binary pair. The 1.5-cent edge is smaller than the spread you cross to take it."
+  - q: "What is the trade that nothing else on the board expresses?"
+    a: "Republican Senate with a Democratic House, at 37.5 cents for a 167 percent return. It is the bet that the wave is real but stops at the Senate map, which means simultaneously believing the national polling and the state-by-state map. Buying the House alone is nearly the same event at a seventh of the payout and says nothing about the Senate; buying the both-chambers contract is the opposite bet on the map."
+---
+
+Four outcomes are priced on the 2026 midterm board, and it is tempting to read them as four separate scenarios you can pick between. They are not. Behind all four sits a single variable — how big the Democratic wave gets — and the prices are a measurement of that one number, sliced three ways.
+
+All figures below are from Oddzy's market data as of 27 August 2026, covering about $22.5 million of lifetime volume across the contracts quoted. Prices move daily — check the market page before acting on any of them.
+
+## Two prices, one election
+
+| Market | Democrat | Republican | Volume |
+| --- | --- | --- | --- |
+| [House of Representatives](/market/will-the-democratic-party-control-the-house-after-the-2026-midterm-elections) | **88.5c** | 12.5c | $9.8M |
+| Senate | **50.5c** | 50.5c | $4.0M |
+
+Same election, same voters, same date. One is close to settled and the other is a coin flip.
+
+The reason is that not every seat is on the ballot. All 435 House seats are contested, so the House price is close to a direct reading of the national mood. In the Senate only about a third of the chamber votes each cycle — roughly 35 seats in 2026 — and **which** third matters far more than how many.
+
+## Why does defending more seats not mean losing more seats?
+
+Republicans hold 53 Senate seats and are defending 22 of the seats up this year, against 13 for the Democrats. Nearly twice the exposure. On paper that should be a rout.
+
+It is not, because of where those seats are:
+
+- **20 of the 22** Republican-held seats up this year are in states Trump carried by double digits. A national swing large enough to take the House comfortably does not move them.
+- The only Republican seat in a state the Democratic ticket won in 2024 is **Maine**, where Susan Collins is running for a sixth term.
+- After Maine, the clearest target is **North Carolina**, where Thom Tillis is seeking a third term. Then the list thins out fast — Ohio and Alaska are considerably harder.
+- At the same time Democrats must hold **Georgia** (Jon Ossoff) and an open seat in **Michigan**, where Gary Peters is retiring.
+
+Democrats need a net four seats for control. The map gives up two without much of a fight and then becomes a wall.
+
+> **The technical detail most people skip.** Read the resolution rules and you find that if no party wins an outright majority, control goes to the party holding half the seats *and* the Vice Presidency. The Vice President is a Republican. A 50-50 Senate therefore resolves as Republican control, which means Democrats have to get Republicans down to **49**, not 50. That one seat changes the entire arithmetic — and it is the kind of clause covered in [read the resolution rules first](/learn/read-the-resolution-rules-first).
+
+## What does the combined board price?
+
+Rather than each chamber separately, the Balance of Power market prices the **combination**. About $8.7 million of volume sits across its four outcomes:
+
+| Outcome | Price | Return if right |
+| --- | --- | --- |
+| [Democratic Senate, Democratic House](/market/2026-balance-of-power-d-senate-d-house-949) | **48.5c** | +106% |
+| Republican Senate, Democratic House | **37.5c** | +167% |
+| [Republican Senate, Republican House](/market/2026-balance-of-power-r-senate-r-house-537) | **11.5c** | +770% |
+| Democratic Senate, Republican House | **0.95c** | +10,426% |
+
+First, a sanity check against the two standalone markets above. Democrats winning the House works out to 48.5 + 37.5 = 86.0, or **87.4%** once normalised — against 88.5c standalone. Democrats winning the Senate is 48.5 + 0.95 = 49.45, or **50.2%** normalised — against 50.5c standalone.
+
+Two entirely separate order books, agreeing to about a point. The board is coherent, which is what makes the rest of this worth doing.
+
+## Why is the cheapest cell the most informative?
+
+Democratic Senate with a Republican House is priced at **0.95 cents**. The market is saying this combination effectively does not happen.
+
+That is not a curiosity in the corner of the board — it is the structure of the whole thing. Taking the Senate is *harder* than taking the House. To win the Senate you first need a wave big enough to have carried the House along with it.
+
+So these are not four independent scenarios. They are one ladder with three rungs:
+
+| Size of the wave | Outcome | Price |
+| --- | --- | --- |
+| No wave | Republicans hold both | **11.5c** |
+| Medium wave | Democrats take the House only | **37.5c** |
+| Large wave | Democrats take both | **48.5c** |
+
+**97.5 cents of the entire board sits on those three rungs.** One variable, three prices.
+
+## How much is the correlation worth?
+
+If the two chambers were independent events, the probability of Democrats winning both would be the product:
+
+> 0.885 × 0.505 = **44.7%**
+
+The market prices it at **48.5%**.
+
+Those extra **3.8 points are the correlation**, and the board is quoting it to you directly.
+
+The same numbers give the conditional probabilities:
+
+- Democratic Senate **given** a Democratic House: 48.5 ÷ 86.0 = **56.4%**
+- Democratic House **given** a Democratic Senate: 48.5 ÷ 49.45 = **98.1%**
+- Republicans holding the Senate **given** they hold the House: 11.5 ÷ 12.45 = **92.4%**
+
+The first is the one that matters. The Senate *on its own* is a coin flip, but conditional on the thing that is already near-certain, it is a 56 percent shot.
+
+## What does the seat ladder add?
+
+Alongside the control markets, individual contracts price each exact Senate seat count. We list eight of them, and they sum to 61.8 cents:
+
+| Republican seats | Price | Controls the chamber |
+| --- | --- | --- |
+| Exactly 48 | 13.5c | Democrats |
+| Exactly 50 | 12.0c | Republicans (via the Vice President) |
+| Exactly 51 | 11.5c | Republicans |
+| Exactly 52 | 10.9c | Republicans |
+| Exactly 53 | 4.8c | Republicans |
+| Exactly 54 | 4.15c | Republicans |
+| Exactly 55 | 2.45c | Republicans |
+| Exactly 56 | 2.5c | Republicans |
+
+The Republican-control buckets here total **48.3 cents**. The buckets we do not list are mostly the low end — 49 and below — and those are all Democratic control. That puts an implied ceiling on Democratic Senate control of roughly **51.7%**, against 50.5c in the control market itself.
+
+About a point apart. This is a consistency check that passes, not a signal — and it is worth knowing the difference. A ladder that disagreed sharply with the control market would usually mean the two are answering slightly different questions (how independents who caucus with a party get counted, how runoffs and vacancies are treated) rather than that one of them is wrong.
+
+## Three ways to express a view
+
+### Do not pay for what everyone already knows
+
+If your view is "the wave is real", buying the House is the worst available way to say it:
+
+| Contract | Price | Return | What it needs |
+| --- | --- | --- | --- |
+| Democratic House | 88.5c | **+13%** | a wave |
+| Democratic Senate | 50.5c | **+98%** | a wave that also reaches the map |
+| Democrats take both | 48.5c | **+106%** | the same |
+
+Eight times the payout for the same opinion. The House price is consensus; the genuine disagreement is in the Senate price.
+
+### The correlation trap
+
+Buying "Democratic House" and "Democratic Senate" separately feels like two positions. It is not.
+
+At 100 contracts of each, the cost is 139 cents:
+
+| Scenario | Probability | Bought separately | Both-chambers only (48.5c) |
+| --- | --- | --- | --- |
+| Democrats take both | 48.5% | 200 → **+61** | 100 → **+51.5** |
+| Split government | 37.5% | 100 → **−39** | 0 → **−48.5** |
+| Republicans hold both | 11.5% | 0 → **−139** | 0 → **−48.5** |
+
+Expected value is near-identical — because the board is coherent, as we checked above. What differs is the **shape** of the risk: buying separately gives you a soft landing in the split-government case and pays for it with a much worse tail. Choose it deliberately if you want it, but do not do it under the name of diversification. Sizing this properly is the subject of [how to size a position](/learn/how-to-size-a-position).
+
+### The trade nothing else expresses
+
+**Republican Senate, Democratic House — 37.5 cents, a 167% return.**
+
+This is the "the wave is real but it stops at the map" bet. Holding it means believing the national polling *and* the state-by-state Senate map at the same time, which is arguably the most defensible reading of the evidence in this article.
+
+Nothing else on the board says it. The House contract is nearly the same event at a seventh of the payout and expresses no view on the Senate at all. The both-chambers contract is the precise opposite bet on the map.
+
+**Exit signals:** Collins retiring or falling sharply behind in Maine, North Carolina opening up, or Ohio or Alaska tightening to single digits. Any of those weakens the map argument, and this is the first position that should come off.
+
+## Why is the arbitrage on this board not real?
+
+There is a combination that looks mathematically locked:
+
+1. Buy **Democrats take both** (48.5c)
+2. Buy **Republican Senate, Democratic House** (37.5c)
+3. Buy **Republican House** (12.5c)
+
+The first two together are exactly "Democrats win the House", and the third is its complement. Whatever happens, the set pays 100 cents. Total cost at midpoints: **98.5 cents**, for a 1.5-cent edge.
+
+Now look at what the same board says about spreads. House YES trades at 88.5c and House NO at 12.5c — together **101 cents** to receive 100. The Senate pair does the same: 50.5 and 50.5, again 101. Each binary pair carries roughly **a cent of overround at the midpoint alone**.
+
+The "arbitrage" is 1.5 cents across three legs. Crossing the spread on three legs costs more than that before you have counted depth at all. The edge is inside the noise, and it was never a free 1.5 cents — a midpoint is not a price you can trade, which is the whole subject of [why orders fill at a worse price](/learn/why-did-my-order-fill-at-a-worse-price).
+
+**The general lesson:** arbitrage found at midpoints usually disappears at the order book. Always check the ask and the depth, not the middle.
+
+## Before you trade any of this
+
+1. Read the price on the market page, not from a screenshot.
+2. Read the full resolution rules — especially the Vice-Presidency clause in a 50-50 Senate.
+3. Look at the ask and the depth, not the midpoint. That gap is where imaginary profit dies.
+4. Size small, and do not concentrate on one contract.
+5. Decide your exit signals in advance.
+6. Remember there are still about ten weeks to go. One large news event moves this entire board at once.
+
+New to how any of this settles? Start with [how a market resolves and when you get paid](/learn/how-markets-resolve-and-when-you-get-paid), or see [how it works](/how-it-works).
+
+*This is analysis of market prices, not financial advice and not a political position. Prediction markets carry the risk of losing your entire stake.*
