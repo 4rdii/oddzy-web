@@ -51,6 +51,9 @@ export function MiniApp({
   // The category picked in Browse; the feed reads it. Kept here so switching
   // tabs doesn't lose the filter.
   const [topic, setTopic] = useState<Topic | null>(null);
+  // Basket picked by a deep link, handed to BasketsScreen so it opens that card
+  // instead of the list.
+  const [deepLinkedBasket, setDeepLinkedBasket] = useState<string | null>(null);
   const { inTelegram } = useTelegram();
 
   /**
@@ -129,6 +132,30 @@ export function MiniApp({
       .catch(() => {
         // Non-fatal: leave the user on the positions list rather than a dead end.
       });
+  }, []);
+
+  /**
+   * Deep link from a basket page: `/app?basket=<slug>` opens that basket.
+   *
+   * Same client-side treatment as `?market=` above, and for the same reason —
+   * reading searchParams on the server would opt this ISR route into dynamic
+   * rendering for everyone to serve the few who arrive via a link.
+   *
+   * No fetch here: BasketsScreen already loads the list through the authed API,
+   * so all this has to do is say which card to open. That also keeps the
+   * sign-in gate honest — a logged-out visitor sees the prompt rather than a
+   * basket they cannot buy.
+   */
+  useEffect(() => {
+    const slug = new URLSearchParams(window.location.search).get("basket");
+    if (!slug) return;
+
+    const url = new URL(window.location.href);
+    url.searchParams.delete("basket");
+    window.history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
+
+    setDeepLinkedBasket(slug);
+    setScreen({ name: "baskets" });
   }, []);
 
   // Screens that can't render anything meaningful without an account.
@@ -243,6 +270,7 @@ export function MiniApp({
 
             {screen.name === "baskets" && (
               <BasketsScreen
+                initialSlug={deepLinkedBasket}
                 balance={balance}
                 onDone={(receipt) => {
                   setScreen({ name: "basketDone", receipt });
@@ -257,7 +285,10 @@ export function MiniApp({
               <BasketReceiptScreen
                 receipt={screen.receipt}
                 onPositions={() => setScreen({ name: "positions" })}
-                onDone={() => setScreen({ name: "baskets" })}
+                onDone={() => {
+                  setDeepLinkedBasket(null);
+                  setScreen({ name: "baskets" });
+                }}
               />
             )}
 
@@ -293,7 +324,12 @@ export function MiniApp({
             active={tab === "baskets"}
             icon="▨"
             label={t.app.nav.baskets}
-            onClick={() => setScreen({ name: "baskets" })}
+            onClick={() => {
+              // A deliberate tap on the tab means "show me the list", even if
+              // this session arrived on a ?basket= link.
+              setDeepLinkedBasket(null);
+              setScreen({ name: "baskets" });
+            }}
           />
           <TabButton
             active={tab === "updown"}

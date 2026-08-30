@@ -110,13 +110,20 @@ const cents = (p: number | null) => (p === null ? "—" : `${Math.round(p * 100)
 export function BasketsScreen({
   balance,
   onDone,
+  initialSlug = null,
 }: {
   balance: number | null;
   onDone: (receipt: BasketReceipt) => void;
+  /**
+   * Basket to open on mount, from a `/app?basket=<slug>` deep link. The card
+   * loads by slug on its own, so an unknown or unpublished slug degrades to the
+   * list rather than a dead screen.
+   */
+  initialSlug?: string | null;
 }) {
   const { locale, t } = useLocale();
   const [list, setList] = useState<BasketSummary[] | null>(null);
-  const [open, setOpen] = useState<string | null>(null);
+  const [open, setOpen] = useState<string | null>(initialSlug);
 
   useEffect(() => {
     const ctrl = new AbortController();

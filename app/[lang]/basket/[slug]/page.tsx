@@ -257,11 +257,24 @@ export default async function BasketPage(props: Params) {
         {!settled && (
           <section className="mt-8 rounded-2xl border border-[var(--line)] bg-[var(--card)] p-5">
             <p className="text-[15px] leading-relaxed">{t.market.ctaLead}</p>
+            {/* The web app is the primary destination: it has had a Baskets tab
+                since well after these pages shipped, and it is on this same
+                hostname, so a reader on the site never leaves the brand to buy.
+                Telegram stays as a second line for people who trade in the bot.
+
+                `?basket=` is read client-side by MiniApp — see the deep-link
+                effect there for why it isn't a server-read searchParam. */}
             <a
-              href={`https://t.me/${brand.tgBot}?start=basket_${slug}`}
+              href={`/app?basket=${encodeURIComponent(slug)}`}
               className="mt-4 inline-block rounded-xl bg-[var(--accent)] px-5 py-3 text-[15px] font-semibold text-[var(--on-accent)]"
             >
               {t.basket.cta}
+            </a>
+            <a
+              href={`https://t.me/${brand.tgBot}?start=bsk_${slug}`}
+              className="mt-3 block text-[14px] font-medium text-[var(--mute)] underline underline-offset-4"
+            >
+              {t.basket.ctaTelegram}
             </a>
           </section>
         )}

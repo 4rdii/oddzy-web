@@ -275,7 +275,15 @@ export const en = {
     partialNotice:
       "Legs are placed as separate orders. If one can't fill at the price shown, the rest still go through and that leg's share stays in your balance.",
     minStake: "Minimum {amount} — the smallest leg needs at least the minimum bet.",
-    cta: "Buy this basket in Telegram",
+    /**
+     * Primary CTA — the web app, on this same hostname. It used to point at
+     * Telegram because the web app had no Baskets tab when these pages shipped;
+     * it has had one since, and sending a web reader out to an app they may not
+     * have installed was throwing the click away.
+     */
+    cta: "Buy this basket",
+    /** Secondary, for readers who'd rather trade in the bot. */
+    ctaTelegram: "Or open it in Telegram",
   },
   topic: {
     metaTitle: "{topic} — what the market says",
