@@ -40,6 +40,25 @@ const LEG_COLORS = [
 const MIN_LEGS = 2;
 const MAX_LEGS = 10;
 
+/**
+ * Legs must resolve within this many days of each other.
+ *
+ * Mirrors MAX_HORIZON_DAYS in packages/domain/src/basket-spec.ts, which is the
+ * authority — the server rejects a wider basket at publish. It is duplicated
+ * here rather than fetched because the alternative is worse: without it the
+ * builder happily lets someone weight a September Fed market against a 2027
+ * geopolitical one, and the only feedback is a rejection AFTER they have named
+ * and submitted it. A rule the client cannot see is a rule the client will
+ * break.
+ *
+ * The reason the rule exists: a basket is bought as one decision, and legs that
+ * settle a quarter apart mean most of the money is locked long after the rest
+ * has resolved. That is a different product from the one the payout line
+ * describes.
+ */
+const MAX_HORIZON_DAYS = 31;
+const DAY_MS = 86_400_000;
+
 type Pick = { slug: string; weight: number };
 
 /**
@@ -180,11 +199,32 @@ export function BasketBuilder({
     return total;
   }, [picked, known]);
 
-  const canPublish = picked.length >= MIN_LEGS && sum === 100 && name.trim().length > 0;
+  /**
+   * Widest gap between any two legs' resolution dates, in days.
+   *
+   * Legs with no close date (season outrights carry a NULL) are skipped rather
+   * than treated as today — counting a missing date as now() would invent a
+   * spread that isn't there and block a legitimate basket.
+   */
+  const horizonDays = useMemo(() => {
+    const times = picked
+      .map((p) => known[p.slug]?.close_time)
+      .filter((x): x is string => Boolean(x))
+      .map((x) => new Date(x).getTime())
+      .filter((n) => Number.isFinite(n));
+    if (times.length < 2) return 0;
+    return (Math.max(...times) - Math.min(...times)) / DAY_MS;
+  }, [picked, known]);
+
+  const horizonOk = horizonDays <= MAX_HORIZON_DAYS;
+
+  const canPublish =
+    picked.length >= MIN_LEGS && sum === 100 && horizonOk && name.trim().length > 0;
 
   const publishLabel =
     picked.length < MIN_LEGS ? c.needTwo
     : sum !== 100 ? c.needHundred
+    : !horizonOk ? c.needHorizon
     : !name.trim() ? c.needName
     : c.publish;
 
@@ -311,6 +351,14 @@ export function BasketBuilder({
                     >
                       <span style={{ color: "var(--bk-green)" }}>YES</span>
                       <span>{Math.round((m.probability?.yes ?? 0) * 100)}%</span>
+                      {m.close_time && (
+                        <span className="text-[var(--dots)]">
+                          {new Date(m.close_time).toLocaleDateString(
+                            locale === "fa" ? "fa-IR" : "en-US",
+                            { month: "short", day: "numeric" },
+                          )}
+                        </span>
+                      )}
                     </div>
                   </div>
                   <button
@@ -473,6 +521,12 @@ export function BasketBuilder({
               {sum !== 100 && (
                 <p className="mt-2 text-[12px]" style={{ color: "var(--bk-warn)" }}>
                   {c.weightWarning}
+                </p>
+              )}
+
+              {!horizonOk && (
+                <p className="mt-2 text-[12px]" style={{ color: "var(--bk-warn)" }}>
+                  {c.horizonWarning.replace("{days}", String(MAX_HORIZON_DAYS))}
                 </p>
               )}
 

@@ -222,6 +222,9 @@ export const en = {
     downWon: "Down won",
   },
   basketBuilder: {
+    needHorizon: "Positions resolve too far apart",
+    horizonWarning:
+      "Every position has to resolve within {days} days of the others. Swap out the one settling latest.",
     metaTitle: "Build a basket",
     h1: "Build a basket",
     lead:
