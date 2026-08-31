@@ -412,6 +412,8 @@ export const fa: Dict = {
     },
 
     baskets: {
+      searchPlaceholder: "جست‌وجوی سبد یا سازنده",
+      noMatches: "چیزی با «{q}» پیدا نشد.",
       title: "سبدها",
       lead: "مجموعه‌ای از موقعیت‌ها که هرکدام وزن مشخصی دارند. با یک ضربه همه خریداری می‌شوند.",
       notParlay:

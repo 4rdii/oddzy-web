@@ -5,6 +5,10 @@ import { authedGet, authedPost } from "@/lib/client-api";
 import { BasketCard, type CommunityBasket } from "@/components/baskets/BasketCard";
 import { useLocale } from "./LocaleProvider";
 
+/** Same filters as /baskets, so the two surfaces stay one product. */
+const FEED_TABS = ["all", "hot", "following", "bought"] as const;
+type FeedTab = (typeof FEED_TABS)[number];
+
 /**
  * Baskets: browse a curated set of positions, then buy the whole set at once.
  *
@@ -122,17 +126,40 @@ export function BasketsScreen({
 }) {
   const { locale, t } = useLocale();
   const [list, setList] = useState<CommunityBasket[] | null>(null);
+  const [tab, setTab] = useState<FeedTab>("all");
+  /**
+   * `query` is what the field shows; `search` is what has actually been sent.
+   * Separating them is what makes the debounce work without the input feeling
+   * laggy — the box updates on every keystroke, the request does not.
+   */
+  const [query, setQuery] = useState("");
+  const [search, setSearch] = useState("");
   const [open, setOpen] = useState<string | null>(initialSlug);
+
+  // 250ms: long enough that a typed word is one request, short enough that the
+  // list feels like it is following you rather than catching up.
+  useEffect(() => {
+    const id = setTimeout(() => setSearch(query.trim()), 250);
+    return () => clearTimeout(id);
+  }, [query]);
 
   useEffect(() => {
     const ctrl = new AbortController();
-    authedGet<{ baskets: CommunityBasket[] }>("/webapp/v1/community-baskets", ctrl.signal)
+    // Null while loading, so a tab change shows the skeleton rather than the
+    // previous tab's results sitting under the newly-selected pill.
+    setList(null);
+    const qs = new URLSearchParams({ tab });
+    if (search) qs.set("q", search);
+    authedGet<{ baskets: CommunityBasket[] }>(
+      `/webapp/v1/community-baskets?${qs}`,
+      ctrl.signal,
+    )
       .then((d) => setList(d.baskets))
       .catch((e: unknown) => {
         if ((e as Error)?.name !== "AbortError") setList([]);
       });
     return () => ctrl.abort();
-  }, []);
+  }, [tab, search]);
 
   if (open) {
     return (
@@ -155,6 +182,35 @@ export function BasketsScreen({
         {t.app.baskets.notParlay}
       </p>
 
+      <input
+        type="search"
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+        placeholder={t.app.baskets.searchPlaceholder}
+        className="mt-4 w-full rounded-xl border border-[var(--line)] bg-[var(--card)] px-3 py-2.5 text-[14px] text-[var(--ink)] placeholder:text-[var(--faint)]"
+      />
+
+      <div className="mt-3 flex flex-wrap gap-2">
+        {FEED_TABS.map((x) => {
+          const on = x === tab;
+          return (
+            <button
+              key={x}
+              type="button"
+              onClick={() => setTab(x)}
+              className="rounded-full border px-3 py-1.5 text-[12px] font-semibold"
+              style={{
+                background: on ? "var(--bk-goldtint)" : "var(--card)",
+                borderColor: on ? "#b08d2f" : "var(--line)",
+                color: on ? "var(--bk-gold)" : "var(--mute)",
+              }}
+            >
+              {t.communityBaskets.tabs[x]}
+            </button>
+          );
+        })}
+      </div>
+
       {list === null ? (
         <div className="mt-6 space-y-2" aria-busy>
           {[0, 1, 2].map((i) => (
@@ -162,7 +218,11 @@ export function BasketsScreen({
           ))}
         </div>
       ) : list.length === 0 ? (
-        <p className="mt-6 text-[13px] text-[var(--mute)]">{t.app.baskets.empty}</p>
+        <p className="mt-6 text-[13px] text-[var(--mute)]">
+          {search ? t.app.baskets.noMatches.replace("{q}", search)
+            : tab === "following" ? t.communityBaskets.emptyFollowing
+            : t.app.baskets.empty}
+        </p>
       ) : (
         <div className="mt-5 space-y-3">
           {list.map((b) => (

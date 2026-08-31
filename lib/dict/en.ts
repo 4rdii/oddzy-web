@@ -436,6 +436,8 @@ export const en = {
     },
 
     baskets: {
+      searchPlaceholder: "Search baskets or creators",
+      noMatches: "Nothing matches \"{q}\".",
       title: "Baskets",
       lead: "A set of positions with a weight on each. One tap buys them all.",
       notParlay:
