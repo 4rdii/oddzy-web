@@ -32,6 +32,27 @@ import { getDict } from "@/lib/dict";
  */
 export const revalidate = 3600;
 
+/**
+ * Empty on purpose, and load-bearing.
+ *
+ * `revalidate` ALONE does not make a dynamic segment cacheable: without a
+ * generateStaticParams the route stays on-demand dynamic, and production
+ * confirmed it — two consecutive requests both came back
+ * `x-vercel-cache: MISS` with `cache-control: no-store`, despite the build
+ * reporting a revalidate window. Exporting this (even empty) opts the route
+ * into the static path, and `dynamicParams` then renders an unknown id on
+ * first request and caches it like any other ISR page.
+ *
+ * Returning [] rather than a creator list is deliberate: prerendering every
+ * creator at build time would tie deploys to the size of the user base, for a
+ * shell that is identical for all of them.
+ */
+export function generateStaticParams() {
+  return [];
+}
+
+export const dynamicParams = true;
+
 export async function generateMetadata({
   params,
 }: {
