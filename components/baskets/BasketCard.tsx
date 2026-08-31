@@ -28,6 +28,8 @@ export type CommunityBasket = {
   followers: number;
   accuracy: number | null;
   viewerFollows: boolean;
+  /** House-endorsed. Editorial baskets are curated and carry no creator. */
+  curated: boolean;
   weightsBps: number[];
   multiplier: number | null;
 };
@@ -70,8 +72,15 @@ export function BasketCard({
   /** Off on a creator's own profile, where the header already says who they are. */
   showCreator?: boolean;
 }) {
-  const { locale, t, rtl } = useLocale();
+  const { locale, t, rtl, brand } = useLocale();
   const c = t.communityBaskets;
+
+  /**
+   * Editorial baskets have no creator row, so they render as the house rather
+   * than as an anonymous user. They also get no Follow button — there is
+   * nobody to follow, and a dead control on a card is worse than none.
+   */
+  const isHouse = b.creatorTgUserId == null;
 
   const title = localized(locale, b.titleEn, b.titleFa);
   const desc = localized(locale, b.descriptionEn ?? "", b.descriptionFa);
@@ -82,21 +91,24 @@ export function BasketCard({
       {showCreator && (
         <div className="flex items-center gap-2.5">
           <a
-            href={b.creatorTgUserId ? `/creator/${b.creatorTgUserId}` : undefined}
+            href={isHouse ? undefined : `/creator/${b.creatorTgUserId}`}
             className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[14px] font-bold text-white"
-            style={{ background: avatarColor(b.creatorTgUserId) }}
+            style={{ background: isHouse ? "var(--bk-goldmuted)" : avatarColor(b.creatorTgUserId) }}
             aria-hidden
           >
-            {initial}
+            {isHouse ? "★" : initial}
           </a>
           <div className="min-w-0 flex-1">
             <a
-              href={b.creatorTgUserId ? `/creator/${b.creatorTgUserId}` : undefined}
+              href={isHouse ? undefined : `/creator/${b.creatorTgUserId}`}
               className="flex items-center gap-1 truncate text-[13px] font-bold text-[var(--ink)]"
             >
-              {b.creatorName ?? c.anonymous}
-              {b.creatorVerified && (
-                <span aria-label={c.verified} style={{ color: "var(--bk-gold)" }}>
+              {isHouse ? brand.name : (b.creatorName ?? c.anonymous)}
+              {(isHouse || b.creatorVerified) && (
+                <span
+                  aria-label={isHouse ? c.editorial : c.verified}
+                  style={{ color: "var(--bk-gold)" }}
+                >
                   ✓
                 </span>
               )}
@@ -106,11 +118,15 @@ export function BasketCard({
               className="truncate text-[11px] text-[var(--faint)]"
               style={{ textAlign: rtl ? "right" : "left" }}
             >
-              {c.followersLabel.replace("{n}", String(b.followers))}
-              {b.accuracy != null && ` · ${Math.round(b.accuracy * 100)}% ${c.accuracyLabel}`}
+              {isHouse
+                ? c.editorial
+                : c.followersLabel.replace("{n}", String(b.followers))}
+              {!isHouse &&
+                b.accuracy != null &&
+                ` · ${Math.round(b.accuracy * 100)}% ${c.accuracyLabel}`}
             </div>
           </div>
-          {onToggleFollow && (
+          {onToggleFollow && !isHouse && (
             <button
               type="button"
               onClick={() => onToggleFollow(b)}
@@ -162,7 +178,7 @@ export function BasketCard({
       </div>
 
       <a
-        href={`/basket/${b.slug}`}
+        href={`/baskets/${b.slug}`}
         className="mt-3 text-[13px] font-bold"
         style={{ color: "var(--bk-gold)" }}
       >

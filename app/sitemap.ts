@@ -113,7 +113,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     })),
     // A basket page's prices move with its legs, so daily while any leg trades.
     ...baskets.map((b) => ({
-      url: `${siteUrl}/basket/${b.slug}`,
+      url: `${siteUrl}/baskets/${b.slug}`,
       lastModified: dayStamp(),
       changeFrequency: (b.status === "active" ? "daily" : "yearly") as "daily" | "yearly",
       priority: b.status === "active" ? 0.8 : 0.4,

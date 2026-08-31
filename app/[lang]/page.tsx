@@ -156,7 +156,7 @@ export default async function HomePage({
               {t.home.basketsBandCta}
             </Link>
             <Link
-              href="/basket"
+              href="/baskets"
               className="text-[14px] font-semibold"
               style={{ color: "var(--bk-gold)" }}
             >

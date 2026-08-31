@@ -236,6 +236,7 @@ export const en = {
       "Accuracy appears once this creator has enough settled positions for it to mean anything.",
   },
   communityBaskets: {
+    editorial: "Editorial pick",
     metaTitle: "Community baskets",
     h1: "Community baskets",
     lead:
@@ -263,6 +264,7 @@ export const en = {
     step3: "Earn {pct}% of the fee on every buy, credited straight to your balance.",
   },
   basketBuilder: {
+    chooseCategory: "Pick a category above to see its markets.",
     pathLabel: "Category path",
     allCategories: "All",
     needHorizon: "Positions resolve too far apart",

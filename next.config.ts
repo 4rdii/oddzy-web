@@ -3,6 +3,30 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   pageExtensions: ["ts", "tsx", "md", "mdx"],
+
+  /**
+   * Baskets moved from /basket to /baskets when the editorial index and the
+   * community feed became one page.
+   *
+   * These are not tidiness — they are load-bearing. /basket/<slug> links are
+   * already published: in Telegram channel posts we cannot edit, in indexed
+   * /learn articles, and in the JSON the basket admin API hands the content
+   * agent. Dropping the old path would 404 all of them.
+   *
+   * The locale-prefixed forms are here because they were reachable too: the
+   * host->locale rewrite in proxy.ts means /fa/basket/<slug> renders, and links
+   * in that shape were shared before the prefix was removed from our own
+   * markup. 308 keeps the method and tells crawlers the move is permanent, so
+   * the ranking on those article-linked pages follows.
+   */
+  async redirects() {
+    return [
+      { source: "/basket", destination: "/baskets", permanent: true },
+      { source: "/basket/:slug", destination: "/baskets/:slug", permanent: true },
+      { source: "/:lang(en|fa)/basket", destination: "/baskets", permanent: true },
+      { source: "/:lang(en|fa)/basket/:slug", destination: "/baskets/:slug", permanent: true },
+    ];
+  },
 };
 
 const withMDX = createMDX({

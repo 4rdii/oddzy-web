@@ -104,7 +104,6 @@ export function BasketBuilder({
    * leagues, which is most of what a football basket is.
    */
   const [path, setPath] = useState<Topic[]>([]);
-  const [catId, setCatId] = useState<string>(topics[0]?.id ?? "");
   const [markets, setMarkets] = useState<Market[]>([]);
   const [loadingMarkets, setLoadingMarkets] = useState(false);
   const [picked, setPicked] = useState<Pick[]>([]);
@@ -124,10 +123,28 @@ export function BasketBuilder({
    */
   const [known, setKnown] = useState<Record<string, Market>>({});
 
+  const current = path.length > 0 ? path[path.length - 1] : null;
+  const children = childrenOf(topics, path);
+
+  /**
+   * Which node's markets to load — and usually the answer is NONE.
+   *
+   * A node only lists markets it OWNS. Loading a section's markets while it
+   * still has children is what turned "Sports" into a wall of 17,000 rows with
+   * no way to reach the Champions League underneath: the firehose looked like
+   * the answer, so nobody drilled. This mirrors BrowseScreen, where drilling
+   * wins and a section's own markets appear only when it actually has some.
+   */
+  const catId = current && current.own_markets > 0 ? current.id : "";
+
   const abortRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
-    if (!catId) return;
+    if (!catId) {
+      setMarkets([]);
+      setLoadingMarkets(false);
+      return;
+    }
     abortRef.current?.abort();
     const ctrl = new AbortController();
     abortRef.current = ctrl;
@@ -278,7 +295,7 @@ export function BasketBuilder({
         <div className="text-[24px] font-extrabold text-[var(--ink)]">{c.publishedTitle}</div>
         <p className="mt-2 text-[14px] text-[var(--mute)]">{c.publishedBody}</p>
         <a
-          href={`/basket/${done.slug}`}
+          href={`/baskets/${done.slug}`}
           className="mt-5 inline-block rounded-xl px-5 py-3 text-[15px] font-bold"
           style={{
             background: "var(--bk-cta)",
@@ -300,10 +317,7 @@ export function BasketBuilder({
         <nav className="mb-2 flex flex-wrap items-center gap-1.5" aria-label={c.pathLabel}>
           <button
             type="button"
-            onClick={() => {
-              setPath([]);
-              setCatId(topics[0]?.id ?? "");
-            }}
+            onClick={() => setPath([])}
             className="rounded-full border px-2.5 py-1 text-[12px] font-semibold"
             style={{
               background: path.length === 0 ? "var(--bk-goldtint)" : "var(--card)",
@@ -317,10 +331,7 @@ export function BasketBuilder({
             <button
               key={node.id}
               type="button"
-              onClick={() => {
-                setPath(path.slice(0, i + 1));
-                setCatId(node.id);
-              }}
+              onClick={() => setPath(path.slice(0, i + 1))}
               className="rounded-full border px-2.5 py-1 text-[12px] font-semibold"
               style={{
                 background: i === path.length - 1 ? "var(--bk-goldtint)" : "var(--card)",
@@ -333,42 +344,27 @@ export function BasketBuilder({
           ))}
         </nav>
 
-        {/* Children of the current node. A node with its own children drills;
-            a leaf just filters. Both also load that node's markets, so the list
-            below is never empty while you are still choosing. */}
-        <div className="mb-3 flex flex-wrap gap-2">
-          {childrenOf(topics, path).map((topic) => {
-            const on = topic.id === catId;
-            const hasKids = topic.children.length > 0;
-            return (
+        {children.length > 0 && (
+          <div className="mb-3 flex flex-wrap gap-2">
+            {children.map((topic) => (
               <button
                 key={topic.id}
                 type="button"
-                onClick={() => {
-                  setCatId(topic.id);
-                  if (hasKids) setPath([...path, topic]);
-                }}
-                className="rounded-full border px-3 py-1.5 text-[13px] font-semibold transition-colors"
-                style={{
-                  background: on ? "var(--bk-goldtint)" : "var(--card)",
-                  borderColor: on ? "#b08d2f" : "var(--line)",
-                  color: on ? "var(--bk-gold)" : "var(--mute)",
-                }}
+                onClick={() => setPath([...path, topic])}
+                className="rounded-full border border-[var(--line)] bg-[var(--card)] px-3 py-1.5 text-[13px] font-semibold text-[var(--mute)] transition-colors hover:border-[var(--bk-goldborder)]"
               >
                 {topic.emoji ? `${topic.emoji} ` : ""}
                 {localized(locale, topic.name, topic.name_fa)}{" "}
                 <span dir="ltr" className="tabular-nums opacity-70">
                   {topic.active_markets}
                 </span>
-                {hasKids && (
-                  <span aria-hidden className="opacity-50">
-                    {" "}›
-                  </span>
+                {topic.children.length > 0 && (
+                  <span aria-hidden className="opacity-50"> ›</span>
                 )}
               </button>
-            );
-          })}
-        </div>
+            ))}
+          </div>
+        )}
 
         <div className="space-y-2">
           {loadingMarkets && markets.length === 0 ? (
@@ -377,7 +373,7 @@ export function BasketBuilder({
             </div>
           ) : markets.length === 0 ? (
             <div className="rounded-xl border border-[var(--line)] bg-[var(--card)] p-6 text-center text-[13px] text-[var(--faint)]">
-              {c.emptyCategory}
+              {catId ? c.emptyCategory : c.chooseCategory}
             </div>
           ) : (
             markets.map((m) => {

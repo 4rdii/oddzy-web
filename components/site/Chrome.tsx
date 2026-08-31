@@ -85,6 +85,12 @@ export async function SiteChrome({
               className="hidden items-center gap-6 sm:flex"
               aria-label={t.nav.primary}
             >
+              {/* Baskets sits first: it is the only nav item that leads to
+                  something buyable, and /basket is the crawlable editorial index
+                  rather than the noindex community feed — the right landing
+                  place for someone who has not chosen a basket yet. The feed and
+                  the builder are reached from there and from the home band. */}
+              <NavLink href="/baskets">{t.nav.baskets}</NavLink>
               <NavLink href="/how-it-works">{t.nav.howItWorks}</NavLink>
               <NavLink href="/learn">{t.nav.learn}</NavLink>
               <NavLink href="/faq">{t.nav.faq}</NavLink>
@@ -124,8 +130,7 @@ export async function SiteChrome({
               <NavLink href="/how-it-works">{t.nav.howItWorks}</NavLink>
               <NavLink href="/learn">{t.nav.learn}</NavLink>
               <NavLink href="/updown">{t.nav.updown}</NavLink>
-              <NavLink href="/basket">{t.nav.baskets}</NavLink>
-              <NavLink href="/baskets">{t.nav.community}</NavLink>
+              <NavLink href="/baskets">{t.nav.baskets}</NavLink>
               <NavLink href="/faq">{t.nav.faq}</NavLink>
             </nav>
 

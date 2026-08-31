@@ -67,9 +67,9 @@ export async function generateMetadata(props: Params): Promise<Metadata> {
       .replace("{title}", title)
       .replace("{count}", count),
     alternates: {
-      canonical: `/basket/${slug}`,
+      canonical: `/baskets/${slug}`,
       languages: Object.fromEntries(
-        LOCALES.map((l) => [BRANDS[l].htmlLang, `${BRANDS[l].siteUrl}/basket/${slug}`]),
+        LOCALES.map((l) => [BRANDS[l].htmlLang, `${BRANDS[l].siteUrl}/baskets/${slug}`]),
       ),
     },
     robots: { index: true, follow: true },
@@ -92,7 +92,7 @@ export default async function BasketPage(props: Params) {
     <SiteChrome lang={lang}>
       <article className="mx-auto max-w-2xl px-5 pt-10 pb-10">
         <Link
-          href="/basket"
+          href="/baskets"
           className="font-mono text-[11px] tracking-[0.06em] text-[var(--mute)]"
         >
           {t.basket.indexH1}
