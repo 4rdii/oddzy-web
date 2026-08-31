@@ -9,17 +9,24 @@ import { getDict } from "@/lib/dict";
 /**
  * Crypto 15-minute up/down.
  *
- * `revalidate = 0`: the only uncached page on the site, and necessarily so.
+ * `revalidate = 5`: the shortest-lived page on the site, but not an uncached one.
  * Every other route here is a static render that exists to be crawled; this one
  * is a live instrument whose contents expire in under fifteen minutes. The
  * initial render seeds the board so there is something on screen immediately,
  * and the client takes over polling from there.
  *
+ * That seeding role is exactly why it does not need to be uncached. It was
+ * `revalidate = 0`, which meant a full React server render — the most expensive
+ * thing this site does — on every single view, including crawlers, including
+ * the same reader reloading. Five seconds costs the board nothing (the client
+ * repaints from /api/updown within 5s of mount regardless) and turns the page
+ * back into something the CDN can serve.
+ *
  * Still indexable. The page describes a permanent product ("bet on 15-minute
  * bitcoin moves") even though the specific windows on it are ephemeral — the
  * same reason topic hubs outrank the markets underneath them.
  */
-export const revalidate = 0;
+export const revalidate = 5;
 
 export async function generateStaticParams() {
   return LOCALES.map((lang) => ({ lang }));

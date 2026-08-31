@@ -5,12 +5,24 @@ import { getUpDownWindows } from "@/lib/api";
  * Live 15-minute crypto up/down windows.
  * Proxies the token-authenticated upstream so the browser never sees it.
  *
- * `no-store`, unlike every other route in this directory. Those describe things
- * that move over hours and cache happily; a window here lives fifteen minutes,
- * so a cached response is not merely stale, it can advertise a market that has
- * already expired and a price nobody can fill at. The client polls this on a
- * few-second cadence while the countdown runs.
+ * Cached for THREE SECONDS at the edge, which is the whole point of this route.
+ * Every open desk polls it every 5s, so without a shared cache the cost is
+ * linear in concurrent viewers: one function invocation per viewer per 5s,
+ * forever, all returning the identical 5KB body. With s-maxage the entire
+ * audience collapses onto ~one origin call every 3s no matter how many people
+ * are watching. That was 75% of a month's Fluid Active CPU budget.
+ *
+ * Three seconds is safe on a fifteen-minute instrument, and the risk the old
+ * comment worried about — advertising a window that has already expired — was
+ * never carried by this response anyway. The board recomputes every countdown
+ * from the window timestamps against a client clock that ticks once a second
+ * (see UpDownBoard), so an expired window disappears locally whether or not the
+ * poll behind it was fresh. What staleness delays is a NEW window appearing, by
+ * at most s-maxage + swr.
  */
+// Still rendered per request (the upstream call must happen server-side, where
+// the API token lives); `dynamic` governs the render, Cache-Control governs the
+// CDN, and only the second one is what saves the money here.
 export const dynamic = "force-dynamic";
 
 export async function GET() {
@@ -18,10 +30,19 @@ export async function GET() {
     const { windows, settled } = await getUpDownWindows();
     return NextResponse.json(
       { windows, settled },
-      { headers: { "Cache-Control": "no-store" } },
+      {
+        headers: {
+          "Cache-Control": "public, s-maxage=3, stale-while-revalidate=12",
+        },
+      },
     );
   } catch (e) {
     console.error("GET /api/updown", e);
-    return NextResponse.json({ error: "upstream_unavailable" }, { status: 502 });
+    // Never let a blip get pinned to the edge for even three seconds: a cached
+    // 502 would blank every desk on the next poll, not just the one that lost.
+    return NextResponse.json(
+      { error: "upstream_unavailable" },
+      { status: 502, headers: { "Cache-Control": "no-store" } },
+    );
   }
 }
