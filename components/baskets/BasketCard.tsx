@@ -82,7 +82,7 @@ export function BasketCard({
       {showCreator && (
         <div className="flex items-center gap-2.5">
           <a
-            href={b.creatorTgUserId ? `/${locale}/creator/${b.creatorTgUserId}` : undefined}
+            href={b.creatorTgUserId ? `/creator/${b.creatorTgUserId}` : undefined}
             className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[14px] font-bold text-white"
             style={{ background: avatarColor(b.creatorTgUserId) }}
             aria-hidden
@@ -91,7 +91,7 @@ export function BasketCard({
           </a>
           <div className="min-w-0 flex-1">
             <a
-              href={b.creatorTgUserId ? `/${locale}/creator/${b.creatorTgUserId}` : undefined}
+              href={b.creatorTgUserId ? `/creator/${b.creatorTgUserId}` : undefined}
               className="flex items-center gap-1 truncate text-[13px] font-bold text-[var(--ink)]"
             >
               {b.creatorName ?? c.anonymous}
@@ -162,7 +162,7 @@ export function BasketCard({
       </div>
 
       <a
-        href={`/${locale}/basket/${b.slug}`}
+        href={`/basket/${b.slug}`}
         className="mt-3 text-[13px] font-bold"
         style={{ color: "var(--bk-gold)" }}
       >

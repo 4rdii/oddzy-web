@@ -64,7 +64,7 @@ export default async function CommunityBasketsPage({
               </p>
             </div>
             <a
-              href={`/${lang}/baskets/new`}
+              href="/baskets/new"
               className="shrink-0 rounded-xl px-4 py-2.5 text-[14px] font-bold"
               style={{
                 background: "var(--bk-cta)",

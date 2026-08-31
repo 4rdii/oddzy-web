@@ -85,7 +85,7 @@ export default async function CreatorPage({
       <PrivyRoot>
         <main className="mx-auto max-w-[1100px] px-4 py-8">
           <a
-            href={`/${lang}/baskets`}
+            href="/baskets"
             className="mb-5 inline-block text-[13px] font-semibold"
             style={{ color: "var(--bk-gold)" }}
           >

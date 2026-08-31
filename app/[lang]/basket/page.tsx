@@ -60,7 +60,7 @@ export default async function BasketIndexPage(props: Params) {
             Next prefetch it would pull that bundle into every reader of this
             cacheable editorial page. */}
         <a
-          href={`/${lang}/baskets/new`}
+          href="/baskets/new"
           className="mt-5 inline-block rounded-xl px-4 py-2.5 text-[14px] font-bold"
           style={{
             background: "var(--bk-cta)",

@@ -143,7 +143,7 @@ export function CommunityFeed({
               : c.empty}
           </p>
           <a
-            href={`/${locale}/baskets/new`}
+            href="/baskets/new"
             className="mt-4 inline-block rounded-xl px-4 py-2.5 text-[14px] font-bold"
             style={{
               background: "var(--bk-cta)",

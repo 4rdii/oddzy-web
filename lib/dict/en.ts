@@ -263,6 +263,8 @@ export const en = {
     step3: "Earn {pct}% of the fee on every buy, credited straight to your balance.",
   },
   basketBuilder: {
+    pathLabel: "Category path",
+    allCategories: "All",
     needHorizon: "Positions resolve too far apart",
     horizonWarning:
       "Every position has to resolve within {days} days of the others. Swap out the one settling latest.",
