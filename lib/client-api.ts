@@ -91,6 +91,13 @@ export async function authedPost<T>(path: string, body: unknown): Promise<T> {
   );
   (err as ApiCallError & { serverMessage?: string }).serverMessage =
     typeof data?.message === "string" ? data.message : undefined;
+  // Validation failures (422) carry a LIST, not a sentence: the basket rules
+  // report every broken rule at once so a builder can fix them in one pass
+  // instead of resubmitting to discover the next one.
+  (err as ApiCallError & { serverErrors?: string[] }).serverErrors =
+    Array.isArray(data?.errors) && data.errors.every((x: unknown) => typeof x === "string")
+      ? (data.errors as string[])
+      : undefined;
   throw err;
 }
 

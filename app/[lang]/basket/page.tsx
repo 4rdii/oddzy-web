@@ -55,6 +55,22 @@ export default async function BasketIndexPage(props: Params) {
           {t.basket.indexLead}
         </p>
 
+        {/* Entry point to the builder. A plain <a>, not <Link>: the builder is a
+            noindex trading-surface route that loads the auth SDK, and letting
+            Next prefetch it would pull that bundle into every reader of this
+            cacheable editorial page. */}
+        <a
+          href={`/${lang}/baskets/new`}
+          className="mt-5 inline-block rounded-xl px-4 py-2.5 text-[14px] font-bold"
+          style={{
+            background: "var(--bk-cta)",
+            color: "var(--bk-cta-ink)",
+            boxShadow: "var(--bk-cta-shadow)",
+          }}
+        >
+          {t.basket.buildCta}
+        </a>
+
         {baskets.length === 0 ? (
           <p className="mt-8 text-[15px] text-[var(--mute)]">{t.basket.empty}</p>
         ) : (

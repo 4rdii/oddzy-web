@@ -39,6 +39,62 @@
   --accent-ink: #ffffff;
 }
 
+/* ──────────────────────────────────────────────────────────────────────────
+   Basket palette (--bk-*).
+   Baskets carry a gold identity of their own, separate from the site's blue
+   --accent. Scoped rather than global on purpose: the redesign applies gold to
+   the basket surface only, and repointing --accent would drag every button on
+   the marketing site and the mini-app along with it.
+
+   Day/night here map to the handoff's light/dark. Defined across all three
+   theme blocks like every other token, so a basket screen is never the one
+   thing on the page still showing its dark palette at first paint.
+   ────────────────────────────────────────────────────────────────────────── */
+
+:root {
+  --bk-gold: #96741c;
+  --bk-goldhover: #7a5d13;
+  --bk-goldmuted: #8a6d20;
+  --bk-goldtint: rgba(176, 141, 47, 0.14);
+  --bk-goldborder: rgba(150, 116, 28, 0.35);
+  --bk-warn: #a2661b;
+  --bk-green: #2e8b4f;
+  --bk-greenbg: rgba(52, 168, 83, 0.14);
+}
+
+:root[data-theme="night"] {
+  --bk-gold: #e8c15a;
+  --bk-goldhover: #f2d27c;
+  --bk-goldmuted: #c9a95c;
+  --bk-goldtint: rgba(232, 193, 90, 0.15);
+  --bk-goldborder: rgba(232, 193, 90, 0.25);
+  --bk-warn: #d1a05a;
+  --bk-green: #5fbf77;
+  --bk-greenbg: rgba(52, 168, 83, 0.12);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="day"]) {
+    --bk-gold: #e8c15a;
+    --bk-goldhover: #f2d27c;
+    --bk-goldmuted: #c9a95c;
+    --bk-goldtint: rgba(232, 193, 90, 0.15);
+    --bk-goldborder: rgba(232, 193, 90, 0.25);
+    --bk-warn: #d1a05a;
+    --bk-green: #5fbf77;
+    --bk-greenbg: rgba(52, 168, 83, 0.12);
+  }
+}
+
+/* The primary basket CTA is FIXED in both themes — a gradient with its own dark
+   ink colour, per the handoff. It is the one thing that must look identical on
+   a shared screenshot regardless of the viewer's setting. */
+:root {
+  --bk-cta: linear-gradient(160deg, #d9b356, #b08d2f);
+  --bk-cta-ink: #1a1405;
+  --bk-cta-shadow: 0 6px 24px rgba(216, 179, 86, 0.25);
+}
+
 /* Explicit night selection. */
 :root[data-theme="night"] {
   --page: #121317;
