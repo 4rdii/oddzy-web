@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocale } from "@/components/app/LocaleProvider";
-import { authedPost, ApiCallError } from "@/lib/client-api";
+import { authedGet, authedPost, ApiCallError } from "@/lib/client-api";
 import { localized } from "@/lib/format";
 import type { EventMarket, MarketEvent } from "@/lib/api";
 import { childrenOf, type Topic } from "@/lib/taxonomy";
@@ -111,6 +111,14 @@ export function BasketBuilder({
   const [dragging, setDragging] = useState<string | null>(null);
   const [over, setOver] = useState(false);
   const [name, setName] = useState("");
+  /**
+   * The name to publish under. Prefilled from the account when it already has
+   * one, so an existing creator is not asked to retype it every time; blank for
+   * web signups (Google / MetaMask), who have no Telegram handle and whose
+   * baskets were rendering as "A creator" with nothing to click.
+   */
+  const [creatorName, setCreatorName] = useState("");
+  const [knownCreatorName, setKnownCreatorName] = useState<string | null>(null);
   const [publishing, setPublishing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState<{ slug: string } | null>(null);
@@ -179,6 +187,25 @@ export function BasketBuilder({
 
     return () => ctrl.abort();
   }, [catId]);
+
+  // Best-effort: a logged-out visitor simply gets an empty field, and the
+  // publish attempt is what tells them they need an account.
+  useEffect(() => {
+    let live = true;
+    authedGet<{ creatorName?: string | null; displayName?: string | null }>("/webapp/v1/me")
+      .then((me) => {
+        if (!live) return;
+        const existing = me.creatorName ?? me.displayName ?? "";
+        setKnownCreatorName(existing || null);
+        if (existing) setCreatorName(existing);
+      })
+      .catch(() => {
+        /* Not signed in, or no account yet. Neither is an error here. */
+      });
+    return () => {
+      live = false;
+    };
+  }, []);
 
   const pickedSlugs = useMemo(() => new Set(picked.map((p) => p.slug)), [picked]);
 
@@ -270,6 +297,11 @@ export function BasketBuilder({
     try {
       const res = await authedPost<{ slug: string }>("/webapp/v1/baskets", {
         name: name.trim(),
+        // Omitted when unchanged, so a no-op publish never rewrites the name.
+        creatorName:
+          creatorName.trim() && creatorName.trim() !== knownCreatorName
+            ? creatorName.trim()
+            : undefined,
         legs: picked.map((p) => ({
           slug: p.slug,
           side: "YES",
@@ -551,6 +583,21 @@ export function BasketBuilder({
                 placeholder={c.namePlaceholder}
                 className="mt-4 w-full rounded-xl border border-[var(--line)] bg-[var(--paper)] px-3 py-2.5 text-[14px] text-[var(--ink)] placeholder:text-[var(--faint)]"
               />
+
+              {/* Asked here rather than in a profile screen that does not exist.
+                  Optional: publishing anonymously is allowed, it just makes a
+                  weaker card. */}
+              <input
+                type="text"
+                value={creatorName}
+                maxLength={32}
+                onChange={(e) => setCreatorName(e.target.value)}
+                placeholder={c.creatorNamePlaceholder}
+                className="mt-2 w-full rounded-xl border border-[var(--line)] bg-[var(--paper)] px-3 py-2.5 text-[14px] text-[var(--ink)] placeholder:text-[var(--faint)]"
+              />
+              <p className="mt-1 text-[11px] leading-relaxed text-[var(--faint)]">
+                {c.creatorNameHint}
+              </p>
             </>
           )}
 
