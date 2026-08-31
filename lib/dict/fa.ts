@@ -316,6 +316,9 @@ export const fa: Dict = {
     viewBasket: "دیدن سبد",
   },
   basket: {
+    eyebrowEditorial: "سبد · انتخاب سردبیر",
+    eyebrowCommunity: "سبد · کاربران",
+    bestCaseHeading: "بهترین حالت",
     buildCta: "+ سبد خودتان را بسازید",
     indexMetaTitle: "سبدها — یک پیش‌بینی کامل با یک کلیک",
     indexMetaDescription:
@@ -412,6 +415,8 @@ export const fa: Dict = {
     },
 
     baskets: {
+      yourShare: "سهم شما",
+      ifItHits: "اگر درست دربیاید",
       searchPlaceholder: "جست‌وجوی سبد یا سازنده",
       noMatches: "چیزی با «{q}» پیدا نشد.",
       title: "سبدها",

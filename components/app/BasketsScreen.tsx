@@ -89,6 +89,12 @@ export type BasketReceipt = {
 
 const PRESETS = [10, 25, 50, 100];
 
+/** Per-leg colours, matching the weight bar on the web basket page. */
+const LEG_COLORS = [
+  "var(--bk-gold)", "#b08d2f", "#8a6f2a", "#6b5620", "#d9b356",
+  "#a3853a", "#7d6a2e", "#5c4d1e", "#c9a44a", "#948038",
+];
+
 const money = (n: number) => `$${n.toFixed(2)}`;
 
 /**
@@ -320,26 +326,163 @@ function BasketDetailScreen({
             {t.app.baskets.minStake.replace("{amount}", min.toFixed(2))}
           </p>
 
-          {/* What comes back if it lands. Sits above the legs because it is the
-              number people scroll for, and it re-derives on every size change
-              along with the quote it belongs to. */}
+          {/* Position cards. Each carries its own share of the stake, because
+              "33%" and "$33 of your $100" are different questions and the
+              second is the one being decided. */}
+          <ul className="mt-4 space-y-2">
+            {detail.legs.map((leg, i) => {
+              const weightPct = leg.weightBps / 100;
+              // What this leg alone returns if it resolves YES.
+              const legPayout =
+                size !== null && leg.buyable && leg.price ? leg.stakeUsdc / leg.price : null;
+              return (
+                <li
+                  key={leg.marketId}
+                  className="overflow-hidden rounded-2xl border border-[var(--line)] bg-[var(--card)]"
+                  style={{ opacity: leg.buyable ? 1 : 0.5 }}
+                >
+                  {/* Strip width = weight. Ties the row to its share without a
+                      legend, and reads at a glance on a phone. */}
+                  <div
+                    className="h-[3px]"
+                    style={{
+                      width: `${weightPct}%`,
+                      background: LEG_COLORS[i % LEG_COLORS.length],
+                    }}
+                  />
+                  <div className="p-3">
+                    <div className="flex items-start justify-between gap-3">
+                      <span className="text-[13px] leading-snug font-semibold">
+                        {locale === "fa" ? (leg.titleFa ?? leg.title) : leg.title}
+                      </span>
+                      <span
+                        className="ltr-num shrink-0 rounded-lg px-2 py-0.5 font-mono text-[11px] font-bold text-[var(--text2)]"
+                        style={{ background: "var(--btn)" }}
+                      >
+                        {weightPct.toFixed(0)}%
+                      </span>
+                    </div>
+
+                    <p
+                      dir="ltr"
+                      className="mt-2 flex flex-wrap items-center gap-x-2 font-mono text-[10px] tracking-[0.06em] text-[var(--faint)]"
+                    >
+                      <span
+                        className="rounded-full px-1.5 py-0.5 font-bold"
+                        style={{ background: "var(--bk-greenbg)", color: "var(--bk-green)" }}
+                      >
+                        {leg.side}
+                      </span>
+                      <span className="ltr-num">{cents(leg.price)}</span>
+                    </p>
+
+                    {/* Only once a real size is chosen. At the $100 preview these
+                        would read as a promise about a stake nobody has set. */}
+                    {size !== null && leg.buyable && legPayout !== null && (
+                      <div className="mt-2 flex items-center justify-between border-t border-[var(--line)] pt-2 text-[11px]">
+                        <span className="text-[var(--mute)]">
+                          {t.app.baskets.yourShare}{" "}
+                          <span className="ltr-num font-bold text-[var(--ink)]">
+                            {money(leg.stakeUsdc)}
+                          </span>
+                        </span>
+                        <span className="text-[var(--mute)]">
+                          {t.app.baskets.ifItHits}{" "}
+                          <span
+                            className="ltr-num font-bold"
+                            style={{ color: "var(--bk-gold)" }}
+                          >
+                            {money(legPayout)}
+                          </span>
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+
+          {/* Amount. The chosen size, large, with the split it produces drawn
+              underneath — the bar is the same one the web page shows. */}
+          <div className="mt-5 rounded-2xl border border-[var(--line)] bg-[var(--card)] p-4">
+            <p className="font-mono text-[10px] tracking-[0.06em] text-[var(--faint)]">
+              {t.app.baskets.amount}
+            </p>
+            <p dir="ltr" className="mt-1 text-[26px] leading-none font-extrabold tabular-nums">
+              {size === null ? "—" : money(size)}
+            </p>
+
+            <div dir="ltr" className="mt-3 flex h-[14px] gap-[3px] overflow-hidden rounded-[7px]">
+              {detail.legs.map((leg, i) => (
+                <div
+                  key={leg.marketId}
+                  style={{
+                    flexGrow: leg.weightBps,
+                    flexBasis: 0,
+                    background: LEG_COLORS[i % LEG_COLORS.length],
+                  }}
+                />
+              ))}
+            </div>
+
+            <div className="mt-3 flex flex-wrap gap-2">
+              {/* The minimum is always offered: on a basket with a small leg it
+                  can be the only amount that clears every leg's floor. */}
+              <AmountButton label={money(min)} active={size === min} onClick={() => setSize(min)} />
+              {affordable.map((p) => (
+                <AmountButton
+                  key={p}
+                  label={`$${p}`}
+                  active={size === p}
+                  onClick={() => setSize(p)}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* Best case. Gold, because it is the number people scroll for — and
+              immediately followed by the reason it is not a parlay, so the
+              headline figure never stands alone. */}
           {detail.payout.staked > 0 && (
-            <div className="mt-4 rounded-2xl border border-[var(--line)] p-4">
+            <div
+              className="mt-3 rounded-2xl border p-4"
+              style={{ borderColor: "var(--bk-goldborder)", background: "var(--bk-goldtint)" }}
+            >
               <p className="font-mono text-[10px] tracking-[0.06em] text-[var(--faint)]">
                 {t.app.baskets.payoutHeading}
               </p>
               {detail.payout.allHit !== null && detail.payout.multiple !== null ? (
-                <p className="mt-1.5 text-[13px] leading-relaxed">
-                  {t.app.baskets.payoutAllHit
-                    .replace("{amount}", money(detail.payout.allHit))
-                    .replace("{stake}", money(detail.payout.staked))
-                    .replace("{multiple}", detail.payout.multiple.toFixed(2))}
-                </p>
+                <>
+                  <p
+                    dir="ltr"
+                    className="mt-1 text-[30px] leading-none font-extrabold tabular-nums"
+                    style={{ color: "var(--bk-gold)" }}
+                  >
+                    {money(detail.payout.allHit)}
+                    <span className="ml-2 text-[15px] font-bold opacity-80">
+                      ×{detail.payout.multiple.toFixed(2)}
+                    </span>
+                  </p>
+                  <p className="mt-2 text-[12px] leading-relaxed text-[var(--text2)]">
+                    {t.app.baskets.payoutAllHit
+                      .replace("{amount}", money(detail.payout.allHit))
+                      .replace("{stake}", money(detail.payout.staked))
+                      .replace("{multiple}", detail.payout.multiple.toFixed(2))}
+                  </p>
+                </>
               ) : evenPayout(detail.payout) !== null ? (
                 /* Equal shares: the winner doesn't change the payout, so one
                    figure rather than a range that implies it does. */
                 <>
-                  <p className="mt-1.5 text-[13px] leading-relaxed">
+                  <p
+                    dir="ltr"
+                    className="mt-1 text-[30px] leading-none font-extrabold tabular-nums"
+                    style={{ color: "var(--bk-gold)" }}
+                  >
+                    {money(evenPayout(detail.payout)!)}
+                  </p>
+                  <p className="mt-2 text-[12px] leading-relaxed text-[var(--text2)]">
                     {t.app.baskets.payoutEven
                       .replace("{stake}", money(detail.payout.staked))
                       .replace("{amount}", money(evenPayout(detail.payout)!))
@@ -370,33 +513,11 @@ function BasketDetailScreen({
                   </>
                 )
               )}
+              <p className="mt-3 text-[12px] leading-relaxed text-[var(--mute)]">
+                {t.app.baskets.notParlay}
+              </p>
             </div>
           )}
-
-          <ul className="mt-4 space-y-2">
-            {detail.legs.map((leg) => (
-              <li
-                key={leg.marketId}
-                className="rounded-2xl border border-[var(--line)] p-3"
-                style={{ opacity: leg.buyable ? 1 : 0.5 }}
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <span className="text-[13px] leading-snug">
-                    {locale === "fa" ? (leg.titleFa ?? leg.title) : leg.title}
-                  </span>
-                  <span className="ltr-num shrink-0 font-mono text-[12px] font-bold">
-                    {(leg.weightBps / 100).toFixed(0)}%
-                  </span>
-                </div>
-                <p className="ltr-num mt-1.5 font-mono text-[10px] tracking-[0.06em] text-[var(--faint)]">
-                  {leg.side} · {cents(leg.price)}
-                  {/* Only meaningful once a real size is chosen; at the $100
-                      preview it would read as a promise about the stake. */}
-                  {size !== null && leg.buyable && <> · {money(leg.stakeUsdc)}</>}
-                </p>
-              </li>
-            ))}
-          </ul>
 
           {skipped > 0 && (
             <p className="mt-3 text-[12px] text-[var(--mute)]">
@@ -404,35 +525,9 @@ function BasketDetailScreen({
             </p>
           )}
 
-          <p className="mt-4 text-[12px] leading-relaxed text-[var(--mute)]">
-            {t.app.baskets.notParlay}
-          </p>
-          <p className="mt-2 text-[12px] leading-relaxed text-[var(--mute)]">
+          <p className="mt-3 text-[12px] leading-relaxed text-[var(--mute)]">
             {t.app.baskets.partialNotice}
           </p>
-
-          <div className="mt-5">
-            <p className="font-mono text-[10px] tracking-[0.06em] text-[var(--faint)]">
-              {t.app.baskets.amount}
-            </p>
-            <div className="mt-2 flex gap-2">
-              {/* The minimum is always offered: on a basket with a small leg it
-                  can be the only amount that clears every leg's floor. */}
-              <AmountButton
-                label={money(min)}
-                active={size === min}
-                onClick={() => setSize(min)}
-              />
-              {affordable.map((p) => (
-                <AmountButton
-                  key={p}
-                  label={`$${p}`}
-                  active={size === p}
-                  onClick={() => setSize(p)}
-                />
-              ))}
-            </div>
-          </div>
 
           {tooSmall && (
             <p className="mt-3 text-[12px] text-[var(--down)]">
@@ -448,7 +543,16 @@ function BasketDetailScreen({
             type="button"
             onClick={buy}
             disabled={size === null || tooSmall || tooBig || busy}
-            className="mt-5 w-full rounded-xl bg-[var(--accent)] px-5 py-3.5 text-[15px] font-semibold text-[var(--on-accent)] disabled:opacity-40"
+            className="mt-5 w-full rounded-xl px-5 py-3.5 text-[15px] font-bold disabled:opacity-40"
+            style={
+              size === null || tooSmall || tooBig || busy
+                ? { background: "var(--btn)", color: "var(--faint)" }
+                : {
+                    background: "var(--bk-cta)",
+                    color: "var(--bk-cta-ink)",
+                    boxShadow: "var(--bk-cta-shadow)",
+                  }
+            }
           >
             {busy
               ? t.app.baskets.buying

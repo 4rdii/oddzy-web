@@ -308,6 +308,9 @@ export const en = {
     viewBasket: "View your basket",
   },
   basket: {
+    eyebrowEditorial: "BASKET · EDITORIAL PICK",
+    eyebrowCommunity: "BASKET · COMMUNITY",
+    bestCaseHeading: "Best case",
     buildCta: "+ Build your own basket",
     indexMetaTitle: "Baskets — buy a whole thesis in one click",
     indexMetaDescription:
@@ -436,6 +439,8 @@ export const en = {
     },
 
     baskets: {
+      yourShare: "your share",
+      ifItHits: "if it hits",
       searchPlaceholder: "Search baskets or creators",
       noMatches: "Nothing matches \"{q}\".",
       title: "Baskets",
