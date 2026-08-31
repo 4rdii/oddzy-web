@@ -27,7 +27,7 @@ export const en = {
     basketsBandBody:
       "A basket is a set of positions with a weight on each. One click buys every leg, and each settles on its own — you don't need them all to come in. Build your own and you earn a share of the fee on every buy.",
     basketsBandCta: "Browse baskets",
-    basketsBandSecondary: "See our editorial picks",
+    basketsBandSecondary: "Or build your own",
     metaTitle: "Oddzy — Prediction markets, in your pocket",
     metaDescription:
       "Put a price on what happens next. Trade Polymarket prediction markets from Telegram or the web — self-custodial wallet, on-chain settlement, no bookmaker margin.",
@@ -264,7 +264,7 @@ export const en = {
     step3: "Earn {pct}% of the fee on every buy, credited straight to your balance.",
   },
   basketBuilder: {
-    creatorNamePlaceholder: "Publish as (your name)",
+    creatorNamePlaceholder: "Your creator name",
     creatorNameHint: "Shown on your basket and your creator page. You can change it any time you publish.",
     finishSetup: "Finish setting up your wallet before publishing a basket.",
     accountNote: "You need an account to publish. Your basket is kept while you sign in.",

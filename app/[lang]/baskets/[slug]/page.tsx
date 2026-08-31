@@ -131,7 +131,11 @@ export default async function BasketPage(props: Params) {
           {basket.curated && <> {" · "}{t.basket.curated}</>}
         </p>
 
-        <div className="mt-7 grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)]">
+        {/* items-start, or the columns stretch to each other's height and the
+            shorter one's last card floats with dead space beneath it. Equal
+            halves: the uneven 1fr/1.05fr split read as an alignment mistake at
+            desktop widths, because it was one. */}
+        <div className="mt-7 grid items-start gap-6 lg:grid-cols-2">
           {/* ── Left: the decision ─────────────────────────────────────── */}
           <div>
             {/* Two stats, side by side: what a unit costs, and what it returns.
@@ -266,8 +270,12 @@ export default async function BasketPage(props: Params) {
             </p>
           </div>
 
-          {/* ── Right: what is actually in it ──────────────────────────── */}
-          <section>
+          {/* ── Right: what is actually in it ──────────────────────────────
+              One bordered card, not loose text: the left column opens with
+              cards, and a column that opens with a bare heading starts at a
+              different visual line — which is exactly the misalignment this
+              layout got reported for. */}
+          <section className="rounded-2xl border border-[var(--line)] bg-[var(--card)] p-5">
             <h2 className="text-[17px] font-bold tracking-[-0.01em]">{t.basket.legsHeading}</h2>
             <p className="mt-2 text-[13px] text-[var(--mute)]">{t.basket.legsLead}</p>
 
@@ -294,7 +302,7 @@ export default async function BasketPage(props: Params) {
                 return (
                   <li
                     key={leg.market.id}
-                    className="overflow-hidden rounded-2xl border border-[var(--line)] bg-[var(--card)]"
+                    className="overflow-hidden rounded-xl border border-[var(--line)] bg-[var(--paper)]"
                   >
                     {/* Colour strip, width = weight. Ties each row to its
                         segment in the bar above without a legend. */}

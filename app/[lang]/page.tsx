@@ -155,8 +155,11 @@ export default async function HomePage({
             >
               {t.home.basketsBandCta}
             </Link>
+            {/* The builder, not /basket: that path now redirects to /baskets,
+                which is where the primary button already goes — two CTAs to one
+                destination is one CTA and a decoy. */}
             <Link
-              href="/baskets"
+              href="/baskets/new"
               className="text-[14px] font-semibold"
               style={{ color: "var(--bk-gold)" }}
             >
