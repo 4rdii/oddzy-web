@@ -478,10 +478,17 @@ export type SettledUpDownWindow = {
 /**
  * Live up/down windows.
  *
- * `revalidate: 0` — the only uncached call in this module, and deliberately so.
- * Every other route here describes something that changes over hours; a window
- * lives fifteen minutes, so even a 60s cache would serve markets that have
- * already expired. The page polls this client-side as the countdown runs.
+ * The shortest-lived call in this module: seconds, where everything else here
+ * caches for an hour. A window lives fifteen minutes, so a 60s cache would serve
+ * markets that have already expired.
+ *
+ * SECONDS, THOUGH — NOT ZERO. `next: { revalidate: 0 }` is a no-store fetch, and
+ * a no-store fetch drags the whole enclosing route into dynamic rendering no
+ * matter what its segment config says. That is how /updown ended up re-rendering
+ * on every single view while its build output cheerfully reported `SSG 5s`: the
+ * segment was prerenderable, the fetch inside it was not, and the fetch wins.
+ * Any small non-zero number keeps the route prerenderable and still expires long
+ * before a fifteen-minute window does.
  */
 export async function getUpDownWindows(
   /**
@@ -492,11 +499,17 @@ export async function getUpDownWindows(
    * the window. Here nothing is placed from the board itself.
    */
   minSecondsLeft = 0,
+  /**
+   * Seconds to hold the upstream response. The page seeds a board that the
+   * client repaints within 5s of mount, so it wants the cheaper, cacheable end
+   * of this; /api/updown is what the board actually polls and wants the fresher.
+   */
+  revalidate = 5,
 ): Promise<{ windows: UpDownWindow[]; settled: SettledUpDownWindow[] }> {
   try {
     const data = await get<{ windows: UpDownWindow[]; settled: SettledUpDownWindow[] }>(
       `/markets/updown?min_seconds_left=${minSecondsLeft}`,
-      0,
+      revalidate,
     );
     return { windows: data.windows ?? [], settled: data.settled ?? [] };
   } catch {

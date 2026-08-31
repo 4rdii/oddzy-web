@@ -27,7 +27,9 @@ export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    const { windows, settled } = await getUpDownWindows();
+    // 3s, matching the edge cache below — the two together mean a burst of
+    // polls costs one upstream call, not one per invocation that slips through.
+    const { windows, settled } = await getUpDownWindows(0, 3);
     return NextResponse.json(
       { windows, settled },
       {
