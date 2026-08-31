@@ -65,10 +65,17 @@ export function avatarColor(id: string | null): string {
 export function BasketCard({
   basket: b,
   onToggleFollow,
+  onOpen,
   showCreator = true,
 }: {
   basket: CommunityBasket;
   onToggleFollow?: (b: CommunityBasket) => void;
+  /**
+   * Open in place instead of navigating. The mini-app passes this: inside
+   * Telegram a link to /baskets/<slug> would leave the buy flow, and the whole
+   * point of the screen is that the next tap is a purchase.
+   */
+  onOpen?: (slug: string) => void;
   /** Off on a creator's own profile, where the header already says who they are. */
   showCreator?: boolean;
 }) {
@@ -177,13 +184,24 @@ export function BasketCard({
         <span>{c.buyers.replace("{n}", String(b.buyCount))}</span>
       </div>
 
-      <a
-        href={`/baskets/${b.slug}`}
-        className="mt-3 text-[13px] font-bold"
-        style={{ color: "var(--bk-gold)" }}
-      >
-        {c.view} →
-      </a>
+      {onOpen ? (
+        <button
+          type="button"
+          onClick={() => onOpen(b.slug)}
+          className="mt-3 text-start text-[13px] font-bold"
+          style={{ color: "var(--bk-gold)" }}
+        >
+          {c.view} →
+        </button>
+      ) : (
+        <a
+          href={`/baskets/${b.slug}`}
+          className="mt-3 text-[13px] font-bold"
+          style={{ color: "var(--bk-gold)" }}
+        >
+          {c.view} →
+        </a>
+      )}
     </article>
   );
 }

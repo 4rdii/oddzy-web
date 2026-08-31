@@ -4,8 +4,9 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocale } from "@/components/app/LocaleProvider";
 import { authedPost, ApiCallError } from "@/lib/client-api";
 import { localized } from "@/lib/format";
-import type { Market } from "@/lib/api";
+import type { EventMarket, MarketEvent } from "@/lib/api";
 import { childrenOf, type Topic } from "@/lib/taxonomy";
+import { MarketLibrary } from "./MarketLibrary";
 
 /**
  * The basket builder: pick 2–10 markets, weight them, publish under your name.
@@ -104,7 +105,7 @@ export function BasketBuilder({
    * leagues, which is most of what a football basket is.
    */
   const [path, setPath] = useState<Topic[]>([]);
-  const [markets, setMarkets] = useState<Market[]>([]);
+  const [events, setEvents] = useState<MarketEvent[]>([]);
   const [loadingMarkets, setLoadingMarkets] = useState(false);
   const [picked, setPicked] = useState<Pick[]>([]);
   const [dragging, setDragging] = useState<string | null>(null);
@@ -121,7 +122,7 @@ export function BasketBuilder({
    * from `markets` by the time you weight it. Without this the basket panel
    * would blank half its rows the moment you changed the filter.
    */
-  const [known, setKnown] = useState<Record<string, Market>>({});
+  const [known, setKnown] = useState<Record<string, EventMarket>>({});
 
   const current = path.length > 0 ? path[path.length - 1] : null;
   const children = childrenOf(topics, path);
@@ -141,7 +142,7 @@ export function BasketBuilder({
 
   useEffect(() => {
     if (!catId) {
-      setMarkets([]);
+      setEvents([]);
       setLoadingMarkets(false);
       return;
     }
@@ -150,16 +151,21 @@ export function BasketBuilder({
     abortRef.current = ctrl;
     setLoadingMarkets(true);
 
-    fetch(`/api/markets?category=${encodeURIComponent(catId)}&limit=40`, {
+    // Events, not markets: fixtures ordered by kick-off with their moneyline
+    // and derivatives attached. Same endpoint the app's games view uses, so the
+    // two surfaces group and order identically.
+    fetch(`/api/events?category=${encodeURIComponent(catId)}&limit=30`, {
       signal: ctrl.signal,
     })
       .then((r) => (r.ok ? r.json() : null))
-      .then((d: { markets?: Market[] } | null) => {
-        const rows = d?.markets ?? [];
-        setMarkets(rows);
+      .then((d: { events?: MarketEvent[] } | null) => {
+        const rows = d?.events ?? [];
+        setEvents(rows);
+        // Flatten every market in view into the lookup, so a pick keeps its
+        // title and price after you navigate away from the fixture it came from.
         setKnown((prev) => {
           const next = { ...prev };
-          for (const m of rows) next[m.slug] = m;
+          for (const ev of rows) for (const m of [...ev.main, ...ev.extra]) next[m.slug] = m;
           return next;
         });
       })
@@ -366,77 +372,22 @@ export function BasketBuilder({
           </div>
         )}
 
-        <div className="space-y-2">
-          {loadingMarkets && markets.length === 0 ? (
-            <div className="rounded-xl border border-[var(--line)] bg-[var(--card)] p-6 text-center text-[13px] text-[var(--faint)]">
-              {c.loading}
-            </div>
-          ) : markets.length === 0 ? (
-            <div className="rounded-xl border border-[var(--line)] bg-[var(--card)] p-6 text-center text-[13px] text-[var(--faint)]">
-              {catId ? c.emptyCategory : c.chooseCategory}
-            </div>
-          ) : (
-            markets.map((m) => {
-              const inBasket = pickedSlugs.has(m.slug);
-              const full = picked.length >= MAX_LEGS;
-              return (
-                <div
-                  key={m.slug}
-                  draggable={!inBasket}
-                  onDragStart={(e) => {
-                    e.dataTransfer.setData("text/plain", m.slug);
-                    setDragging(m.slug);
-                  }}
-                  onDragEnd={() => setDragging(null)}
-                  className="flex items-center gap-3 rounded-xl border bg-[var(--card)] p-3 transition-opacity"
-                  style={{
-                    opacity: inBasket ? 0.45 : 1,
-                    borderColor: inBasket ? "var(--btn)" : "var(--line)",
-                  }}
-                >
-                  <span aria-hidden className="cursor-grab text-[var(--dots)] select-none">
-                    ⠿
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <div className="truncate text-[14px] font-semibold text-[var(--ink)]">
-                      {localized(locale, m.title, m.title_fa)}
-                    </div>
-                    <div
-                      dir="ltr"
-                      className="mt-0.5 flex gap-2 text-[12px] tabular-nums text-[var(--faint)]"
-                      style={{ justifyContent: rtl ? "flex-end" : "flex-start" }}
-                    >
-                      <span style={{ color: "var(--bk-green)" }}>YES</span>
-                      <span>{Math.round((m.probability?.yes ?? 0) * 100)}%</span>
-                      {m.close_time && (
-                        <span className="text-[var(--dots)]">
-                          {new Date(m.close_time).toLocaleDateString(
-                            locale === "fa" ? "fa-IR" : "en-US",
-                            { month: "short", day: "numeric" },
-                          )}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => addMarket(m.slug)}
-                    disabled={inBasket || full}
-                    aria-label={inBasket ? c.added : c.add}
-                    className="h-8 w-8 shrink-0 rounded-lg border text-[15px] font-bold disabled:cursor-not-allowed"
-                    style={{
-                      background: inBasket ? "var(--bk-goldtint)" : "var(--btn)",
-                      borderColor: inBasket ? "#b08d2f" : "var(--line)",
-                      color: inBasket ? "var(--bk-gold)" : "var(--text2)",
-                    }}
-                  >
-                    {inBasket ? "✓" : "+"}
-                  </button>
-                </div>
-              );
-            })
-          )}
-        </div>
+        {loadingMarkets && events.length === 0 ? (
+          <div className="rounded-xl border border-[var(--line)] bg-[var(--card)] p-6 text-center text-[13px] text-[var(--faint)]">
+            {c.loading}
+          </div>
+        ) : events.length === 0 ? (
+          <div className="rounded-xl border border-[var(--line)] bg-[var(--card)] p-6 text-center text-[13px] text-[var(--faint)]">
+            {catId ? c.emptyCategory : c.chooseCategory}
+          </div>
+        ) : (
+          <MarketLibrary
+            events={events}
+            pickedSlugs={pickedSlugs}
+            full={picked.length >= MAX_LEGS}
+            onAdd={(m) => addMarket(m.slug)}
+          />
+        )}
       </section>
 
       {/* ── Basket panel ───────────────────────────────────────────────── */}

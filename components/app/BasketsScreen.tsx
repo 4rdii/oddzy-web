@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { authedGet, authedPost } from "@/lib/client-api";
+import { BasketCard, type CommunityBasket } from "@/components/baskets/BasketCard";
 import { useLocale } from "./LocaleProvider";
 
 /**
@@ -13,16 +14,14 @@ import { useLocale } from "./LocaleProvider";
  * request could size legs itself and route around the slippage cap.
  */
 
-type BasketSummary = {
-  slug: string;
-  title: string;
-  titleFa: string | null;
-  description: string | null;
-  descriptionFa: string | null;
-  curated: boolean;
-  legCount: number;
-  buys: number;
-};
+/**
+ * The in-app list is the SAME feed as /baskets, rendered with the same card.
+ *
+ * It used to be its own endpoint and its own bare markup, which meant the
+ * mini-app showed editorial baskets only and gave no hint that other people
+ * publish here — the surface where someone is most likely to buy was the one
+ * hiding most of the inventory. One query, one card, one ordering.
+ */
 
 type QuotedLeg = {
   /** Persian market title; null when untranslated. */
@@ -122,23 +121,18 @@ export function BasketsScreen({
   initialSlug?: string | null;
 }) {
   const { locale, t } = useLocale();
-  const [list, setList] = useState<BasketSummary[] | null>(null);
+  const [list, setList] = useState<CommunityBasket[] | null>(null);
   const [open, setOpen] = useState<string | null>(initialSlug);
 
   useEffect(() => {
     const ctrl = new AbortController();
-    authedGet<{ baskets: BasketSummary[] }>("/webapp/v1/baskets", ctrl.signal)
+    authedGet<{ baskets: CommunityBasket[] }>("/webapp/v1/community-baskets", ctrl.signal)
       .then((d) => setList(d.baskets))
       .catch((e: unknown) => {
         if ((e as Error)?.name !== "AbortError") setList([]);
       });
     return () => ctrl.abort();
   }, []);
-
-  const title = (b: { title: string; titleFa: string | null }) =>
-    locale === "fa" ? (b.titleFa ?? b.title) : b.title;
-  const blurb = (b: { description: string | null; descriptionFa: string | null }) =>
-    (locale === "fa" ? (b.descriptionFa ?? b.description) : b.description) ?? "";
 
   if (open) {
     return (
@@ -170,27 +164,11 @@ export function BasketsScreen({
       ) : list.length === 0 ? (
         <p className="mt-6 text-[13px] text-[var(--mute)]">{t.app.baskets.empty}</p>
       ) : (
-        <ul className="mt-5 space-y-2">
+        <div className="mt-5 space-y-3">
           {list.map((b) => (
-            <li key={b.slug}>
-              <button
-                type="button"
-                onClick={() => setOpen(b.slug)}
-                className="w-full rounded-2xl border border-[var(--line)] bg-[var(--card)] p-4 text-start"
-              >
-                <span className="block text-[15px] font-semibold">{title(b)}</span>
-                {blurb(b) && (
-                  <span className="mt-1 block text-[12px] leading-relaxed text-[var(--mute)]">
-                    {blurb(b)}
-                  </span>
-                )}
-                <span className="ltr-num mt-2 block font-mono text-[10px] tracking-[0.06em] text-[var(--faint)]">
-                  {t.app.baskets.legs.replace("{count}", String(b.legCount))}
-                </span>
-              </button>
-            </li>
+            <BasketCard key={b.slug} basket={b} onOpen={setOpen} />
           ))}
-        </ul>
+        </div>
       )}
     </section>
   );
