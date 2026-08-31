@@ -264,6 +264,8 @@ export const en = {
     step3: "Earn {pct}% of the fee on every buy, credited straight to your balance.",
   },
   basketBuilder: {
+    finishSetup: "Finish setting up your wallet before publishing a basket.",
+    accountNote: "You need an account to publish. Your basket is kept while you sign in.",
     chooseCategory: "Pick a category above to see its markets.",
     pathLabel: "Category path",
     allCategories: "All",

@@ -287,6 +287,11 @@ export function BasketBuilder({
         err.serverErrors?.length ? err.serverErrors.join(" · ")
         : err.serverMessage ? err.serverMessage
         : err.kind === "unauthenticated" ? c.signInFirst
+        // Signed in but no wallet row yet. A distinct state from logged out,
+        // and sending these people back to a login screen they have already
+        // passed is the one response guaranteed not to help. See `authenticate`
+        // in apps/bot/src/api/v1.ts.
+        : err.kind === "no_account" ? c.finishSetup
         : err.kind === "rate_limited" ? c.tooFast
         : c.publishFailed,
       );
@@ -572,6 +577,14 @@ export function BasketBuilder({
 
           <p className="mt-2 text-center text-[11px] leading-relaxed text-[var(--faint)]">
             {c.feeNote.replace("{pct}", String(creatorSharePct))}
+          </p>
+          {/* Said before the button, not after it fails. Building is open to
+              anyone; publishing needs an account, and finding that out only
+              once you have weighted ten legs is a bad way to learn it. Privy
+              opens as a modal, so signing in from here does not navigate and
+              the basket survives. */}
+          <p className="mt-1 text-center text-[11px] leading-relaxed text-[var(--faint)]">
+            {c.accountNote}
           </p>
         </div>
       </section>
