@@ -6,6 +6,7 @@
  */
 export const en = {
   nav: {
+    community: "Community",
     updown: "Up or Down",
     howItWorks: "How it works",
     learn: "Learn",
@@ -22,6 +23,11 @@ export const en = {
     tradeThisMarket: "Trade this market",
   },
   home: {
+    basketsBandTitle: "Baskets — several predictions, one buy",
+    basketsBandBody:
+      "A basket is a set of positions with a weight on each. One click buys every leg, and each settles on its own — you don't need them all to come in. Build your own and you earn a share of the fee on every buy.",
+    basketsBandCta: "Browse baskets",
+    basketsBandSecondary: "See our editorial picks",
     metaTitle: "Oddzy — Prediction markets, in your pocket",
     metaDescription:
       "Put a price on what happens next. Trade Polymarket prediction markets from Telegram or the web — self-custodial wallet, on-chain settlement, no bookmaker margin.",
@@ -220,6 +226,41 @@ export const en = {
     otherMarkets: "Other coins",
     upWon: "Up won",
     downWon: "Down won",
+  },
+  creatorProfile: {
+    metaTitle: "Creator",
+    notFound: "This creator hasn't published any baskets yet.",
+    theirBaskets: "Their baskets",
+    basketCount: "{n} baskets",
+    accuracyPending:
+      "Accuracy appears once this creator has enough settled positions for it to mean anything.",
+  },
+  communityBaskets: {
+    metaTitle: "Community baskets",
+    h1: "Community baskets",
+    lead:
+      "Baskets built by people who trade here. Publish your own and you earn {pct}% of the fee on every buy.",
+    newBasket: "+ New basket",
+    tabs: { all: "All", hot: "Hot", following: "Following", bought: "Most bought" },
+    loading: "Loading baskets…",
+    empty: "No community baskets yet. Be the first.",
+    emptyFollowing: "You're not following anyone yet. Follow a creator and their baskets show up here.",
+    emptyFollowingSignedOut: "Sign in to see baskets from creators you follow.",
+    anonymous: "A creator",
+    verified: "Verified creator",
+    follow: "Follow",
+    following: "Following",
+    signInToFollow: "Sign in to follow creators.",
+    followFailed: "That didn't save. Try again.",
+    followersLabel: "{n} followers",
+    accuracyLabel: "accuracy",
+    positions: "{n} positions",
+    buyers: "{n} buyers",
+    view: "View",
+    explainerTitle: "Publish a basket, earn on every buy",
+    step1: "Pick 2 to 10 positions and set how the money splits between them.",
+    step2: "Publish it under your own name. You get a link you can share anywhere.",
+    step3: "Earn {pct}% of the fee on every buy, credited straight to your balance.",
   },
   basketBuilder: {
     needHorizon: "Positions resolve too far apart",

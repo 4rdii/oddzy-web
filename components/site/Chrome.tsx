@@ -125,6 +125,7 @@ export async function SiteChrome({
               <NavLink href="/learn">{t.nav.learn}</NavLink>
               <NavLink href="/updown">{t.nav.updown}</NavLink>
               <NavLink href="/basket">{t.nav.baskets}</NavLink>
+              <NavLink href="/baskets">{t.nav.community}</NavLink>
               <NavLink href="/faq">{t.nav.faq}</NavLink>
             </nav>
 

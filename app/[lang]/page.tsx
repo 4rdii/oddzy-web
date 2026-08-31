@@ -130,6 +130,42 @@ export default async function HomePage({
         </section>
       )}
 
+      {/* Baskets promo band. Plain links, no auth SDK — this page is the most
+          crawled thing on the site and must stay cacheable HTML. */}
+      <section className="mx-auto max-w-5xl px-5 py-8">
+        <div
+          className="rounded-2xl border p-6 sm:p-8"
+          style={{ borderColor: "var(--bk-goldborder)", background: "var(--bk-goldtint)" }}
+        >
+          <h2 className="text-[24px] font-bold tracking-[-0.02em] text-[var(--ink)]">
+            {t.home.basketsBandTitle}
+          </h2>
+          <p className="mt-2 max-w-[620px] text-[15px] leading-relaxed text-[var(--text2)]">
+            {t.home.basketsBandBody}
+          </p>
+          <div className="mt-5 flex flex-wrap items-center gap-3">
+            <Link
+              href="/baskets"
+              className="rounded-xl px-4 py-2.5 text-[14px] font-bold"
+              style={{
+                background: "var(--bk-cta)",
+                color: "var(--bk-cta-ink)",
+                boxShadow: "var(--bk-cta-shadow)",
+              }}
+            >
+              {t.home.basketsBandCta}
+            </Link>
+            <Link
+              href="/basket"
+              className="text-[14px] font-semibold"
+              style={{ color: "var(--bk-gold)" }}
+            >
+              {t.home.basketsBandSecondary}
+            </Link>
+          </div>
+        </div>
+      </section>
+
       <section className="mx-auto max-w-5xl px-5 py-14">
         <h2 className="text-[28px] font-bold tracking-[-0.02em]">{t.home.howItWorks}</h2>
         <ol className="mt-7 grid gap-5 sm:grid-cols-3">
