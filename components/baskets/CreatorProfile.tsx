@@ -65,6 +65,8 @@ export function CreatorProfile({ creatorId }: { creatorId: string }) {
   const [notice, setNotice] = useState<string | null>(null);
   const [activeOpen, setActiveOpen] = useState(true);
   const [recordOpen, setRecordOpen] = useState(true);
+  /** Which record row is expanded to show its predictions. */
+  const [openRecord, setOpenRecord] = useState<string | null>(null);
 
   const load = useCallback(
     async (signal?: AbortSignal) => {
@@ -299,9 +301,12 @@ export function CreatorProfile({ creatorId }: { creatorId: string }) {
         </section>
       )}
 
-      {/* Track record — the archived baskets, one row each. The right-hand
-          figure is the buyers' realized return where anyone actually bought;
-          otherwise the hit count, which is the only honest number left. */}
+      {/* Track record — the archived baskets, one row each. Every row shows
+          the date and its X-of-Y hit count; the right-hand figure is the
+          buyers' realized return where anyone actually bought, a dash where
+          nobody did. A row expands in place to list its predictions with
+          their outcomes — the archived detail page 404s on purpose, so this
+          is where the receipts live. */}
       {past.length > 0 && (
         <section className="flex flex-col gap-2.5">
           <button
@@ -325,7 +330,6 @@ export function CreatorProfile({ creatorId }: { creatorId: string }) {
                 const real = perBasket.get(b.slug);
                 const pl =
                   real && real.stakeUsdc > 0 ? (real.pnlUsdc / real.stakeUsdc) * 100 : null;
-                const good = pl != null ? pl >= 0 : settled > 0 && won * 2 >= settled;
                 const when = b.publishedAt
                   ? new Intl.DateTimeFormat(locale === "fa" ? "fa-IR" : "en-US", {
                       year: "numeric",
@@ -333,34 +337,88 @@ export function CreatorProfile({ creatorId }: { creatorId: string }) {
                       day: "numeric",
                     }).format(new Date(b.publishedAt))
                   : null;
+                const expanded = openRecord === b.slug;
                 return (
-                  <div
-                    key={b.slug}
-                    className="flex items-center justify-between gap-3.5 px-[18px] py-3.5"
-                    style={{ borderTop: i === 0 ? "none" : "1px solid var(--line)" }}
-                  >
-                    <div className="min-w-0 flex-1">
-                      <div className="truncate text-[14px] font-semibold text-[var(--ink)]">
-                        {localized(locale, b.titleEn, b.titleFa)}
-                      </div>
-                      <div className="mt-0.5 text-[12px] text-[var(--mute)]">
-                        {when}
-                        {when && settled > 0 && pl != null && ` · ${hit}`}
-                      </div>
-                    </div>
-                    <div
-                      className="whitespace-nowrap text-[13px] font-extrabold tabular-nums"
-                      style={{
-                        color:
-                          settled === 0
-                            ? "var(--faint)"
-                            : good
-                              ? "var(--bk-green)"
-                              : "var(--down)",
-                      }}
+                  <div key={b.slug} style={{ borderTop: i === 0 ? "none" : "1px solid var(--line)" }}>
+                    <button
+                      type="button"
+                      onClick={() => setOpenRecord(expanded ? null : b.slug)}
+                      aria-expanded={expanded}
+                      className="flex w-full items-center justify-between gap-3.5 px-[18px] py-3.5 text-start"
                     >
-                      {pl != null ? signedPct(pl) : settled > 0 ? hit : c.closed}
-                    </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="truncate text-[14px] font-semibold text-[var(--ink)]">
+                          {localized(locale, b.titleEn, b.titleFa)}
+                        </div>
+                        <div className="mt-0.5 text-[12px] text-[var(--mute)]">
+                          {when}
+                          {settled > 0 && `${when ? " · " : ""}${hit}`}
+                        </div>
+                      </div>
+                      <div className="flex shrink-0 items-center gap-2.5">
+                        <span
+                          className="whitespace-nowrap text-[13px] font-extrabold tabular-nums"
+                          style={{
+                            color:
+                              pl == null
+                                ? "var(--faint)"
+                                : pl >= 0
+                                  ? "var(--bk-green)"
+                                  : "var(--down)",
+                          }}
+                        >
+                          {pl != null ? signedPct(pl) : "—"}
+                        </span>
+                        <span className="text-[10px] text-[var(--faint)]" aria-hidden>
+                          {expanded ? "▲" : "▼"}
+                        </span>
+                      </div>
+                    </button>
+                    {expanded && (b.legs?.length ?? 0) > 0 && (
+                      <ul className="flex flex-col gap-2 px-[18px] pb-4">
+                        {b.legs!.map((leg, j) => {
+                          const state =
+                            leg.outcome == null ? "open"
+                            : leg.outcome === "VOID" ? "void"
+                            : leg.outcome === leg.side ? "won"
+                            : "lost";
+                          return (
+                            <li key={j} className="flex items-center gap-2.5 text-[13px]">
+                              <span
+                                aria-hidden
+                                className="flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full text-[10px] font-extrabold"
+                                style={{
+                                  background:
+                                    state === "won" ? "var(--bk-greenbg)"
+                                    : state === "lost" ? "rgba(224,112,90,0.14)"
+                                    : "var(--chip, var(--line))",
+                                  color:
+                                    state === "won" ? "var(--bk-green)"
+                                    : state === "lost" ? "var(--down)"
+                                    : "var(--faint)",
+                                }}
+                              >
+                                {state === "won" ? "✓" : state === "lost" ? "✗" : "–"}
+                              </span>
+                              <span
+                                className="min-w-0 flex-1 truncate"
+                                style={{
+                                  color: state === "open" ? "var(--faint)" : "var(--text2, var(--ink))",
+                                }}
+                              >
+                                {localized(locale, leg.title, leg.titleFa)}
+                              </span>
+                              <span
+                                dir="ltr"
+                                className="shrink-0 text-[11px] font-bold text-[var(--faint)]"
+                              >
+                                {leg.side}
+                              </span>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    )}
                   </div>
                 );
               })}

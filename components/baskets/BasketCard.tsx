@@ -35,6 +35,13 @@ export type CommunityBasket = {
   /** 'published' | 'archived'. Profiles include archived rows as history. */
   status?: string;
   publishedAt?: string | null;
+  /** Leg detail, present on profile responses only — the expandable record. */
+  legs?: Array<{
+    title: string;
+    titleFa: string | null;
+    side: "YES" | "NO";
+    outcome: string | null;
+  }>;
   /** The basket's own settled-leg record. */
   settledLegs?: number;
   wonLegs?: number;
