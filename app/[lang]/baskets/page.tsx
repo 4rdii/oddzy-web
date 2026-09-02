@@ -13,9 +13,10 @@ import { getDict } from "@/lib/dict";
  * PrivyRoot + noindex. Following needs a credential, and the standing rule is
  * that the auth SDK never loads on a crawlable page.
  *
- * The SEO surface for baskets stays /basket — the editorial index, plain
- * cacheable HTML, and the page a search result should land on. This one is for
- * people who already arrived.
+ * The SEO surface for baskets is the individual /baskets/<slug> pages (plain
+ * cacheable HTML, index:true, listed in the sitemap). /basket, the old
+ * editorial index, now 308s here and is no longer in the sitemap — this page
+ * is for people who already arrived.
  *
  * The list is fetched client-side rather than server-rendered: it is
  * personalised per viewer (follow state) and would otherwise have to be

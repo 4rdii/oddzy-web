@@ -70,7 +70,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // permanent and describes a standing product, the way a topic hub outlives
     // the markets under it. The windows themselves are never listed.
     { url: `${siteUrl}/updown`, priority: 0.8 },
-    ...(baskets.length > 0 ? [{ url: `${siteUrl}/basket`, priority: 0.8 }] : []),
+    // No baskets HUB here, deliberately. /basket (the old editorial index)
+    // now 308s to /baskets, and /baskets is noindex — it needs the auth SDK
+    // for Follow, and the standing rule is that the SDK never loads on a
+    // crawlable page. Advertising a redirect into a noindex page asks Google
+    // to crawl a URL only to be told to drop it. The individual basket pages
+    // below are the indexable basket surface.
   ].map((r) => ({ ...r, lastModified: dayStamp(), changeFrequency: "weekly" as const }));
 
   return [
