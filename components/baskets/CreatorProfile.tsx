@@ -20,10 +20,13 @@ import {
  * from the public endpoint and renders fully for a logged-out visitor. Only the
  * Follow button needs a credential, and it says so when pressed.
  *
- * Every number is real: win rate from settled legs, return and the chart from
- * settled buyer picks, fees from the sharer accrual. Where there is no data
- * yet the card shows a dash — the design's +15.2% is a mock, and rendering an
- * invented figure in its place would be worse than an empty one.
+ * Every number is grounded: win rate from settled legs; return and the chart
+ * from CREATION prices — each fully-settled basket scored as $1 spread across
+ * its legs at the prices recorded when it was published
+ * (basket_legs.price_at_publish), so the record exists whether or not anyone
+ * bought and cannot be flattered by when buyers arrived; fees from the sharer
+ * accrual. Where a number cannot be computed the card shows a dash — the
+ * design's +15.2% is a mock, and an invented figure is worse than an empty one.
  */
 
 type Creator = {
