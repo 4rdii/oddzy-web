@@ -236,6 +236,7 @@ export const en = {
       "Accuracy appears once this creator has enough settled positions for it to mean anything.",
     houseBaskets: "Editorial baskets",
     houseRecordLine: "{won} of {n} settled predictions correct",
+    pastBaskets: "Past baskets",
   },
   communityBaskets: {
     editorial: "Editorial pick",
@@ -257,6 +258,8 @@ export const en = {
       daily: "Daily Picks",
       world: "Politics & Economy",
     },
+    closed: "Closed",
+    recordChip: "{won} of {n} correct",
     loading: "Loading baskets…",
     empty: "No community baskets yet. Be the first.",
     emptyCategory: "No baskets in this topic yet. Build the first one.",

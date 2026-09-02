@@ -32,6 +32,11 @@ export type CommunityBasket = {
   curated: boolean;
   /** Which editorial desk this is, derived server-side from the legs. */
   editorialPersona?: "daily" | "world" | null;
+  /** 'published' | 'archived'. Profiles include archived rows as history. */
+  status?: string;
+  /** The basket's own settled-leg record. */
+  settledLegs?: number;
+  wonLegs?: number;
   weightsBps: number[];
   multiplier: number | null;
 };
@@ -95,6 +100,13 @@ export function BasketCard({
    */
   const isHouse = b.creatorTgUserId == null;
   const houseName = b.editorialPersona ? c.personas[b.editorialPersona] : brand.name;
+  /**
+   * A past basket (the expiry job archives one the moment no leg is still
+   * buyable). It renders as a record, not an offer: the detail page only
+   * serves published baskets, so the View link would 404, and the multiplier
+   * is a quote for a purchase nobody can make any more.
+   */
+  const isPast = b.status === "archived";
   const creatorHref = `/creator/${
     isHouse ? (b.editorialPersona ? `house-${b.editorialPersona}` : "house") : b.creatorTgUserId
   }`;
@@ -182,7 +194,7 @@ export function BasketCard({
         style={{ justifyContent: rtl ? "flex-end" : "flex-start" }}
       >
         <span>{c.positions.replace("{n}", String(b.legCount))}</span>
-        {b.multiplier != null && (
+        {!isPast && b.multiplier != null && (
           <>
             <span aria-hidden>·</span>
             <span style={{ color: "var(--bk-gold)", fontWeight: 700 }}>
@@ -194,7 +206,15 @@ export function BasketCard({
         <span>{c.buyers.replace("{n}", String(b.buyCount))}</span>
       </div>
 
-      {onOpen ? (
+      {isPast ? (
+        <p className="mt-3 text-[13px] font-bold tabular-nums" style={{ color: "var(--mute)" }}>
+          {(b.settledLegs ?? 0) > 0
+            ? c.recordChip
+                .replace("{won}", String(b.wonLegs ?? 0))
+                .replace("{n}", String(b.settledLegs ?? 0))
+            : c.closed}
+        </p>
+      ) : onOpen ? (
         <button
           type="button"
           onClick={() => onOpen(b.slug)}

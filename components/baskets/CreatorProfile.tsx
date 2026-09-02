@@ -207,14 +207,38 @@ export function CreatorProfile({ creatorId }: { creatorId: string }) {
         </p>
       )}
 
-      <h2 className="mt-8 mb-4 text-[16px] font-extrabold text-[var(--ink)]">
-        {isHouse ? p.houseBaskets : p.theirBaskets}
-      </h2>
-      <div className="grid gap-4 [grid-template-columns:repeat(auto-fill,minmax(290px,1fr))]">
-        {baskets.map((b) => (
-          <BasketCard key={b.slug} basket={b} showCreator={false} />
-        ))}
-      </div>
+      {/* Live baskets first, then the record. The API includes archived rows
+          precisely so this page HAS a yesterday — a daily-picks desk whose
+          baskets are archived minutes after kickoff would otherwise present
+          an empty history every morning. */}
+      {baskets.some((b) => b.status !== "archived") && (
+        <>
+          <h2 className="mt-8 mb-4 text-[16px] font-extrabold text-[var(--ink)]">
+            {isHouse ? p.houseBaskets : p.theirBaskets}
+          </h2>
+          <div className="grid gap-4 [grid-template-columns:repeat(auto-fill,minmax(290px,1fr))]">
+            {baskets
+              .filter((b) => b.status !== "archived")
+              .map((b) => (
+                <BasketCard key={b.slug} basket={b} showCreator={false} />
+              ))}
+          </div>
+        </>
+      )}
+      {baskets.some((b) => b.status === "archived") && (
+        <>
+          <h2 className="mt-8 mb-4 text-[16px] font-extrabold text-[var(--ink)]">
+            {p.pastBaskets}
+          </h2>
+          <div className="grid gap-4 [grid-template-columns:repeat(auto-fill,minmax(290px,1fr))]">
+            {baskets
+              .filter((b) => b.status === "archived")
+              .map((b) => (
+                <BasketCard key={b.slug} basket={b} showCreator={false} />
+              ))}
+          </div>
+        </>
+      )}
     </div>
   );
 }
