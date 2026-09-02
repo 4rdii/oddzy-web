@@ -24,7 +24,7 @@ import { getDict } from "@/lib/dict";
  * on the up/down desk. Static shell, personalised payload.
  */
 
-const CREATOR_SHARE_PCT = Number(process.env.CREATOR_FEE_SHARE_PCT ?? 10);
+const CREATOR_SHARE_PCT = Number(process.env.CREATOR_FEE_SHARE_PCT ?? 50);
 
 export async function generateMetadata({
   params,

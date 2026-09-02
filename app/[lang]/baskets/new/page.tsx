@@ -32,7 +32,7 @@ import { getDict } from "@/lib/dict";
  * env keeps it changeable without a code edit. If you move the bot's bps, move
  * this too; the comment in apps/bot/src/api/v1.ts says the same in reverse.
  */
-const CREATOR_SHARE_PCT = Number(process.env.CREATOR_FEE_SHARE_PCT ?? 10);
+const CREATOR_SHARE_PCT = Number(process.env.CREATOR_FEE_SHARE_PCT ?? 50);
 
 export async function generateMetadata({
   params,

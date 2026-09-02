@@ -488,6 +488,9 @@ export const fa: Dict = {
       reasonError: "ثبت نشد",
       viewPositions: "مشاهدهٔ موقعیت‌ها",
       done: "تمام",
+      retryFailed: "تلاش دوباره برای پیش‌بینی‌های ناموفق",
+      retrying: "در حال تلاش دوباره…",
+      retryError: "تلاش دوباره انجام نشد. کمی بعد دوباره امتحان کنید.",
     },
 
     feed: {

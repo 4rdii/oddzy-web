@@ -514,6 +514,9 @@ export const en = {
       reasonError: "not placed",
       viewPositions: "View positions",
       done: "Done",
+      retryFailed: "Retry failed positions",
+      retrying: "Retrying…",
+      retryError: "Retry didn't go through. Try again in a moment.",
     },
 
     feed: {

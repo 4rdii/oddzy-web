@@ -93,11 +93,21 @@ type ReceiptLeg = {
 };
 
 export type BasketReceipt = {
+  /** Purchase id — what /basket-retry re-attempts failed legs against. */
+  buyId?: string | null;
   status: "filled" | "partial" | "failed";
   requestedUsdc: number;
   filledUsdc: number;
   legs: ReceiptLeg[];
 };
+
+/**
+ * Leg failures worth offering a Retry for. Mirrors the server's own list —
+ * the dominant case is the exchange counting a matched-but-unsettled earlier
+ * leg against the wallet balance, which clears by itself within seconds.
+ * `settled` and `below_min` stay out: retrying cannot change either.
+ */
+const RETRYABLE = new Set(["no_fill", "order_error", "price_moved", "no_quote", "unbuyable"]);
 
 const PRESETS = [10, 25, 50, 100];
 
@@ -630,7 +640,7 @@ function AmountButton({
 
 /** The per-leg account of a basket purchase. */
 export function BasketReceiptScreen({
-  receipt,
+  receipt: initial,
   onPositions,
   onDone,
 }: {
@@ -640,7 +650,31 @@ export function BasketReceiptScreen({
 }) {
   const { t } = useLocale();
   const b = t.app.baskets;
+  // Local: a retry replaces the receipt in place, same screen.
+  const [receipt, setReceipt] = useState(initial);
+  const [retrying, setRetrying] = useState(false);
+  const [retryErr, setRetryErr] = useState<string | null>(null);
   const unspent = receipt.requestedUsdc - receipt.filledUsdc;
+
+  const canRetry =
+    Boolean(receipt.buyId) &&
+    receipt.legs.some((l) => !l.filled && l.reason != null && RETRYABLE.has(l.reason));
+
+  async function retry() {
+    if (!receipt.buyId || retrying) return;
+    setRetrying(true);
+    setRetryErr(null);
+    try {
+      const res = await authedPost<BasketReceipt>("/webapp/v1/basket-retry", {
+        buyId: receipt.buyId,
+      });
+      setReceipt(res);
+    } catch {
+      setRetryErr(b.retryError);
+    } finally {
+      setRetrying(false);
+    }
+  }
 
   const reasonText = (reason: string | null) => {
     switch (reason) {
@@ -707,6 +741,23 @@ export function BasketReceiptScreen({
           {b.unspent.replace("{amount}", unspent.toFixed(2))}
         </p>
       )}
+
+      {canRetry && (
+        <button
+          type="button"
+          onClick={retry}
+          disabled={retrying}
+          className="mt-4 w-full rounded-xl border px-4 py-3 text-[14px] font-bold disabled:opacity-60"
+          style={{
+            borderColor: "var(--bk-goldborder)",
+            background: "var(--bk-goldtint)",
+            color: "var(--bk-gold)",
+          }}
+        >
+          {retrying ? b.retrying : b.retryFailed}
+        </button>
+      )}
+      {retryErr && <p className="mt-2 text-[12px] text-[var(--down)]">{retryErr}</p>}
 
       <div className="mt-6 flex gap-2">
         <button
