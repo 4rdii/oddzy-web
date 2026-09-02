@@ -116,14 +116,23 @@ export function CreatorProfile({ creatorId }: { creatorId: string }) {
   }
 
   /**
-   * -1 is the house. Its baskets have no creator row, so the API reserves the
-   * id and this page renders the brand as the byline: gold ★ avatar, no Follow
-   * button (there is nobody to follow) and no follower count — but the same
-   * accuracy discipline as everyone else, because "trust our picks" is exactly
-   * the claim a track record exists to check.
+   * `house*` ids are the editorial desks: `house-daily` (all-sports baskets),
+   * `house-world` (everything else), `house` (the lot). Their baskets have no
+   * creator row, so the API reserves these ids — non-numeric, since positive
+   * ids are Telegram users and NEGATIVE ids are web-auth users — and this
+   * page renders the desk as the byline: gold ★ avatar, no Follow button
+   * (there is nobody to follow) and no follower count — but the same accuracy
+   * discipline as everyone else, because "trust our picks" is exactly the
+   * claim a track record exists to check.
    */
-  const isHouse = creatorId === "-1";
-  const name = isHouse ? brand.name : (creator.name ?? c.anonymous);
+  const isHouse = creatorId === "house" || creatorId.startsWith("house-");
+  const housePersona =
+    creatorId === "house-daily" ? ("daily" as const)
+    : creatorId === "house-world" ? ("world" as const)
+    : null;
+  const name = isHouse
+    ? housePersona ? c.personas[housePersona] : brand.name
+    : (creator.name ?? c.anonymous);
   const initial = (creator.name ?? "?").replace(/^@/, "").charAt(0).toUpperCase();
 
   return (

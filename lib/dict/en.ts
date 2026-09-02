@@ -253,6 +253,10 @@ export const en = {
       economy: "Economy",
       iran: "Iran",
     },
+    personas: {
+      daily: "Daily Picks",
+      world: "Politics & Economy",
+    },
     loading: "Loading baskets…",
     empty: "No community baskets yet. Be the first.",
     emptyCategory: "No baskets in this topic yet. Build the first one.",

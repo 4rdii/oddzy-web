@@ -73,9 +73,11 @@ export default async function CreatorPage({
   const { lang, id } = await params;
   if (!isLocale(lang)) notFound();
 
-  // Ids are bigints on the wire. Reject anything else here rather than handing
-  // it to the API — a malformed id is a 400 there and a blank screen here.
-  if (!/^-?\d{1,20}$/.test(id)) notFound();
+  // Ids are bigints on the wire — plus the reserved editorial-desk slugs
+  // (house, house-daily, house-world). Reject anything else here rather than
+  // handing it to the API — a malformed id is a 400 there and a blank screen
+  // here.
+  if (!/^(-?\d{1,20}|house(-[a-z]{1,16})?)$/.test(id)) notFound();
 
   const t = getDict(lang);
   const brand = brandFor(lang);

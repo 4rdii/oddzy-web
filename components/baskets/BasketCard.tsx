@@ -30,6 +30,8 @@ export type CommunityBasket = {
   viewerFollows: boolean;
   /** House-endorsed. Editorial baskets are curated and carry no creator. */
   curated: boolean;
+  /** Which editorial desk this is, derived server-side from the legs. */
+  editorialPersona?: "daily" | "world" | null;
   weightsBps: number[];
   multiplier: number | null;
 };
@@ -86,11 +88,16 @@ export function BasketCard({
    * Editorial baskets have no creator row, so they render as the house rather
    * than as an anonymous user. They also get no Follow button — there is
    * nobody to follow, and a dead control on a card is worse than none. The
-   * byline still links somewhere: -1 is the reserved house id, and its page
-   * holds the same track record any human creator has to stand behind.
+   * byline still links somewhere: `house-daily` / `house-world` are the
+   * reserved editorial-desk ids (non-numeric, because both positive AND
+   * negative integers are real account ids), and those pages hold the same
+   * track record any human creator has to stand behind.
    */
   const isHouse = b.creatorTgUserId == null;
-  const creatorHref = `/creator/${isHouse ? "-1" : b.creatorTgUserId}`;
+  const houseName = b.editorialPersona ? c.personas[b.editorialPersona] : brand.name;
+  const creatorHref = `/creator/${
+    isHouse ? (b.editorialPersona ? `house-${b.editorialPersona}` : "house") : b.creatorTgUserId
+  }`;
 
   const title = localized(locale, b.titleEn, b.titleFa);
   const desc = localized(locale, b.descriptionEn ?? "", b.descriptionFa);
@@ -113,7 +120,7 @@ export function BasketCard({
               href={creatorHref}
               className="flex items-center gap-1 truncate text-[13px] font-bold text-[var(--ink)]"
             >
-              {isHouse ? brand.name : (b.creatorName ?? c.anonymous)}
+              {isHouse ? houseName : (b.creatorName ?? c.anonymous)}
               {(isHouse || b.creatorVerified) && (
                 <span
                   aria-label={isHouse ? c.editorial : c.verified}
