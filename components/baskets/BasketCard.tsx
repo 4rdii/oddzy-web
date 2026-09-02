@@ -85,9 +85,12 @@ export function BasketCard({
   /**
    * Editorial baskets have no creator row, so they render as the house rather
    * than as an anonymous user. They also get no Follow button — there is
-   * nobody to follow, and a dead control on a card is worse than none.
+   * nobody to follow, and a dead control on a card is worse than none. The
+   * byline still links somewhere: -1 is the reserved house id, and its page
+   * holds the same track record any human creator has to stand behind.
    */
   const isHouse = b.creatorTgUserId == null;
+  const creatorHref = `/creator/${isHouse ? "-1" : b.creatorTgUserId}`;
 
   const title = localized(locale, b.titleEn, b.titleFa);
   const desc = localized(locale, b.descriptionEn ?? "", b.descriptionFa);
@@ -98,7 +101,7 @@ export function BasketCard({
       {showCreator && (
         <div className="flex items-center gap-2.5">
           <a
-            href={isHouse ? undefined : `/creator/${b.creatorTgUserId}`}
+            href={creatorHref}
             className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[14px] font-bold text-white"
             style={{ background: isHouse ? "var(--bk-goldmuted)" : avatarColor(b.creatorTgUserId) }}
             aria-hidden
@@ -107,7 +110,7 @@ export function BasketCard({
           </a>
           <div className="min-w-0 flex-1">
             <a
-              href={isHouse ? undefined : `/creator/${b.creatorTgUserId}`}
+              href={creatorHref}
               className="flex items-center gap-1 truncate text-[13px] font-bold text-[var(--ink)]"
             >
               {isHouse ? brand.name : (b.creatorName ?? c.anonymous)}

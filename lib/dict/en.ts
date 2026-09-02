@@ -234,6 +234,8 @@ export const en = {
     basketCount: "{n} baskets",
     accuracyPending:
       "Accuracy appears once this creator has enough settled positions for it to mean anything.",
+    houseBaskets: "Editorial baskets",
+    houseRecordLine: "{won} of {n} settled predictions correct",
   },
   communityBaskets: {
     editorial: "Editorial pick",
@@ -243,8 +245,17 @@ export const en = {
       "Baskets built by people who trade here. Publish your own and you earn {pct}% of the fee on every buy.",
     newBasket: "+ New basket",
     tabs: { all: "All", hot: "Hot", following: "Following", bought: "Most bought" },
+    categories: {
+      all: "All topics",
+      sports: "Sports",
+      crypto: "Crypto",
+      politics: "Politics",
+      economy: "Economy",
+      iran: "Iran",
+    },
     loading: "Loading baskets…",
     empty: "No community baskets yet. Be the first.",
+    emptyCategory: "No baskets in this topic yet. Build the first one.",
     emptyFollowing: "You're not following anyone yet. Follow a creator and their baskets show up here.",
     emptyFollowingSignedOut: "Sign in to see baskets from creators you follow.",
     anonymous: "A creator",

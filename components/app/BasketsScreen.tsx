@@ -9,6 +9,18 @@ import { useLocale } from "./LocaleProvider";
 const FEED_TABS = ["all", "hot", "following", "bought"] as const;
 type FeedTab = (typeof FEED_TABS)[number];
 
+// Root-topic chips, same set the web feed shows — keys are the topic-tree
+// root slugs the API filters by. `all` sends no filter.
+const FEED_CATS = [
+  { key: "all", emoji: "" },
+  { key: "sports", emoji: "⚽" },
+  { key: "crypto", emoji: "🪙" },
+  { key: "politics", emoji: "🗳" },
+  { key: "economy", emoji: "📈" },
+  { key: "iran", emoji: "🇮🇷" },
+] as const;
+type FeedCat = (typeof FEED_CATS)[number]["key"];
+
 /**
  * Baskets: browse a curated set of positions, then buy the whole set at once.
  *
@@ -133,6 +145,7 @@ export function BasketsScreen({
   const { locale, t } = useLocale();
   const [list, setList] = useState<CommunityBasket[] | null>(null);
   const [tab, setTab] = useState<FeedTab>("all");
+  const [cat, setCat] = useState<FeedCat>("all");
   /**
    * `query` is what the field shows; `search` is what has actually been sent.
    * Separating them is what makes the debounce work without the input feeling
@@ -155,6 +168,7 @@ export function BasketsScreen({
     // previous tab's results sitting under the newly-selected pill.
     setList(null);
     const qs = new URLSearchParams({ tab });
+    if (cat !== "all") qs.set("category", cat);
     if (search) qs.set("q", search);
     authedGet<{ baskets: CommunityBasket[] }>(
       `/webapp/v1/community-baskets?${qs}`,
@@ -165,7 +179,7 @@ export function BasketsScreen({
         if ((e as Error)?.name !== "AbortError") setList([]);
       });
     return () => ctrl.abort();
-  }, [tab, search]);
+  }, [tab, cat, search]);
 
   if (open) {
     return (
@@ -217,6 +231,28 @@ export function BasketsScreen({
         })}
       </div>
 
+      <div className="mt-2 flex flex-wrap gap-2">
+        {FEED_CATS.map((x) => {
+          const on = x.key === cat;
+          return (
+            <button
+              key={x.key}
+              type="button"
+              onClick={() => setCat(x.key)}
+              className="rounded-full border px-2.5 py-1 text-[11px] font-semibold"
+              style={{
+                background: on ? "var(--bk-goldtint)" : "transparent",
+                borderColor: on ? "#b08d2f" : "var(--line)",
+                color: on ? "var(--bk-gold)" : "var(--faint)",
+              }}
+            >
+              {x.emoji && <span aria-hidden>{x.emoji} </span>}
+              {t.communityBaskets.categories[x.key]}
+            </button>
+          );
+        })}
+      </div>
+
       {list === null ? (
         <div className="mt-6 space-y-2" aria-busy>
           {[0, 1, 2].map((i) => (
@@ -227,6 +263,7 @@ export function BasketsScreen({
         <p className="mt-6 text-[13px] text-[var(--mute)]">
           {search ? t.app.baskets.noMatches.replace("{q}", search)
             : tab === "following" ? t.communityBaskets.emptyFollowing
+            : cat !== "all" ? t.communityBaskets.emptyCategory
             : t.app.baskets.empty}
         </p>
       ) : (

@@ -27,10 +27,13 @@ type Creator = {
   viewerFollows: boolean;
   basketCount: number;
   totalBuys: number;
+  /** House profile only — raw settled-leg record behind (or below) `accuracy`. */
+  settledLegs?: number;
+  wonLegs?: number;
 };
 
 export function CreatorProfile({ creatorId }: { creatorId: string }) {
-  const { t } = useLocale();
+  const { t, brand } = useLocale();
   const c = t.communityBaskets;
   const p = t.creatorProfile;
 
@@ -112,6 +115,15 @@ export function CreatorProfile({ creatorId }: { creatorId: string }) {
     );
   }
 
+  /**
+   * -1 is the house. Its baskets have no creator row, so the API reserves the
+   * id and this page renders the brand as the byline: gold ★ avatar, no Follow
+   * button (there is nobody to follow) and no follower count — but the same
+   * accuracy discipline as everyone else, because "trust our picks" is exactly
+   * the claim a track record exists to check.
+   */
+  const isHouse = creatorId === "-1";
+  const name = isHouse ? brand.name : (creator.name ?? c.anonymous);
   const initial = (creator.name ?? "?").replace(/^@/, "").charAt(0).toUpperCase();
 
   return (
@@ -121,21 +133,23 @@ export function CreatorProfile({ creatorId }: { creatorId: string }) {
           <span
             aria-hidden
             className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full text-[22px] font-bold text-white"
-            style={{ background: avatarColor(creator.id) }}
+            style={{ background: isHouse ? "var(--bk-goldmuted)" : avatarColor(creator.id) }}
           >
-            {initial}
+            {isHouse ? "★" : initial}
           </span>
           <div className="min-w-0 flex-1">
             <h1 className="flex items-center gap-1.5 text-[20px] font-extrabold text-[var(--ink)]">
-              {creator.name ?? c.anonymous}
-              {creator.verified && (
-                <span aria-label={c.verified} style={{ color: "var(--bk-gold)" }}>
+              {name}
+              {(isHouse || creator.verified) && (
+                <span aria-label={isHouse ? c.editorial : c.verified} style={{ color: "var(--bk-gold)" }}>
                   ✓
                 </span>
               )}
             </h1>
             <p dir="ltr" className="mt-1 text-[13px] tabular-nums text-[var(--mute)]">
-              {c.followersLabel.replace("{n}", String(creator.followers))}
+              {isHouse
+                ? c.editorial
+                : c.followersLabel.replace("{n}", String(creator.followers))}
               {" · "}
               {p.basketCount.replace("{n}", String(creator.basketCount))}
               {" · "}
@@ -143,19 +157,31 @@ export function CreatorProfile({ creatorId }: { creatorId: string }) {
               {creator.accuracy != null &&
                 ` · ${Math.round(creator.accuracy * 100)}% ${c.accuracyLabel}`}
             </p>
+            {/* The raw record, even below the accuracy floor: on the house
+                page an absent number reads as a dodge, and "0 of 1" is a
+                more credible sentence than a hidden stat. */}
+            {isHouse && (creator.settledLegs ?? 0) > 0 && (
+              <p className="mt-1 text-[13px] tabular-nums text-[var(--mute)]">
+                {p.houseRecordLine
+                  .replace("{won}", String(creator.wonLegs ?? 0))
+                  .replace("{n}", String(creator.settledLegs ?? 0))}
+              </p>
+            )}
           </div>
-          <button
-            type="button"
-            onClick={toggleFollow}
-            className="rounded-full border px-4 py-2 text-[13px] font-semibold"
-            style={{
-              background: creator.viewerFollows ? "var(--bk-goldtint)" : "transparent",
-              borderColor: creator.viewerFollows ? "#b08d2f" : "var(--line)",
-              color: creator.viewerFollows ? "var(--bk-gold)" : "var(--mute)",
-            }}
-          >
-            {creator.viewerFollows ? c.following : c.follow}
-          </button>
+          {!isHouse && (
+            <button
+              type="button"
+              onClick={toggleFollow}
+              className="rounded-full border px-4 py-2 text-[13px] font-semibold"
+              style={{
+                background: creator.viewerFollows ? "var(--bk-goldtint)" : "transparent",
+                borderColor: creator.viewerFollows ? "#b08d2f" : "var(--line)",
+                color: creator.viewerFollows ? "var(--bk-gold)" : "var(--mute)",
+              }}
+            >
+              {creator.viewerFollows ? c.following : c.follow}
+            </button>
+          )}
         </div>
 
         {/* Accuracy is withheld below a floor of settled picks rather than shown
@@ -172,7 +198,9 @@ export function CreatorProfile({ creatorId }: { creatorId: string }) {
         </p>
       )}
 
-      <h2 className="mt-8 mb-4 text-[16px] font-extrabold text-[var(--ink)]">{p.theirBaskets}</h2>
+      <h2 className="mt-8 mb-4 text-[16px] font-extrabold text-[var(--ink)]">
+        {isHouse ? p.houseBaskets : p.theirBaskets}
+      </h2>
       <div className="grid gap-4 [grid-template-columns:repeat(auto-fill,minmax(290px,1fr))]">
         {baskets.map((b) => (
           <BasketCard key={b.slug} basket={b} showCreator={false} />

@@ -19,6 +19,22 @@ export type { CommunityBasket };
 const TABS = ["all", "hot", "following", "bought"] as const;
 type Tab = (typeof TABS)[number];
 
+/**
+ * Root-topic chips, orthogonal to the tabs: "hot" answers *how to rank*,
+ * these answer *what about*. Keys are the topic-tree root slugs the API
+ * filters by; emoji match the catalogue's own so a basket chip and the
+ * markets menu read as the same taxonomy. `all` sends no filter.
+ */
+const CATEGORIES = [
+  { key: "all", emoji: "" },
+  { key: "sports", emoji: "⚽" },
+  { key: "crypto", emoji: "🪙" },
+  { key: "politics", emoji: "🗳" },
+  { key: "economy", emoji: "📈" },
+  { key: "iran", emoji: "🇮🇷" },
+] as const;
+type Category = (typeof CATEGORIES)[number]["key"];
+
 export function CommunityFeed({
   initial,
   creatorSharePct,
@@ -30,18 +46,21 @@ export function CommunityFeed({
   const c = t.communityBaskets;
 
   const [tab, setTab] = useState<Tab>("all");
+  const [cat, setCat] = useState<Category>("all");
   const [rows, setRows] = useState<CommunityBasket[]>(initial);
   const [loading, setLoading] = useState(false);
   const [signedIn, setSignedIn] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
 
-  const load = useCallback(async (next: Tab, signal?: AbortSignal) => {
+  const load = useCallback(async (next: Tab, nextCat: Category, signal?: AbortSignal) => {
     setLoading(true);
     try {
+      const qs = new URLSearchParams({ tab: next });
+      if (nextCat !== "all") qs.set("category", nextCat);
       // Not authedGet: this endpoint is public, and requiring a credential here
       // would make the feed blank for exactly the visitors it exists to reach.
       // The bot reads auth opportunistically to fill in follow state.
-      const res = await fetch(`/api/webapp/v1/community-baskets?tab=${next}`, {
+      const res = await fetch(`/api/webapp/v1/community-baskets?${qs}`, {
         signal,
         cache: "no-store",
         headers: await optionalAuthHeaders(),
@@ -59,9 +78,9 @@ export function CommunityFeed({
 
   useEffect(() => {
     const ctrl = new AbortController();
-    load(tab, ctrl.signal);
+    load(tab, cat, ctrl.signal);
     return () => ctrl.abort();
-  }, [tab, load]);
+  }, [tab, cat, load]);
 
   /**
    * Optimistic follow.
@@ -127,6 +146,28 @@ export function CommunityFeed({
         })}
       </div>
 
+      <div className="mb-5 flex flex-wrap items-center gap-2">
+        {CATEGORIES.map((x) => {
+          const on = x.key === cat;
+          return (
+            <button
+              key={x.key}
+              type="button"
+              onClick={() => setCat(x.key)}
+              className="rounded-full border px-3 py-1 text-[12px] font-semibold"
+              style={{
+                background: on ? "var(--bk-goldtint)" : "transparent",
+                borderColor: on ? "#b08d2f" : "var(--line)",
+                color: on ? "var(--bk-gold)" : "var(--faint)",
+              }}
+            >
+              {x.emoji && <span aria-hidden>{x.emoji} </span>}
+              {c.categories[x.key]}
+            </button>
+          );
+        })}
+      </div>
+
       {notice && (
         <p className="mb-4 rounded-lg bg-[var(--bk-goldtint)] p-2.5 text-[13px] text-[var(--bk-warn)]">
           {notice}
@@ -140,6 +181,7 @@ export function CommunityFeed({
           <p className="text-[14px] text-[var(--mute)]">
             {tab === "following" && !signedIn ? c.emptyFollowingSignedOut
               : tab === "following" ? c.emptyFollowing
+              : cat !== "all" ? c.emptyCategory
               : c.empty}
           </p>
           <a
