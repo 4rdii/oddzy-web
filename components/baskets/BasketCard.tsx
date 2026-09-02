@@ -34,6 +34,7 @@ export type CommunityBasket = {
   editorialPersona?: "daily" | "world" | null;
   /** 'published' | 'archived'. Profiles include archived rows as history. */
   status?: string;
+  publishedAt?: string | null;
   /** The basket's own settled-leg record. */
   settledLegs?: number;
   wonLegs?: number;
