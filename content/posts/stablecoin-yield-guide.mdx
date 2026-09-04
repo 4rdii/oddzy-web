@@ -1,0 +1,94 @@
+---
+title: "Stablecoin yield: what your dollars actually earn"
+description: "Holding USDT pays nothing while ordinary dollars earn 4-5%. The reference rate, the three permissionless doors actually open, and what each charges in risk."
+tag: GUIDE
+readingMinutes: 8
+publishedAt: "2026-09-04"
+lead: "Converting to stablecoins stopped a loss; it did not create a gain. A dollar sitting in USDT earns zero while ordinary dollars earn 4-5% a year, and closing that gap means naming the risk you are being paid to take."
+keywords:
+  - "stablecoin yield"
+  - "USDT interest rate"
+  - "permissionless defi yield"
+  - "tokenized treasury yield"
+  - "stablecoin risk"
+takeaways:
+  - "Moving into stablecoins protects you from a falling local currency, but it is not income: USDT itself pays zero, and that gap is the whole subject of this article."
+  - "Tokenized US Treasury funds pay roughly 4-5% a year, and even if you cannot access them, that number is your yardstick for judging every offer you are shown."
+  - "Anything paying materially more than the Treasury rate is charging you for a risk, and you should be able to name that risk in one sentence before accepting it."
+  - "Tether is a company, not a protocol, and it has frozen addresses before — for users in sanctioned countries that is a real tail risk, not a theoretical one."
+  - "A guaranteed monthly return on stablecoins does not exist at any size; the guarantee itself is the clearest signal that the payout is coming from someone else's deposit."
+faq:
+  - q: "Does holding USDT earn interest on its own?"
+    a: "No. A stablecoin is a claim on a dollar, not a deposit account, and the issuer keeps the interest earned on the reserves backing it. Your balance stays numerically the same forever whether you hold it for a day or three years. Everything described in this article is about lending or deploying that balance somewhere else, which is what introduces both the yield and the risk."
+  - q: "Why is the Treasury rate the right benchmark?"
+    a: "Short-dated US government debt is the closest thing to a risk-free dollar return that exists, so it sets the floor that every other dollar yield is measured against. Tokenized funds holding that debt pass roughly 4-5% through to holders. If something offers you double that, the extra is not generosity — it is payment for taking on credit risk, smart-contract risk, or exposure to a trade that can stop working."
+  - q: "Is a 12% yield automatically a scam?"
+    a: "Not automatically, but it requires an explanation you can verify. Some genuinely pay double digits from a real underlying trade, such as collecting perpetual futures funding in a delta-neutral position — that income is real but it is not promised, and it can halve in a month when funding compresses. The distinction that matters is between a variable rate with a disclosed source and a fixed rate with none."
+  - q: "Can a stablecoin issuer freeze my balance?"
+    a: "Centralised issuers such as Tether and Circle can and do freeze addresses on request from law enforcement, because the freeze function is written into the token contract. This is not a hypothetical: thousands of addresses have been blacklisted. Users in sanctioned jurisdictions carry more of this risk than most, which is the practical argument for spreading a balance across more than one issuer and more than one chain."
+  - q: "How much should I start with?"
+    a: "Small enough that losing it entirely would not change anything for you, and the first thing you should test is not the yield but the exit. Deposit a token amount, wait, then withdraw it end to end and confirm the money arrives where you expect. A protocol you have successfully withdrawn from once is a very different proposition from one you have only ever deposited into."
+---
+
+Converting your savings into dollars was the right move, and it was also only half a move. If you swapped into a stablecoin while the local currency fell, you stopped a loss — you did not produce a gain. That distinction matters more than it sounds, because the two feel identical in a wallet screen and behave completely differently over a year.
+
+**This article is educational and is not financial advice. No platform below is a recommendation, and every instrument mentioned carries a real risk of total loss.**
+
+## Why does holding a stablecoin pay you nothing?
+
+A stablecoin is a claim on a dollar, not a deposit account. When you hold USDT, the issuer holds the reserves backing it and keeps the interest those reserves earn. Your balance is the same number tomorrow, next month, and in three years.
+
+Meanwhile an ordinary dollar in the world earns something. That gap — zero against roughly 4-5% a year — is what this article is about, and closing it always means accepting a risk you did not have before. There is no version of this where the yield arrives for free.
+
+## What is the reference rate, and why does it matter?
+
+Tokenized US Treasury funds — BUIDL, USDY, OUSG and their peers — hold short-dated government debt and pass through roughly **4-5% a year**. Most of them are closed to much of the world behind identity checks and sanctions screening, so this is not necessarily an option you can take.
+
+It is still the single most useful number you can carry, because it is your yardstick:
+
+> Any offer materially above the Treasury rate is paying you for a risk. Before you accept it, you should be able to say what that risk is in one sentence.
+
+That test disqualifies most of what gets pushed at retail investors, and it does so in about five seconds.
+
+## Which doors are actually open without permission?
+
+Permissionless DeFi — protocols that work with a self-custodial wallet and ask for no identity — is what remains reachable when the regulated products are not. Three broad categories, in rising order of both yield and complexity.
+
+**Lending markets, roughly 3.5-9%.** Aave, Compound, Morpho, Spark. You supply stablecoins to a pool, over-collateralised borrowers pay to take them out, and the interest reaches you. The rate floats with demand. *Risks:* smart-contract failure, which is never zero even in long-lived protocols; liquidity risk in a crisis, when everyone tries to withdraw at once; and the risk of the stablecoin itself.
+
+**Savings-rate tokens, roughly 5-7%.** sUSDS in the Sky ecosystem is the largest example, backed by a mix of Treasuries and over-collateralised loans, with yield accruing into the token itself rather than arriving as separate payments. *Risks:* protocol risk, the composition of the backing portfolio, and governance concentration — a small group can change the rate or the collateral rules.
+
+**Variable-yield strategies, roughly 10-15%.** sUSDe from Ethena is the archetype: the return comes from collecting perpetual futures funding while holding a delta-neutral position. **This yield is real but it is not a promise.** When funding compresses or turns negative, the rate can halve inside a month. *Risks:* funding compression, exposure to the exchanges where the hedge is held, and enough mechanical complexity that most holders cannot check whether it is still working.
+
+## What is the risk nobody prices in?
+
+Tether is a company, not a protocol. It has the technical ability to freeze an address and it has used that ability many times. For anyone in a sanctioned jurisdiction, this is the tail risk sitting underneath the entire strategy — including the part you already completed.
+
+Three sensible responses, none of which eliminate it:
+
+- Do not hold everything with one issuer. Splitting across USDT, USDC, DAI and USDS spreads the exposure, though each of those carries its own version of the problem.
+- Do not hold everything on one chain or in one protocol.
+- Keep funds in a self-custodial wallet with a safely stored recovery phrase, rather than a large balance parked on an exchange. [Where your money actually sits](/learn/is-it-safe-where-your-money-sits) covers what self-custody does and does not protect you from.
+
+## How do you recognise a "guaranteed return"?
+
+The rule is short: **above the rates listed here, guaranteed does not exist.** A channel promising a fixed 5% a month is paying you out of your own principal or the next person's deposit, and the arithmetic has only one ending.
+
+The classic signature is four things at once — a guarantee, time pressure, a referral bonus for bringing others, and withdrawals that turn out to be difficult. Any one of them deserves suspicion. All four together is a description of the outcome, not a warning about it.
+
+## Where does a prediction market sit in this picture?
+
+Nowhere on this list, and it is worth being blunt about why. A [prediction market](/learn/what-is-a-prediction-market) position is not yield. It has no rate, it pays nothing for waiting, and a share that resolves against you is worth exactly zero — the loss is total, not partial.
+
+It is a different use of a dollar: a directional view with a defined settlement date, not a place to park savings. If you take one, it belongs in a separate mental bucket from the balance you are trying to make safe, and [sizing it](/learn/how-to-size-a-position) matters more than picking it. [How Oddzy works](/how-it-works) explains the mechanics from the other side.
+
+## The step-two checklist
+
+1. **Memorise the reference rate.** Measure every offer against roughly 4.5% and ask what risk the excess is paying for.
+2. **Start small and test the exit first.** Withdraw before you scale up, not after.
+3. **Diversify across issuers, protocols and chains.** Correlated risk is the one that actually hurts.
+4. **Check rates live.** Every number here is from September 2026 and will be stale within weeks; read them off the protocols' own dashboards.
+5. **Treat the recovery phrase as everything.** Offline, two copies, never typed into a website.
+6. **Sustainable yield above 15%?** Go back to line one.
+
+*Educational only. Not financial advice, and not an endorsement of any platform. The risk of losing your entire balance is real in every instrument described above.*
