@@ -124,9 +124,13 @@ export function BasketCard({
   const initial = (b.creatorName ?? "?").replace(/^@/, "").charAt(0).toUpperCase();
 
   return (
-    <article className="flex flex-col rounded-2xl border border-[var(--line)] bg-[var(--card)] p-4 transition-colors hover:border-[var(--bk-goldborder)]">
+    /* `relative` is the positioning context for the stretched View link below,
+       which is what makes the whole card a click target. */
+    <article className="relative flex flex-col rounded-2xl border border-[var(--line)] bg-[var(--card)] p-4 transition-colors hover:border-[var(--bk-goldborder)]">
       {showCreator && (
-        <div className="flex items-center gap-2.5">
+        /* Lifted above the stretched link so the byline and Follow keep their
+           own targets — the card opens the basket, these go to the creator. */
+        <div className="relative z-10 flex items-center gap-2.5">
           <a
             href={creatorHref}
             className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[14px] font-bold text-white"
@@ -226,7 +230,7 @@ export function BasketCard({
         <button
           type="button"
           onClick={() => onOpen(b.slug)}
-          className="mt-3 text-start text-[13px] font-bold"
+          className="mt-3 text-start text-[13px] font-bold after:absolute after:inset-0 after:content-['']"
           style={{ color: "var(--bk-gold)" }}
         >
           {c.view} →
@@ -234,7 +238,7 @@ export function BasketCard({
       ) : (
         <a
           href={`/baskets/${b.slug}`}
-          className="mt-3 text-[13px] font-bold"
+          className="mt-3 text-[13px] font-bold after:absolute after:inset-0 after:content-['']"
           style={{ color: "var(--bk-gold)" }}
         >
           {c.view} →
