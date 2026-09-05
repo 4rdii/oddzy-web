@@ -1,0 +1,107 @@
+---
+title: "Ukraine ceasefire ladder: pricing a window, not a date"
+description: "The ceasefire ladder is nested, so you can take a view on when rather than whether — with the loss capped at about 12% whichever way you are wrong."
+tag: ANALYSIS
+readingMinutes: 9
+publishedAt: "2026-09-05"
+lead: "Polymarket's Russia-Ukraine ceasefire markets are nested: October sits inside December. That structure lets you price a window of time instead of a yes-or-no, and it caps the loss at roughly 12% in both directions of being wrong."
+keywords:
+  - "Ukraine ceasefire prediction market"
+  - "Polymarket ceasefire odds"
+  - "nested market spread"
+  - "ceasefire resolution rules"
+  - "prediction market window trade"
+takeaways:
+  - "The ceasefire ladder is nested — a deal by October also resolves the December market Yes — which is what makes a window position possible at all."
+  - "Buying Yes on December and No on October costs 114c and pays 200c only if a deal lands in November or December; every other outcome returns 100c, a loss of about 12%."
+  - "The implied odds of that window are just the gap between the two rungs: 36.5% minus 22.5%, or 14%, so the structure is priced fairly and is only worth taking if your view is specifically about timing."
+  - "October spiked from 7.5% to 27.5% on the envoy news and has already given back five points while December kept climbing — the market bought a deal, not a fast one."
+  - "Two markets asking the same ceasefire question for the same deadline resolved opposite ways in May, one on 141 million dollars of volume and one on 817 thousand; volume is not a substitute for reading the text."
+faq:
+  - q: "What is a nested market and why does it matter?"
+    a: "Two markets are nested when one outcome is a subset of the other. A Russia-Ukraine ceasefire agreement by 31 October is automatically also a ceasefire agreement by 31 December, so the October market cannot resolve Yes while December resolves No. That containment is what lets you combine them into a position on a period of time rather than on the event itself, and it is why the order of the two sides matters so much."
+  - q: "Why is the loss capped at only about 12%?"
+    a: "Because the two sides cannot both lose. If a deal arrives early the December side pays 100c; if no deal arrives at all the October No side pays 100c. One of the two always returns your 100c, so the most you can lose is the 14c premium you paid above that floor. That is the entire appeal of the structure compared with a naked October position, which returns nothing at all if the timing is wrong."
+  - q: "Does the ceasefire Ukraine ordered for 5-8 September resolve these markets?"
+    a: "Almost certainly not, and the reason is written into both rule sets. The agreement ladder explicitly excludes a unilateral pause in hostilities, and a pause one side orders is unilateral no matter how long it lasts. The separate ceasefire ladder requires the halt to go into effect and hold continuously for at least ten calendar days, and a window running 5 to 8 September is four. Checking that took two minutes and it is the difference between a position and a guess."
+  - q: "Why do the two ceasefire ladders trade so far apart?"
+    a: "They are asking different questions. The agreement ladder resolves on a mutually agreed, dated commitment to stop fighting, and prices December at 36.5%. The other ladder additionally requires the ceasefire to take effect and hold continuously for ten days, and prices the same December deadline at 17.5%. The roughly nineteen-point gap is the market's estimate of the chance that something gets signed and then does not hold."
+  - q: "How thin are the 2027 rungs?"
+    a: "Thin enough to quote but not to trade. The March 2027 and June 2027 rungs have taken about 43 and 45 thousand dollars of lifetime volume between them, against 1.4 million on October and 2.5 million on December. Prices that far out are worth reading as the market's shape of belief over time, but an order of any size moves them, and a fill there will not resemble the number on screen."
+---
+
+Polymarket's Russia-Ukraine ceasefire markets are a ladder of deadlines, and the rungs are nested: a deal by 31 October is also a deal by 31 December. That containment is what makes the interesting position on this board a **window** — a view on *when*, not on *whether* — with the loss capped in both directions of being wrong.
+
+*Prices below are from 5 September 2026, around 10:30 UTC, on the ceasefire **agreement** ladder. They move by the hour on this board. Market analysis, not financial advice.*
+
+## Why can you take a position on a window of time?
+
+Because the ladder is nested, the two rungs can be combined so that one of them always pays:
+
+> **Yes on "ceasefire agreement by 31 December" (36.5c) + No on "by 31 October" (77.5c) = 114c**
+
+| Outcome | Yes Dec | No Oct | Total | Result |
+| --- | --- | --- | --- | --- |
+| Deal in **November or December** | 100 | 100 | **200** | **+75%** |
+| Deal earlier, by 31 October | 100 | 0 | 100 | **−12.3%** |
+| No deal this year | 0 | 100 | 100 | **−12.3%** |
+
+The floor exists because the two sides cannot both fail. Either a deal arrives, in which case December pays, or it does not, in which case October's No pays. You are only ever risking the 14c premium above that guaranteed 100c — against a naked October Yes, which is a total loss if the timing is off by a month.
+
+Being honest about what that buys you: **the implied odds of the window are exactly the gap between the rungs, 36.5 − 22.5 = 14%.** The structure is priced fairly. It is worth taking only if your actual view is "the Moscow track produces something, but not by October — by year end." If you do not hold that view specifically, this is a fair coin with fees.
+
+## How much goes on each side?
+
+The cap only exists if you hold an **equal number of shares** on both sides. Splitting the money evenly breaks it.
+
+- At these prices one unit costs 114c, so roughly **32% of the cash goes to December Yes and 68% to October No.** Most of the money sits in the boring side — which is the side building the floor.
+- Worked example: $1,000 buys about 877 units, so 877 shares of each side (about $320 and $680). Window hits, $1,754. Wrong either way, $877.
+- Recompute against the live ask. October's book is holding about $38k of liquidity against December's $95k, and one or two cents of spread is a large bite out of a 14-cent window.
+- **Both sides or neither.** Half a spread is a naked directional position wearing a disguise. Use limit orders, and if only one side fills and the board runs, close it rather than chasing the second.
+- The −12.3% is on the whole stake, so [size it](/learn/how-to-size-a-position) the way you would size anything else.
+
+## What did the market actually buy this week?
+
+On 4 September, CNN reported that Steve Witkoff and Jared Kushner were travelling to Moscow and Kyiv. Ukraine then ordered a temporary halt to fighting from 5 to 8 September around the visit. As this is written the Moscow meeting has not yet been reported as concluded — which is worth stating plainly, because the repricing already happened.
+
+The agreement ladder over the last three days, from Polymarket's own price history:
+
+| Rung | 3 Sep | 5 Sep 00:00 | Now |
+| --- | --- | --- | --- |
+| Agreement by 31 October | 7.5% | **27.5%** | 22.5% |
+| Agreement by 31 December | 17.5% | 34.0% | **36.5%** |
+| Peace deal signed before 2027 | — | — | 12.5% |
+
+Read the shape rather than the levels. **October tripled overnight and has already handed back five points; December kept climbing.** The board is not pricing a breakthrough — it is pricing a process, and moving its weight from "soon" to "eventually." Meanwhile the peace-deal market sits at 12.5%, barely moved. The market believes talks can stop the fighting. It does not believe they end the war.
+
+## Why did two markets on the same question resolve opposite ways?
+
+This is the part worth more than any price on the board. Look at what happened to the May 2026 deadline:
+
+| Market | Volume | Resolved |
+| --- | --- | --- |
+| Russia x Ukraine ceasefire by May 31, 2026 | $141.25M | **Yes** |
+| Russia x Ukraine ceasefire agreement by May 31, 2026 | $817k | **No** |
+| Russia x Ukraine ceasefire by May 31, 2026 (10-day rule) | $59k | **No** |
+
+Same war, same deadline, opposite answers — and it repeated in June, where a $60.7M market resolved Yes while its $1.7M near-twin resolved No. The two texts read almost identically; both demand a mutually agreed, dated halt. I cannot reconstruct the divergence from the wording alone, and that is precisely the lesson: **$141M of volume did not make the resolution obvious, and it did not protect anyone on the wrong side of it.** [Read the resolution rules first](/learn/read-the-resolution-rules-first) is not filler advice on this board; it is the whole game.
+
+Apply it to what is happening right now. Does Ukraine's 5-8 September halt resolve anything Yes? No — the agreement ladder excludes a *unilateral pause in hostilities* by name, and the other ladder requires ten continuous days where this offers four. Two minutes of reading, and the biggest headline of the week turns out to be irrelevant to the contract you were about to buy. [How markets resolve](/learn/how-markets-resolve-and-when-you-get-paid) covers the mechanics.
+
+## What do the outer rungs and the side markets say?
+
+The full ladder: October **22.5%** · December **36.5%** · March 2027 **48.5%** · June 2027 **65%**. The 2027 rungs have taken roughly $43k and $45k of lifetime volume, so quote them, do not trade them. There is a tempting version of the window one rung out — Yes March, No December, for a winter window — but it is built on that thin March book, and a wide fill destroys a spread whose whole edge is a few cents.
+
+Two side markets are worth holding next to the ceasefire price. Putin out before 2027 trades at **6.5%**, Zelensky out before 2027 at **7%** — against a 36.5% chance of an agreement. Even if you assumed every leadership change came bundled with a ceasefire, at least 23 of those 36.5 points describe a world where both men are still in office. **A ceasefire, if it comes, comes from these two.**
+
+If you would rather express a view like this as a single pre-built position than manage two sides yourself, [baskets](/learn/what-is-a-basket) do that, and [how Oddzy works](/how-it-works) explains the mechanics from the other side.
+
+## The checklist
+
+1. **Read the settlement text of the exact market you are buying** — this board has already paid Yes and No on the same question and the same date.
+2. **Quote the ask and the depth, not the midpoint.** The 2027 rungs are numbers, not prices.
+3. **Both sides or neither**, in equal share counts, or the floor you are paying for does not exist.
+4. **Small size, short horizon.** One headline reprices this entire ladder overnight, as it just did.
+5. **"Safer" is not safe.** The −12.3% is real and it arrives in two of the three outcomes.
+
+*Market price analysis. Not financial advice, and not a political position.*
