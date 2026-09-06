@@ -1,0 +1,218 @@
+---
+title: "How to hedge gold with Fed rate-hike markets"
+description: "Gold fell more than 2% on one payrolls print. A layered hedge on the Fed hike-count market costs about 4% of the position and covers most of a tightening shock."
+tag: ANALYSIS
+readingMinutes: 9
+publishedAt: "2026-09-06"
+lead: "One jobs report knocked more than 2% off gold on 4 September. If you hold gold and the thing you are afraid of is the Fed, you can price that fear directly instead of guessing — and a layered hedge costs about 4% of the position rather than the 10% a single contract would."
+keywords:
+  - "hedge gold with prediction markets"
+  - "Fed rate hike market 2026"
+  - "gold Fed rate hike hedge"
+  - "how many Fed rate hikes in 2026"
+  - "Polymarket Fed hike odds"
+takeaways:
+  - "The Fed hike-count market splits 2026 into exactly-n buckets, so covering two or more hikes means buying the 2, 3, 4 and 5+ buckets together for a combined 29.65c as of 6 September 2026."
+  - "A single 50 bps move counts as two hikes under the resolution text, which is why the cheap shock leg and the core leg pay out together rather than being alternatives."
+  - "Splitting 40 dollars across three layers covers a 1,000 dollar gold position for about 4%, against roughly 10% for the same cover bought as one contract."
+  - "There is deliberately no layer for a single hike: the market prices at least one hike at 71.5%, so it is the most expensive cover available for the smallest loss, and it is the plan's deductible."
+  - "This insures the Fed's decision, not the gold price, and in 2022 gold fell 22% from its March peak yet finished the year down only about 4% — the same hedge would have expired worthless against a real drawdown."
+faq:
+  - q: "Does a 50 basis point hike count as one hike or two?"
+    a: "Two. The resolution text for the hike-count market says the market resolves on the number of 25 basis point hikes, and gives the explicit example that a 50 bps move after a meeting counts as two hikes. Moves between 1 and 24 bps count as one. That rule is what links the cheap shock contract to the core layer, because a single emergency 50 bps move satisfies the two-or-more bucket on its own."
+  - q: "Why buy four separate contracts instead of one?"
+    a: "Because the hike-count market is written as exactly-n buckets, not as thresholds. There is no single contract for two or more hikes, so the only way to hold that exposure is to buy one share each of the 2, 3, 4 and 5+ buckets, which together cost 29.65c and pay exactly 100c in every world where at least two hikes happen. Buying only the 2 bucket would lose if the Fed hiked three times."
+  - q: "How much of my gold should a hedge like this cover?"
+    a: "The plan in this article spends 40 dollars against a 1,000 dollar position, or 4%, and it does not fully cover the loss it is insuring against. That is normal for insurance and deliberate here. A hedge sized to cover the loss completely would cost more than the loss is likely to be, given the market only prices two or more hikes at about 30%."
+  - q: "What happens to the September contract if the Fed does nothing?"
+    a: "It expires worthless and you lose the two dollars spent on it. The 50 bps September contract resolves on the FOMC statement from the 15 to 16 September meeting, so it is settled and gone within days of that announcement, well before the year-end layers. If you still want shock cover afterwards, the December version of the same contract trades at 1.8c."
+  - q: "Is this available on Oddzy or do I need Polymarket?"
+    a: "The 50 bps September contract, the binary rate-hike market and the gold dip contracts are all on Oddzy. The six hike-count buckets are not currently listed on Oddzy and trade on Polymarket only, so the core and tail layers as described have to be placed there for now. The gold-price hedge described at the end is the version of this trade that is fully available on Oddzy today."
+  - q: "Why is a prediction market hedge different from buying a put?"
+    a: "A prediction market contract pays a fixed 100c if the stated event happens and exactly nothing if it does not, so there is no partial payout and no sensitivity to how far the event went. A put on gold pays more the further gold falls. That makes these contracts a blunter instrument, but a much cheaper one, and it means you can insure a cause rather than a price."
+---
+
+Gold slid more than 2% on 4 September 2026 after US payrolls came in at 162,000 against about 53,000 expected, pushing the market back toward pricing a September hike. If you hold gold, that is the shape of the risk: the Fed tightens, real yields rise, and metal that pays no coupon gets marked down. You can buy insurance against that specific event, and this article prices it.
+
+*All prices are from Oddzy and Polymarket market data on 6 September 2026. They move daily. Market analysis, not financial advice.*
+
+<div className="oz-cta">
+  <div className="oz-cta-label">The board this is priced from</div>
+  <div className="oz-cta-row">
+
+[Fed rate hike in 2026 · 71.5%](/market/fed-rate-hike-in-2026)
+
+[50+ bps in September · 0.55%](/market/will-the-fed-increase-interest-rates-by-50-bps-after-the-september-2026-meeting-664)
+
+  </div>
+  <div className="oz-cta-note">The full Fed board, meeting by meeting, is on the <a href="/topic/economy-fed">Fed rates topic page</a>. The six hike-count buckets used for the core layer are not listed on Oddzy yet — see the availability note below.</div>
+</div>
+
+## What are you actually insuring against?
+
+You are insuring against the Fed raising rates more than once in 2026, because that is the scenario in which gold's problem stops being a headline and becomes a trend. The market prices at least one hike this year at 71.5%, two or more at 29.65%, and three or more at 6.65%. The gap between those numbers is where a hedge is worth buying.
+
+The link from that decision to your gold is an assumption, and it has to be your assumption rather than a number quoted at you. The table below is the sensitivity this article's sizing uses. It is not a model output:
+
+| Fed scenario | Assumed gold move | On a $1,000 position |
+| --- | --- | --- |
+| 0–1 hikes | roughly flat | ~$0 |
+| Exactly 2 hikes | −10% | **−$100** |
+| 3+ hikes, or a 50 bps move | −17.5% | **−$175** |
+
+Two real anchors sit behind those guesses. Gold fell about 22% from its March 2022 peak of roughly $2,070 to about $1,615 that September, during the fastest tightening cycle since the Volcker era. And a single payrolls print moved it more than 2% in a day last Friday. Everything else in the table is judgement, and if you disagree with it the sizing below changes.
+
+## How much does each layer cost?
+
+Three layers, $40 total against a $1,000 gold position — about 4% of what you are protecting. Each layer buys a different distance into the tail:
+
+| Layer | What it buys | Price | Units | Cost | Net if it hits |
+| --- | --- | --- | --- | --- | --- |
+| **Core** | 2 or more hikes (buckets 2, 3, 4, 5+) | 29.65c | 101 | **$30** | **+$71** |
+| **Tail** | 3 or more hikes (buckets 3, 4, 5+) | 6.65c | 120 | **$8** | **+$112** |
+| **Shock** | A 50+ bps move at the September meeting | 0.55c | 364 | **$2** | **+$362** |
+
+<div className="oz-fig">
+  <div className="oz-fig-title">Premium against payout, per layer</div>
+  <div className="oz-bars">
+    <div className="oz-bar-row">
+      <div className="oz-bar-label">Core<span>2+ hikes · 29.65c</span></div>
+      <div className="oz-bar-track">
+        <div className="oz-bar-fill oz-w27">
+          <div className="oz-bar-seg oz-bar-cost oz-w30" />
+          <div className="oz-bar-seg oz-bar-gain oz-w70" />
+        </div>
+        <div className="oz-bar-val is-pos">+$71</div>
+      </div>
+    </div>
+    <div className="oz-bar-row">
+      <div className="oz-bar-label">Tail<span>3+ hikes · 6.65c</span></div>
+      <div className="oz-bar-track">
+        <div className="oz-bar-fill oz-w32">
+          <div className="oz-bar-seg oz-bar-cost oz-w7" />
+          <div className="oz-bar-seg oz-bar-gain oz-w93" />
+        </div>
+        <div className="oz-bar-val is-pos">+$112</div>
+      </div>
+    </div>
+    <div className="oz-bar-row">
+      <div className="oz-bar-label">Shock<span>50+ bps in Sept · 0.55c</span></div>
+      <div className="oz-bar-track">
+        <div className="oz-bar-fill oz-w96">
+          <div className="oz-bar-seg oz-bar-cost oz-w1" />
+          <div className="oz-bar-seg oz-bar-gain oz-w99" />
+        </div>
+        <div className="oz-bar-val is-pos">+$362</div>
+      </div>
+    </div>
+  </div>
+  <div className="oz-key">
+    <span><i className="oz-key-cost" />premium paid</span>
+    <span><i className="oz-key-gain" />profit if the layer pays</span>
+  </div>
+  <div className="oz-fig-note">Bar length is the gross payout of each layer, on a shared scale. The $2 shock leg is the shortest premium and the longest bar on the board — that asymmetry is the entire reason it is worth two dollars.</div>
+</div>
+
+## What does the plan pay in each world?
+
+The premium is $40 in every world, and you get it back only in the ones where gold is falling. Against the sensitivity assumed above:
+
+| World | Hedge pays | Premium | Gold | Net hedged | Net unhedged |
+| --- | --- | --- | --- | --- | --- |
+| 0–1 hikes | $0 | −$40 | ~$0 | **−$40** | $0 |
+| Exactly 2 hikes | $101 | −$40 | −$100 | **−$39** | −$100 |
+| 3 or more hikes | $221 | −$40 | −$175 | **+$6** | −$175 |
+| 50 bps at September | $465 | −$40 | −$175 | **+$250** | −$175 |
+
+<div className="oz-fig">
+  <div className="oz-fig-title">Net outcome, hedged against unhedged</div>
+  <div className="oz-bars">
+    <div className="oz-bar-row">
+      <div className="oz-bar-label">0–1 hikes<span>hedged</span></div>
+      <div className="oz-bar-track">
+        <div className="oz-bar-fill oz-w23"><div className="oz-bar-seg oz-bar-loss oz-w100" /></div>
+        <div className="oz-bar-val is-neg">−$40</div>
+      </div>
+    </div>
+    <div className="oz-bar-row">
+      <div className="oz-bar-label"><span>unhedged</span></div>
+      <div className="oz-bar-track">
+        <div className="oz-bar-fill oz-bar-flat oz-w1" />
+        <div className="oz-bar-val">$0</div>
+      </div>
+    </div>
+    <div className="oz-bar-row">
+      <div className="oz-bar-label">Exactly 2 hikes<span>hedged</span></div>
+      <div className="oz-bar-track">
+        <div className="oz-bar-fill oz-w22"><div className="oz-bar-seg oz-bar-loss oz-w100" /></div>
+        <div className="oz-bar-val is-neg">−$39</div>
+      </div>
+    </div>
+    <div className="oz-bar-row">
+      <div className="oz-bar-label"><span>unhedged</span></div>
+      <div className="oz-bar-track">
+        <div className="oz-bar-fill oz-w57"><div className="oz-bar-seg oz-bar-loss oz-w100" /></div>
+        <div className="oz-bar-val is-neg">−$100</div>
+      </div>
+    </div>
+    <div className="oz-bar-row">
+      <div className="oz-bar-label">3+ hikes<span>hedged</span></div>
+      <div className="oz-bar-track">
+        <div className="oz-bar-fill oz-w3"><div className="oz-bar-seg oz-bar-gain oz-w100" /></div>
+        <div className="oz-bar-val is-pos">+$6</div>
+      </div>
+    </div>
+    <div className="oz-bar-row">
+      <div className="oz-bar-label"><span>unhedged</span></div>
+      <div className="oz-bar-track">
+        <div className="oz-bar-fill oz-w100"><div className="oz-bar-seg oz-bar-loss oz-w100" /></div>
+        <div className="oz-bar-val is-neg">−$175</div>
+      </div>
+    </div>
+  </div>
+  <div className="oz-fig-note">Bars are scaled to the worst outcome on the board, −$175. The hedge does not turn a bad year good — it flattens the difference between the three worlds, which is what you are paying for.</div>
+</div>
+
+Read the middle rows rather than the last one. The plan's job is that the spread between your best and worst case narrows from $175 to about $46. The 50 bps row is a windfall, not a plan.
+
+## Why is there no layer for a single hike?
+
+Because one hike is the most expensive cover on the board for the smallest loss it protects. The "exactly 1" bucket trades at 42.5c, and the market puts at least one hike at 71.5% — you would be paying up for the outcome that is already the base case, and a widely expected single hike is largely in the gold price already.
+
+So 0–1 hikes is the plan's deductible. You absorb it. If you want that cover anyway, roughly $15 on the "exactly 1" bucket returns about $35 gross and takes the programme to $55 — which buys the least insurance per dollar of anything here.
+
+## How do you actually place these?
+
+Three things decide whether the numbers above survive contact with the book.
+
+**The buckets are exactly-n, not thresholds.** "Two or more" is not a contract you can buy. You buy one share each of the 2, 3, 4 and 5+ buckets, and that basket costs 29.65c and pays exactly 100c whenever at least two hikes land. Miss one bucket and you have a hole in the cover. The same applies to the tail layer with buckets 3 and up. If you have not built a multi-leg position before, [what a basket is](/learn/what-is-a-basket) covers the mechanics.
+
+**The hike-count market is thin.** The whole event has taken about $287,000 of lifetime volume, spread across six buckets. That is fine for the $40 in this article and not fine for a serious size. Quote the ask and the depth, not the midpoint, because on a book this thin [the fill can be materially worse than the screen](/learn/why-did-my-order-fill-at-a-worse-price).
+
+**The September leg dies on 16 September.** It resolves on the FOMC statement from the 15–16 September meeting and is settled within days. If it expires worthless and you still want shock cover, the December version of the same contract trades at 1.8c.
+
+**Availability, plainly:** of the three layers, only the shock leg is on Oddzy today. The six hike-count buckets that make up the core and tail are listed on Polymarket and are not in Oddzy's market set yet. Everything in the final section is on Oddzy.
+
+## You are insuring the cause, not the outcome
+
+This is the real weakness of the plan and it deserves more than a footnote. Every contract above pays on a *Federal Reserve decision*. None of them pays on the *price of gold*. Those two things are correlated until they are not.
+
+2022 is the cautionary case in both directions. Gold fell about 22% from its March peak during that tightening cycle — and still finished the year down only around 4%, because central bank buying and geopolitical demand absorbed the rate shock. A hedge structured like this one would have paid out handsomely in September 2022 and been worth nothing at all by December, against a position that had barely moved.
+
+The failure modes are symmetric. Gold can fall hard for a reason that has nothing to do with the Fed, and your insurance pays zero. Or the Fed can hike into a bid — as it did for stretches of this year — and your insurance expires worthless while gold never falls, which costs you the premium and nothing else.
+
+## Can you insure the outcome instead?
+
+Yes, and on Oddzy this is the version you can actually place today. Rather than paying for the Fed's decision, buy the gold price itself. On the [gold markets board](/topic/economy-gold), the contract on gold dipping to $3,500 by end of December trades at 9.5c, and the deeper $3,000 strike at 5.05c.
+
+With spot around $4,420, a touch of $3,500 is a fall of roughly 21%. That contract pays whatever the reason — Fed, dollar, liquidation, anything — which is exactly what the Fed layers cannot do. The trade-off is that it is a *touch* contract on a deep strike, so it pays nothing at all for the 10% drawdown that the hike-count plan is built around, and its book is thinner still at about $8,800 of lifetime volume.
+
+Neither is strictly better. The Fed plan covers the likely, shallower move and can miss the cause entirely; the gold contract covers any cause and only the severe move. Reading both [resolution texts](/learn/read-the-resolution-rules-first) before choosing is the part people skip.
+
+## Before you place any of this
+
+- Re-derive the sensitivity table yourself. Every size in this article hangs off two numbers you did not choose.
+- Work from the ask and the depth. On a $287,000 market the midpoint is a suggestion.
+- Insurance is a cost. In the world where gold does well, this $40 is gone, and that is the plan working as intended.
+- Rebalance after each FOMC meeting — the buckets reprice hard on statement day, and a bucket becomes worthless the moment its number of hikes is arithmetically out of reach.
+- [Size it](/learn/how-to-size-a-position) so the premium is genuinely spare. A hedge that you need to win is not a hedge.
