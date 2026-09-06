@@ -682,3 +682,210 @@ html[data-locale="fa"] [lang="en"] .oz-prose {
   font-size: 13px;
   color: var(--text2);
 }
+
+/* ---- Article figures -------------------------------------------------
+   Data illustrations for /learn posts. Built from divs rather than an
+   SVG or a chart library so they inherit the theme tokens, reflow on a
+   phone, and mirror correctly in RTL — the FA article renders the same
+   markup. Widths arrive as .oz-wN classes rather than inline styles
+   because the article validator rejects { } in MDX, where a brace is a
+   JS expression; each width is a percentage of that figure's own scale,
+   which the figure's note states. */
+.oz-fig {
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--btn);
+  padding: 1rem 1.15rem 1.1rem;
+  margin-block: 1.6rem;
+}
+.oz-fig-title {
+  font-family: var(--font-plex), ui-monospace, monospace;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-block-end: 0.9rem;
+}
+.oz-fig-note {
+  margin-block-start: 0.9rem;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--text2);
+}
+.oz-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.oz-bar-row {
+  display: grid;
+  /* Label column is fixed so every track shares one origin and the bars
+     stay visually comparable; it collapses on narrow screens. */
+  grid-template-columns: 10.5rem 1fr;
+  align-items: center;
+  gap: 0.2rem 0.85rem;
+}
+.oz-bar-label {
+  font-size: 13px;
+  line-height: 1.35;
+  color: var(--ink);
+}
+.oz-bar-label span {
+  display: block;
+  font-size: 11px;
+  color: var(--text2);
+}
+.oz-bar-track {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-inline-size: 0;
+}
+.oz-bar-fill {
+  display: flex;
+  block-size: 20px;
+  border-radius: 3px;
+  overflow: hidden;
+  min-inline-size: 2px;
+}
+.oz-bar-seg {
+  block-size: 100%;
+}
+/* Premium is what you hand over and never see again; profit is what the
+   layer returns. Same bar, so the ratio is the point of the figure. */
+.oz-bar-cost { background: var(--down); opacity: 0.55; min-inline-size: 2px; }
+.oz-bar-gain { background: var(--up); }
+.oz-bar-loss { background: var(--down); }
+.oz-bar-flat { background: var(--line); }
+.oz-bar-val {
+  font-family: var(--font-plex), ui-monospace, monospace;
+  font-size: 12px;
+  color: var(--text2);
+  white-space: nowrap;
+}
+.oz-bar-val.is-pos { color: var(--up); }
+.oz-bar-val.is-neg { color: var(--down); }
+.oz-key {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.9rem;
+  margin-block-start: 0.9rem;
+  font-size: 12px;
+  color: var(--text2);
+}
+.oz-key i.oz-key-cost { background: var(--down); opacity: 0.55; }
+.oz-key i.oz-key-gain { background: var(--up); }
+.oz-key i {
+  display: inline-block;
+  inline-size: 10px;
+  block-size: 10px;
+  border-radius: 2px;
+  margin-inline-end: 0.35rem;
+  vertical-align: baseline;
+}
+@media (max-width: 560px) {
+  .oz-bar-row { grid-template-columns: 1fr; }
+  .oz-bar-label span { display: inline; margin-inline-start: 0.4rem; }
+}
+
+/* Bar widths for .oz-fig figures — see .oz-bar-fill. */
+.oz-w1 { inline-size: 1%; }
+.oz-w2 { inline-size: 2%; }
+.oz-w3 { inline-size: 3%; }
+.oz-w4 { inline-size: 4%; }
+.oz-w5 { inline-size: 5%; }
+.oz-w6 { inline-size: 6%; }
+.oz-w7 { inline-size: 7%; }
+.oz-w8 { inline-size: 8%; }
+.oz-w9 { inline-size: 9%; }
+.oz-w10 { inline-size: 10%; }
+.oz-w11 { inline-size: 11%; }
+.oz-w12 { inline-size: 12%; }
+.oz-w13 { inline-size: 13%; }
+.oz-w14 { inline-size: 14%; }
+.oz-w15 { inline-size: 15%; }
+.oz-w16 { inline-size: 16%; }
+.oz-w17 { inline-size: 17%; }
+.oz-w18 { inline-size: 18%; }
+.oz-w19 { inline-size: 19%; }
+.oz-w20 { inline-size: 20%; }
+.oz-w21 { inline-size: 21%; }
+.oz-w22 { inline-size: 22%; }
+.oz-w23 { inline-size: 23%; }
+.oz-w24 { inline-size: 24%; }
+.oz-w25 { inline-size: 25%; }
+.oz-w26 { inline-size: 26%; }
+.oz-w27 { inline-size: 27%; }
+.oz-w28 { inline-size: 28%; }
+.oz-w29 { inline-size: 29%; }
+.oz-w30 { inline-size: 30%; }
+.oz-w31 { inline-size: 31%; }
+.oz-w32 { inline-size: 32%; }
+.oz-w33 { inline-size: 33%; }
+.oz-w34 { inline-size: 34%; }
+.oz-w35 { inline-size: 35%; }
+.oz-w36 { inline-size: 36%; }
+.oz-w37 { inline-size: 37%; }
+.oz-w38 { inline-size: 38%; }
+.oz-w39 { inline-size: 39%; }
+.oz-w40 { inline-size: 40%; }
+.oz-w41 { inline-size: 41%; }
+.oz-w42 { inline-size: 42%; }
+.oz-w43 { inline-size: 43%; }
+.oz-w44 { inline-size: 44%; }
+.oz-w45 { inline-size: 45%; }
+.oz-w46 { inline-size: 46%; }
+.oz-w47 { inline-size: 47%; }
+.oz-w48 { inline-size: 48%; }
+.oz-w49 { inline-size: 49%; }
+.oz-w50 { inline-size: 50%; }
+.oz-w51 { inline-size: 51%; }
+.oz-w52 { inline-size: 52%; }
+.oz-w53 { inline-size: 53%; }
+.oz-w54 { inline-size: 54%; }
+.oz-w55 { inline-size: 55%; }
+.oz-w56 { inline-size: 56%; }
+.oz-w57 { inline-size: 57%; }
+.oz-w58 { inline-size: 58%; }
+.oz-w59 { inline-size: 59%; }
+.oz-w60 { inline-size: 60%; }
+.oz-w61 { inline-size: 61%; }
+.oz-w62 { inline-size: 62%; }
+.oz-w63 { inline-size: 63%; }
+.oz-w64 { inline-size: 64%; }
+.oz-w65 { inline-size: 65%; }
+.oz-w66 { inline-size: 66%; }
+.oz-w67 { inline-size: 67%; }
+.oz-w68 { inline-size: 68%; }
+.oz-w69 { inline-size: 69%; }
+.oz-w70 { inline-size: 70%; }
+.oz-w71 { inline-size: 71%; }
+.oz-w72 { inline-size: 72%; }
+.oz-w73 { inline-size: 73%; }
+.oz-w74 { inline-size: 74%; }
+.oz-w75 { inline-size: 75%; }
+.oz-w76 { inline-size: 76%; }
+.oz-w77 { inline-size: 77%; }
+.oz-w78 { inline-size: 78%; }
+.oz-w79 { inline-size: 79%; }
+.oz-w80 { inline-size: 80%; }
+.oz-w81 { inline-size: 81%; }
+.oz-w82 { inline-size: 82%; }
+.oz-w83 { inline-size: 83%; }
+.oz-w84 { inline-size: 84%; }
+.oz-w85 { inline-size: 85%; }
+.oz-w86 { inline-size: 86%; }
+.oz-w87 { inline-size: 87%; }
+.oz-w88 { inline-size: 88%; }
+.oz-w89 { inline-size: 89%; }
+.oz-w90 { inline-size: 90%; }
+.oz-w91 { inline-size: 91%; }
+.oz-w92 { inline-size: 92%; }
+.oz-w93 { inline-size: 93%; }
+.oz-w94 { inline-size: 94%; }
+.oz-w95 { inline-size: 95%; }
+.oz-w96 { inline-size: 96%; }
+.oz-w97 { inline-size: 97%; }
+.oz-w98 { inline-size: 98%; }
+.oz-w99 { inline-size: 99%; }
+.oz-w100 { inline-size: 100%; }
