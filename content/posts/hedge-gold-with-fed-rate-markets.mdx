@@ -16,6 +16,7 @@ takeaways:
   - "A single 50 bps move counts as two hikes under the resolution text, which is why the cheap shock leg and the core leg pay out together rather than being alternatives."
   - "Splitting 40 dollars across three layers covers a 1,000 dollar gold position for about 4%, against roughly 10% for the same cover bought as one contract."
   - "There is deliberately no layer for a single hike: the market prices at least one hike at 71.5%, so it is the most expensive cover available for the smallest loss, and it is the plan's deductible."
+  - "Equal-shares sizing means the cheapest leg sets the minimum stake, so a basket covering all four rungs of the core layer would cost at least 34 dollars to enter against 5.56 for the first two."
   - "This insures the Fed's decision, not the gold price, and in 2022 gold fell 22% from its March peak yet finished the year down only about 4% — the same hedge would have expired worthless against a real drawdown."
 faq:
   - q: "Does a 50 basis point hike count as one hike or two?"
@@ -27,7 +28,7 @@ faq:
   - q: "What happens to the September contract if the Fed does nothing?"
     a: "It expires worthless and you lose the two dollars spent on it. The 50 bps September contract resolves on the FOMC statement from the 15 to 16 September meeting, so it is settled and gone within days of that announcement, well before the year-end layers. If you still want shock cover afterwards, the December version of the same contract trades at 1.8c."
   - q: "Is this available on Oddzy or do I need Polymarket?"
-    a: "The 50 bps September contract, the binary rate-hike market and the gold dip contracts are all on Oddzy. The six hike-count buckets are not currently listed on Oddzy and trade on Polymarket only, so the core and tail layers as described have to be placed there for now. The gold-price hedge described at the end is the version of this trade that is fully available on Oddzy today."
+    a: "All of it is on Oddzy: the six hike-count buckets, the 50 bps September contract, the binary rate-hike market and both gold dip contracts. The one-click basket covers the 2 and 3 buckets only, because adding the 4 and 5+ rungs would push its minimum stake from about 5 dollars to over 34, so those two rungs have to be bought separately if you want the complete core layer."
   - q: "Why is a prediction market hedge different from buying a put?"
     a: "A prediction market contract pays a fixed 100c if the stated event happens and exactly nothing if it does not, so there is no partial payout and no sensitivity to how far the event went. A put on gold pays more the further gold falls. That makes these contracts a blunter instrument, but a much cheaper one, and it means you can insure a cause rather than a price."
 ---
@@ -37,15 +38,15 @@ Gold slid more than 2% on 4 September 2026 after US payrolls came in at 162,000 
 *All prices are from Oddzy and Polymarket market data on 6 September 2026. They move daily. Market analysis, not financial advice.*
 
 <div className="oz-cta">
-  <div className="oz-cta-label">The board this is priced from</div>
+  <div className="oz-cta-label">Take the core layer</div>
   <div className="oz-cta-row">
 
-[Fed rate hike in 2026 · 71.5%](/market/fed-rate-hike-in-2026)
+[Open the hikes basket →](/baskets/fed-2026-two-or-three-hikes)
 
 [50+ bps in September · 0.55%](/market/will-the-fed-increase-interest-rates-by-50-bps-after-the-september-2026-meeting-664)
 
   </div>
-  <div className="oz-cta-note">The full Fed board, meeting by meeting, is on the <a href="/topic/economy-fed">Fed rates topic page</a>. The six hike-count buckets used for the core layer are not listed on Oddzy yet — see the availability note below.</div>
+  <div className="oz-cta-note">The basket buys equal shares of the 2 and 3 buckets in one order — the core layer without its two thinnest rungs, for reasons the execution section explains. The rest of the board, meeting by meeting, is on the <a href="/topic/economy-fed">Fed rates topic page</a>.</div>
 </div>
 
 ## What are you actually insuring against?
@@ -185,13 +186,13 @@ So 0–1 hikes is the plan's deductible. You absorb it. If you want that cover a
 
 Three things decide whether the numbers above survive contact with the book.
 
-**The buckets are exactly-n, not thresholds.** "Two or more" is not a contract you can buy. You buy one share each of the 2, 3, 4 and 5+ buckets, and that basket costs 29.65c and pays exactly 100c whenever at least two hikes land. Miss one bucket and you have a hole in the cover. The same applies to the tail layer with buckets 3 and up. If you have not built a multi-leg position before, [what a basket is](/learn/what-is-a-basket) covers the mechanics.
+**The buckets are exactly-n, not thresholds.** "Two or more" is not a contract you can buy. You buy one share each of the 2, 3, 4 and 5+ buckets, and that set costs 29.65c and pays exactly 100c whenever at least two hikes land. Miss one bucket and you have a hole in the cover. The same applies to the tail layer with buckets 3 and up. The [basket](/baskets/fed-2026-two-or-three-hikes) does the first two rungs in a single order; if you have not built a multi-leg position before, [what a basket is](/learn/what-is-a-basket) covers the mechanics.
 
 **The hike-count market is thin.** The whole event has taken about $287,000 of lifetime volume, spread across six buckets. That is fine for the $40 in this article and not fine for a serious size. Quote the ask and the depth, not the midpoint, because on a book this thin [the fill can be materially worse than the screen](/learn/why-did-my-order-fill-at-a-worse-price).
 
 **The September leg dies on 16 September.** It resolves on the FOMC statement from the 15–16 September meeting and is settled within days. If it expires worthless and you still want shock cover, the December version of the same contract trades at 1.8c.
 
-**Availability, plainly:** of the three layers, only the shock leg is on Oddzy today. The six hike-count buckets that make up the core and tail are listed on Polymarket and are not in Oddzy's market set yet. Everything in the final section is on Oddzy.
+**Where the minimum stake bites.** All six buckets and both gold contracts are on Oddzy. But the [two-or-three-hikes basket](/baskets/fed-2026-two-or-three-hikes) deliberately stops at the 3 rung, and the reason is arithmetic: buying equal shares means the cheapest leg sets the floor, so including the 4 and 5+ rungs at 0.85c and 0.75c would force at least 118 shares of everything and a minimum stake of $34 to $40. Stopping at 3 brings that to $5.56. The cost of that decision is a real hole — four or more hikes pays nothing in the basket — and if you want the full core layer you buy the last two rungs yourself, for about a dollar.
 
 ## You are insuring the cause, not the outcome
 
