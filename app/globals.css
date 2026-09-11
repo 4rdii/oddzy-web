@@ -757,6 +757,8 @@ html[data-locale="fa"] [lang="en"] .oz-prose {
 .oz-bar-gain { background: var(--up); }
 .oz-bar-loss { background: var(--down); }
 .oz-bar-flat { background: var(--line); }
+/* Neutral data bar: a price or probability, where green/red would wrongly read as profit or loss. */
+.oz-bar-accent { background: var(--accent); }
 .oz-bar-val {
   font-family: var(--font-plex), ui-monospace, monospace;
   font-size: 12px;
