@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { usePrivy, useWallets, useSigners } from "@privy-io/react-auth";
 import { authedPost } from "@/lib/client-api";
+import { attribution } from "@/lib/track";
 import { useLocale } from "./LocaleProvider";
 
 const SIGNER_ID = process.env.NEXT_PUBLIC_PRIVY_SIGNER_ID ?? "";
@@ -94,7 +95,9 @@ export function WebLogin({ onReady }: { onReady: () => void }) {
         setPhase("registering");
         // Creates the account row and provisions the deposit wallet. Safe to
         // repeat: the server returns the existing account rather than a second one.
-        await authedPost("/webapp/v1/register", {});
+        // Where this account came from (shared-link source + anonymous visitor
+        // id) so the signup joins to the page events that preceded it.
+        await authedPost("/webapp/v1/register", attribution());
 
         setPhase("ready");
         onReady();

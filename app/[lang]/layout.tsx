@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { Space_Grotesk, IBM_Plex_Mono, Vazirmatn } from "next/font/google";
 import "../globals.css";
 import { ThemeScript } from "@/components/ThemeScript";
+import { SiteAnalytics } from "@/components/SiteAnalytics";
 import { brandFor, isLocale, LOCALES } from "@/lib/i18n";
 import { getDict } from "@/lib/dict";
 
@@ -105,7 +106,10 @@ export default async function LangLayout({
       <head>
         <ThemeScript defaultTheme={lang === "fa" ? "night" : undefined} />
       </head>
-      <body className="min-h-full">{children}</body>
+      <body className="min-h-full">
+        {children}
+        <SiteAnalytics />
+      </body>
     </html>
   );
 }

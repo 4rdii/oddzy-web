@@ -7,6 +7,7 @@ import type { Market } from "@/lib/api";
 import type { Topic } from "@/lib/taxonomy";
 import { useTelegram } from "@/lib/telegram";
 import { authedGet } from "@/lib/client-api";
+import { captureSource, track } from "@/lib/track";
 import { MarketsFeed } from "./MarketsFeed";
 import { BrowseScreen } from "./BrowseScreen";
 import { ThemeToggle } from "../site/ThemeToggle";
@@ -147,11 +148,18 @@ export function MiniApp({
    * basket they cannot buy.
    */
   useEffect(() => {
-    const slug = new URLSearchParams(window.location.search).get("basket");
+    // Attribution first: `?src=` (from a shared basket link) is remembered
+    // before the URL is cleaned, and the open is recorded whether or not a
+    // basket was linked, so "reached the app" is a countable funnel step.
+    const params = new URLSearchParams(window.location.search);
+    const src = captureSource();
+    const slug = params.get("basket");
+    track("app_open", { basket: slug, src });
     if (!slug) return;
 
     const url = new URL(window.location.href);
     url.searchParams.delete("basket");
+    url.searchParams.delete("src");
     window.history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
 
     setDeepLinkedBasket(slug);

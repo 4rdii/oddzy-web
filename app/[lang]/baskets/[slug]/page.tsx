@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { SiteChrome } from "@/components/site/Chrome";
+import { BasketCtas } from "@/components/baskets/BasketCtas";
 import { getBasket, getBaskets, type BasketDetail } from "@/lib/api";
 import { BRANDS, brandFor, isLocale, LOCALES } from "@/lib/i18n";
 import { getDict } from "@/lib/dict";
@@ -232,27 +233,12 @@ export default async function BasketPage(props: Params) {
             </p>
 
             {!settled && (
-              <div className="mt-4">
-                {/* `?basket=` is read client-side by MiniApp — see the deep-link
-                    effect there for why it isn't a server-read searchParam. */}
-                <a
-                  href={`/app?basket=${encodeURIComponent(slug)}`}
-                  className="block w-full rounded-xl px-5 py-3.5 text-center text-[15px] font-bold"
-                  style={{
-                    background: "var(--bk-cta)",
-                    color: "var(--bk-cta-ink)",
-                    boxShadow: "var(--bk-cta-shadow)",
-                  }}
-                >
-                  {t.basket.cta}
-                </a>
-                <a
-                  href={`https://t.me/${brand.tgBot}?start=bsk_${slug}`}
-                  className="mt-3 block text-center text-[14px] font-medium text-[var(--mute)] underline underline-offset-4"
-                >
-                  {t.basket.ctaTelegram}
-                </a>
-              </div>
+              <BasketCtas
+                slug={slug}
+                tgBot={brand.tgBot}
+                webLabel={t.basket.cta}
+                tgLabel={t.basket.ctaTelegram}
+              />
             )}
 
             <p className="mt-5 font-mono text-[11px] text-[var(--faint)]">

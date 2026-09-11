@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { authedGet, authedPost } from "@/lib/client-api";
+import { attribution } from "@/lib/track";
 import { BasketCard, type CommunityBasket } from "@/components/baskets/BasketCard";
 import { useLocale } from "./LocaleProvider";
 
@@ -343,6 +344,8 @@ function BasketDetailScreen({
       const res = await authedPost<BasketReceipt>("/webapp/v1/basket-buy", {
         slug: detail.slug,
         sizeUsdc: size,
+        // Reporting only: which shared link (if any) this buyer followed.
+        ...attribution(),
       });
       onDone(res);
     } catch (e: unknown) {

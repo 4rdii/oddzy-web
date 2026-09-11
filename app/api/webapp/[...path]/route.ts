@@ -22,8 +22,13 @@ import { NextResponse, type NextRequest } from "next/server";
 
 const UPSTREAM = process.env.API_ORIGIN ?? "https://app.oddzy.xyz";
 
-/** Only these headers cross to the upstream. Cookies deliberately do not. */
-const FORWARD_REQUEST_HEADERS = ["authorization", "x-telegram-init-data", "content-type"];
+/**
+ * Only these headers cross to the upstream. Cookies deliberately do not.
+ * user-agent is forwarded so the bot's event endpoint can tell an Instagram /
+ * Facebook in-app browser from a real one — the one place a t.me link may
+ * fail to open Telegram, and the leak the shared-link funnel exists to measure.
+ */
+const FORWARD_REQUEST_HEADERS = ["authorization", "x-telegram-init-data", "content-type", "user-agent"];
 
 /**
  * Placing a bet waits on Polymarket's CLOB and the chain, which is slower than a
