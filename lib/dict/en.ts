@@ -246,7 +246,7 @@ export const en = {
     buyersCard: "Buyers",
     acrossBaskets: "across all baskets",
     cumulativeReturn: "Cumulative basket return",
-    chartMeta: "Last {n} months · percent",
+    chartMeta: "Last {n} months · $100 per basket",
     activeBaskets: "Active baskets",
     trackRecord: "Track record",
     memberSince: "Member since {date}",

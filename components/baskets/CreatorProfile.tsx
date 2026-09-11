@@ -455,10 +455,21 @@ function StatCard({
   );
 }
 
+/** $ put into every scored basket for the chart's running P&L. */
+const CHART_STAKE_PER_BASKET = 100;
+
+const signedUsd = (v: number) =>
+  `${v > 0 ? "+" : v < 0 ? "−" : ""}$${Math.abs(v).toFixed(Math.abs(v) >= 100 ? 0 : 1)}`;
+
 /**
- * The cumulative-return line, drawn from realized monthly buckets: each
- * month's point is total PnL over total stake up to and including that month,
- * so the line answers "how has $1 given to this creator done so far".
+ * The cumulative-return line, drawn from realized monthly buckets. Each
+ * settled basket is scored as if bought with $100 (the backend already
+ * scores every basket as $1 equal-weight, so this is just a scale), and
+ * each month's point is the running sum of those dollar results. So the
+ * line answers "if I had put $100 into every basket, how much am I up".
+ *
+ * Deliberately NOT the running average return: that line drops whenever a
+ * modest win follows a big one, which reads as a loss when nothing was lost.
  */
 function ReturnChart({
   monthly,
@@ -471,13 +482,12 @@ function ReturnChart({
   meta: string;
   locale: string;
 }) {
-  let stake = 0;
-  let pnl = 0;
-  const points = monthly.map((m) => {
-    stake += m.stakeUsdc;
-    pnl += m.pnlUsdc;
-    return { month: m.month, v: stake > 0 ? (pnl / stake) * 100 : 0 };
-  });
+  // pnlUsdc is per-$1-stake, so × stake-per-basket gives dollars.
+  const points = monthly.reduce<Array<{ month: string; v: number }>>((acc, m) => {
+    const prev = acc.length ? acc[acc.length - 1]!.v : 0;
+    acc.push({ month: m.month, v: prev + m.pnlUsdc * CHART_STAKE_PER_BASKET });
+    return acc;
+  }, []);
 
   const lo = Math.min(0, ...points.map((pt) => pt.v));
   const hi = Math.max(1, ...points.map((pt) => pt.v));
@@ -513,7 +523,7 @@ function ReturnChart({
           <g key={i}>
             <line x1={0} y1={y(g)} x2={W} y2={y(g)} stroke="var(--line)" strokeWidth={1} />
             <text x={W - 4} y={y(g) - 5} textAnchor="end" fontSize={10} fill="var(--faint)">
-              {signedPct(g)}
+              {signedUsd(g)}
             </text>
           </g>
         ))}

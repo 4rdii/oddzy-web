@@ -254,7 +254,7 @@ export const fa: Dict = {
     buyersCard: "خریداران",
     acrossBaskets: "در همهٔ سبدها",
     cumulativeReturn: "بازده تجمعی سبدها",
-    chartMeta: "{n} ماه گذشته · درصد",
+    chartMeta: "{n} ماه گذشته · با ۱۰۰ دلار در هر سبد",
     activeBaskets: "سبدهای فعال",
     trackRecord: "کارنامه",
     memberSince: "عضو از {date}",
