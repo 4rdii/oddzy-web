@@ -13,6 +13,7 @@ import { publishedTopicSlugs } from "@/lib/topic-slugs";
 import { BRANDS, isLocale, LOCALES } from "@/lib/i18n";
 import { getDict } from "@/lib/dict";
 import { compactUsd, localized, pct } from "@/lib/format";
+import { RelatedGuides } from "@/components/site/RelatedGuides";
 
 /**
  * A topic hub — the permanent anchor for a subject.
@@ -141,7 +142,7 @@ export default async function TopicPage(props: Params) {
         </section>
       )}
 
-      <ul className="mx-auto flex max-w-3xl flex-col gap-2 px-5 pb-12">
+      <ul className="mx-auto flex max-w-3xl flex-col gap-2 px-5 pb-4">
         {rows.map((m) => (
           <li key={m.id}>
             <Link
@@ -163,6 +164,10 @@ export default async function TopicPage(props: Params) {
           </li>
         ))}
       </ul>
+
+      <div className="mx-auto max-w-3xl px-5 pb-12">
+        <RelatedGuides categoryId={slug} lang={lang} heading={t.guides.heading} lead={t.guides.topicLead} />
+      </div>
     </SiteChrome>
   );
 }

@@ -7,6 +7,7 @@ import { BRANDS, brandFor, isLocale, LOCALES, type Locale } from "@/lib/i18n";
 import { getDict } from "@/lib/dict";
 import { compactUsd, deadlineDate, localized, pct } from "@/lib/format";
 import { PriceHistory } from "@/components/site/PriceHistory";
+import { RelatedGuides } from "@/components/site/RelatedGuides";
 
 /**
  * One market, as a public page.
@@ -242,6 +243,13 @@ export default async function MarketPage(props: Params) {
             </div>
           </section>
         )}
+
+        <RelatedGuides
+          categoryId={market.category?.id}
+          lang={lang}
+          heading={t.guides.heading}
+          lead={t.guides.marketLead}
+        />
 
         <section className="mt-8 rounded-2xl border border-[var(--line)] bg-[var(--card)] p-5">
           <p className="text-[15px] leading-relaxed">{t.market.ctaLead}</p>

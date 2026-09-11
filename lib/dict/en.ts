@@ -418,6 +418,11 @@ export const en = {
     deadlines: "{count} deadlines so far",
     vol: "24h volume",
   },
+  guides: {
+    heading: "Guides",
+    marketLead: "Background worth reading before you trade this.",
+    topicLead: "Our analysis and guides on this topic.",
+  },
   learn: {
     metaTitle: "Learn — prediction markets explained",
     metaDescription:

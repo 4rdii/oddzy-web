@@ -402,6 +402,11 @@ export const fa: Dict = {
     deadlines: "{count} مهلت تا امروز",
     vol: "حجم ۲۴ ساعته",
   },
+  guides: {
+    heading: "راهنماها",
+    marketLead: "مطالبی که بهتر است پیش از معامله روی این بازار بخوانید.",
+    topicLead: "تحلیل‌ها و راهنماهای ما دربارهٔ این موضوع.",
+  },
   learn: {
     metaTitle: "آموزش پلی مارکت و بازارهای پیش‌بینی — به زبان ساده",
     metaDescription:

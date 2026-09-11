@@ -54,6 +54,11 @@ export type PostMeta = {
   faq: FaqItem[];
   /** Emitted as BlogPosting.keywords; not rendered. */
   keywords: string[];
+  /**
+   * Topic slugs from the bot's navigation tree. Drives the Guides block on
+   * /market, /question and /topic pages — see getGuidesFor.
+   */
+  topics: string[];
   /** H2s of the body, with the ids rehype-slug will put on them. */
   headings: Heading[];
   /** Body words, emitted as BlogPosting.wordCount. */
@@ -124,12 +129,60 @@ async function read(slug: string, locale: Locale): Promise<PostMeta | null> {
     takeaways: strings(data.takeaways),
     faq: faqItems(data.faq),
     keywords: strings(data.keywords),
+    topics: strings(data.topics),
     headings: headingsOf(content),
     wordCount: content.trim().split(/\s+/).filter(Boolean).length,
   } satisfies PostMeta;
 }
 
 /** Frontmatter arrays are author-written, so coerce rather than trust. */
+/**
+ * Guides that apply to any market, used to fill the Guides block when a page's
+ * topic has fewer articles than slots. Ordered by how directly they change
+ * what someone does next on a market page.
+ */
+const EVERGREEN_GUIDES = [
+  "read-the-resolution-rules-first",
+  "how-markets-resolve-and-when-you-get-paid",
+  "why-did-my-order-fill-at-a-worse-price",
+];
+
+/**
+ * Articles to link from a market, question or topic page.
+ *
+ * This is the blog's inbound internal linking. Before it existed no market,
+ * question or topic page linked to /learn at all — a 60-page sample of the
+ * sitemap had 34 links to /question/* and zero to articles — so the posts sat
+ * in the sitemap with nothing pointing at them and Google left them unindexed
+ * while the pages around them indexed fine.
+ *
+ * `topicPath` is the category's path through the topic tree, root first
+ * (["economy", "economy-fed"]). The most specific match wins, newest first,
+ * and evergreen guides fill whatever slots remain so every page links somewhere.
+ */
+export async function getGuidesFor(
+  topicPath: string[],
+  locale: Locale = DEFAULT_LOCALE,
+  limit = 3,
+): Promise<PostMeta[]> {
+  const posts = await getAllPosts(locale);
+  const specificity = [...topicPath].reverse();
+  const rank = (p: PostMeta) => {
+    const i = specificity.findIndex((t) => p.topics.includes(t));
+    return i === -1 ? Infinity : i;
+  };
+  const picked = posts
+    .filter((p) => rank(p) !== Infinity)
+    .sort((a, b) => rank(a) - rank(b))
+    .slice(0, limit);
+  for (const slug of EVERGREEN_GUIDES) {
+    if (picked.length >= limit) break;
+    const post = posts.find((p) => p.slug === slug);
+    if (post && !picked.includes(post)) picked.push(post);
+  }
+  return picked;
+}
+
 function strings(v: unknown): string[] {
   if (!Array.isArray(v)) return [];
   return v.map((x) => String(x).trim()).filter(Boolean);
