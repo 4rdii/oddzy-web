@@ -856,6 +856,12 @@ export const en = {
       quoting: "Pricing that route…",
       quoteFailed: "Couldn't price that route just now — try again, or withdraw on Polygon.",
       bridgeNote: "Enter an amount to see what arrives.",
+      /**
+       * Said plainly because it is the one way a withdrawal can deliver less
+       * than quoted: a stablecoin route is worth what it says, a native coin
+       * moves in the seconds between the quote and the fill.
+       */
+      nativeNote: "You'll receive the network's own coin — its value can move between the quote and arrival.",
       amountPlaceholder: "0.00",
       max: "MAX",
       pctChip: "{p}%",
