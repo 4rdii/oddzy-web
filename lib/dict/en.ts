@@ -742,7 +742,7 @@ export const en = {
     wallet: {
       title: "Wallet",
       availableBalance: "AVAILABLE BALANCE",
-      custody: "USDC on Polygon · self-custodial via Privy",
+      custody: "pUSD on Polygon · self-custodial via Privy",
       deposit: "Deposit",
       withdraw: "Withdraw",
       accounts: "YOUR ON-CHAIN ADDRESSES",
@@ -823,12 +823,19 @@ export const en = {
     withdraw: {
       sheetLabel: "Withdraw",
       title: "Withdraw",
-      /** Wraps the balance: "Available {amount} · USDC on Polygon". */
+      /**
+       * Wraps the balance: "Available {amount} · pUSD on Polygon".
+       *
+       * pUSD, not USDC. The balance IS pUSD and `withdrawPusd` sends raw pUSD to
+       * the address given — saying USDC promised a token the withdrawal does not
+       * deliver, which a user only discovers after the transfer is irreversible.
+       * Deposit copy still says USDC because deposits genuinely are USDC.e.
+       */
       available: "Available",
-      onPolygon: "· USDC on Polygon",
+      onPolygon: "· pUSD on Polygon",
       toAddress: "TO ADDRESS",
       addressPlaceholder: "0x…",
-      amountLabel: "AMOUNT (USDC)",
+      amountLabel: "AMOUNT (pUSD)",
       amountPlaceholder: "0.00",
       max: "MAX",
       pctChip: "{p}%",
@@ -838,7 +845,13 @@ export const en = {
       confirmTitle: "Confirm withdrawal",
       amount: "Amount",
       to: "TO",
-      note: "Sends on Polygon. On-chain transfers cannot be reversed — check the address.",
+      /**
+       * Says what actually arrives. The transfer is pUSD, and what to do with it
+       * is the half a recipient needs — the bot's confirm card has said this all
+       * along; the web sheet claimed USDC and left them holding a token they had
+       * no stated way to use.
+       */
+      note: "Sends pUSD on Polygon. pUSD is redeemable on polymarket.com or swappable on any Polygon DEX. On-chain transfers cannot be reversed — check the address.",
       failed: "The withdrawal failed. Nothing was sent.",
       sending: "Sending…",
       /** Followed by the amount as its own span. */
