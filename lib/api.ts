@@ -328,6 +328,13 @@ export type BasketDetail = {
   description_fa: string | null;
   curated: boolean;
   status: string;
+  /**
+   * No longer buyable. Set when the expiry sweep archives the basket, which
+   * happens at CLOSE time and can therefore precede settlement — so this can be
+   * true while `status` is still "active". Gate the buy CTA on this, never on
+   * `status`, or the page offers a purchase that cannot be made.
+   */
+  archived: boolean;
   leg_count: number;
   /**
    * Weighted average of the legs' prices — what one unit of the basket costs as

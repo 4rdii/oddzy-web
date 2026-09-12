@@ -393,6 +393,19 @@ export const en = {
     legCount: "{count} positions",
     buys: "{count} buys",
     settled: "Every position in this basket has settled.",
+    /**
+     * The record view, shown once a basket is archived. Archiving happens at
+     * CLOSE time, not settlement, so "closed" and "decided" are different
+     * states and both need saying — a reader who bought deserves to know which
+     * one they are looking at rather than seeing a half-empty scoreline.
+     */
+    resultHeading: "Result",
+    resultClosed: "This basket is closed — it can't be bought any more.",
+    resultPending: "Some positions haven't settled yet; this updates as they do.",
+    legWon: "Won",
+    legLost: "Lost",
+    legVoid: "Void",
+    legPending: "Pending",
     /** The honest caveat, shown on every basket page. */
     partialNotice:
       "Legs are placed as separate orders. If one can't fill at the price shown, the rest still go through and that leg's share stays in your balance.",
@@ -505,6 +518,19 @@ export const en = {
       belowMin: "This basket needs at least ${amount}.",
       insufficient: "That's more than your balance.",
       skipping: "{count} skipped — no price right now",
+      /**
+       * Record mode: a shared link opened after the basket closed. Archiving
+       * happens at close time rather than settlement, so `resultPending` covers
+       * the window where the games are over but the results are not in yet.
+       */
+      resultHeading: "Result",
+      hitOf: "{won} of {n} hit",
+      resultClosed: "This basket is closed — it can't be bought any more.",
+      resultPending: "Some positions haven't settled yet.",
+      legWon: "Won",
+      legLost: "Lost",
+      legVoid: "Void",
+      legPending: "Pending",
       /** Receipt. */
       boughtTitle: "Basket bought",
       partialTitle: "Partially filled",

@@ -52,6 +52,12 @@ type QuotedLeg = {
   price: number | null;
   buyable: boolean;
   skipReason: string | null;
+  /**
+   * "YES" | "NO" | "VOID" once the market resolves, null while undecided. On an
+   * archived basket a null means the game closed but the result has not landed
+   * yet — render that as pending, never as a loss.
+   */
+  outcome: string | null;
 };
 
 type BasketDetail = {
@@ -62,6 +68,12 @@ type BasketDetail = {
   descriptionFa: string | null;
   minStake: number;
   quotedFor: number;
+  /**
+   * Closed — not buyable any more. Archiving happens at CLOSE time and can
+   * precede settlement, so this is true while the legs may still look live.
+   * The buy UI is gated on this, never on leg buyability.
+   */
+  archived: boolean;
   /** At most one leg can resolve YES — five contenders, one trophy. */
   exclusive: boolean;
   /**
@@ -336,6 +348,25 @@ function BasketDetailScreen({
   const tooBig = size !== null && balance !== null && size > balance;
   const skipped = detail ? detail.legs.filter((l) => !l.buyable).length : 0;
 
+  /**
+   * A closed basket, opened from a shared link that outlived it. It renders as
+   * a record: no size picker, no payout quote and no buy button, because none
+   * of those mean anything once nothing can be bought.
+   */
+  const isRecord = detail?.archived ?? false;
+  const legState = (l: QuotedLeg) =>
+    l.outcome == null
+      ? "pending"
+      : l.outcome === "VOID"
+        ? "void"
+        : l.outcome === l.side
+          ? "won"
+          : "lost";
+  // Denominator is the DECIDED legs: a basket archived at kickoff with nothing
+  // settled yet must not report "0 of 5 hit".
+  const decided = detail ? detail.legs.filter((l) => legState(l) !== "pending").length : 0;
+  const wonLegs = detail ? detail.legs.filter((l) => legState(l) === "won").length : 0;
+
   async function buy() {
     if (!detail || size === null || busy) return;
     setBusy(true);
@@ -389,7 +420,9 @@ function BasketDetailScreen({
                 <li
                   key={leg.marketId}
                   className="overflow-hidden rounded-2xl border border-[var(--line)] bg-[var(--card)]"
-                  style={{ opacity: leg.buyable ? 1 : 0.5 }}
+                  // On a record EVERY leg is unbuyable, so the dimming that
+                  // usefully marks one skipped leg would grey out the whole list.
+                  style={{ opacity: isRecord || leg.buyable ? 1 : 0.5 }}
                 >
                   {/* Strip width = weight. Ties the row to its share without a
                       legend, and reads at a glance on a phone. */}
@@ -423,7 +456,38 @@ function BasketDetailScreen({
                       >
                         {leg.side}
                       </span>
-                      <span className="ltr-num">{cents(leg.price)}</span>
+                      {/* A closed market's last price is not a quote. Printing
+                          one beside a finished prediction invites the reader to
+                          think it is still available at that number. */}
+                      {isRecord ? (
+                        <span
+                          className="rounded-full px-1.5 py-0.5 font-bold"
+                          style={{
+                            background:
+                              legState(leg) === "won"
+                                ? "var(--bk-greenbg)"
+                                : legState(leg) === "lost"
+                                  ? "rgba(224,112,90,0.14)"
+                                  : "var(--btn)",
+                            color:
+                              legState(leg) === "won"
+                                ? "var(--bk-green)"
+                                : legState(leg) === "lost"
+                                  ? "var(--down)"
+                                  : "var(--mute)",
+                          }}
+                        >
+                          {legState(leg) === "won"
+                            ? t.app.baskets.legWon
+                            : legState(leg) === "lost"
+                              ? t.app.baskets.legLost
+                              : legState(leg) === "void"
+                                ? t.app.baskets.legVoid
+                                : t.app.baskets.legPending}
+                        </span>
+                      ) : (
+                        <span className="ltr-num">{cents(leg.price)}</span>
+                      )}
                     </p>
 
                     {/* Only once a real size is chosen. At the $100 preview these
@@ -454,7 +518,9 @@ function BasketDetailScreen({
           </ul>
 
           {/* Amount. The chosen size, large, with the split it produces drawn
-              underneath — the bar is the same one the web page shows. */}
+              underneath — the bar is the same one the web page shows. Live
+              baskets only: on a record there is nothing left to size. */}
+          {!isRecord && (
           <div className="mt-5 rounded-2xl border border-[var(--line)] bg-[var(--card)] p-4">
             <p className="font-mono text-[10px] tracking-[0.06em] text-[var(--faint)]">
               {t.app.baskets.amount}
@@ -490,11 +556,12 @@ function BasketDetailScreen({
               ))}
             </div>
           </div>
+          )}
 
           {/* Best case. Gold, because it is the number people scroll for — and
               immediately followed by the reason it is not a parlay, so the
               headline figure never stands alone. */}
-          {detail.payout.staked > 0 && (
+          {!isRecord && detail.payout.staked > 0 && (
             <div
               className="mt-3 rounded-2xl border p-4"
               style={{ borderColor: "var(--bk-goldborder)", background: "var(--bk-goldtint)" }}
@@ -569,15 +636,39 @@ function BasketDetailScreen({
             </div>
           )}
 
-          {skipped > 0 && (
+          {/* The record. What a shared /app?basket=<slug> link resolves to once
+              the games have gone — previously this screen showed a generic
+              "couldn't reach the server" error, which is both wrong and the
+              least useful thing to say at the moment someone opens the link. */}
+          {isRecord && (
+            <div className="mt-5 rounded-2xl border border-[var(--line)] bg-[var(--card)] p-4">
+              <p className="font-mono text-[10px] tracking-[0.06em] text-[var(--faint)]">
+                {t.app.baskets.resultHeading}
+              </p>
+              <p dir="ltr" className="mt-1 text-[26px] leading-none font-extrabold tabular-nums">
+                {t.app.baskets.hitOf
+                  .replace("{won}", String(wonLegs))
+                  .replace("{n}", String(decided))}
+              </p>
+              <p className="mt-2 text-[12px] leading-relaxed text-[var(--mute)]">
+                {decided === detail.legs.length
+                  ? t.app.baskets.resultClosed
+                  : t.app.baskets.resultPending}
+              </p>
+            </div>
+          )}
+
+          {!isRecord && skipped > 0 && (
             <p className="mt-3 text-[12px] text-[var(--mute)]">
               {t.app.baskets.skipping.replace("{count}", String(skipped))}
             </p>
           )}
 
-          <p className="mt-3 text-[12px] leading-relaxed text-[var(--mute)]">
-            {t.app.baskets.partialNotice}
-          </p>
+          {!isRecord && (
+            <p className="mt-3 text-[12px] leading-relaxed text-[var(--mute)]">
+              {t.app.baskets.partialNotice}
+            </p>
+          )}
 
           {tooSmall && (
             <p className="mt-3 text-[12px] text-[var(--down)]">
@@ -589,6 +680,7 @@ function BasketDetailScreen({
           )}
           {error && <p className="mt-3 text-[12px] text-[var(--down)]">{error}</p>}
 
+          {!isRecord && (
           <button
             type="button"
             onClick={buy}
@@ -610,6 +702,7 @@ function BasketDetailScreen({
                 ? t.app.baskets.buy
                 : `${t.app.baskets.buy} · ${money(size)}`}
           </button>
+          )}
         </>
       )}
     </section>

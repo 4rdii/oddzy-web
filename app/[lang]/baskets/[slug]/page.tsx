@@ -89,6 +89,32 @@ export default async function BasketPage(props: Params) {
   const description = localized(lang, basket.description ?? "", basket.description_fa);
   const settled = basket.status !== "active";
 
+  /**
+   * How one leg finished. `outcome` stays null until the market actually
+   * resolves, which is NOT the same as the basket being closed: the expiry
+   * sweep archives a basket at close time, so an archived basket routinely
+   * holds legs whose result is still pending. Those must read as pending —
+   * folding them into "lost" would invent a result the market never gave.
+   */
+  const legState = (leg: BasketDetail["legs"][number]) =>
+    leg.market.outcome == null
+      ? "pending"
+      : leg.market.outcome === "VOID"
+        ? "void"
+        : leg.market.outcome === leg.side
+          ? "won"
+          : "lost";
+
+  /**
+   * Render as a record rather than an offer. Gated on `archived` as well as
+   * `settled` because those diverge over exactly the window that matters:
+   * kickoff has passed so nothing is buyable, but no result has landed yet.
+   * Gating on `settled` alone would show a buy button on a dead basket.
+   */
+  const isRecord = basket.archived || settled;
+  const decidedLegs = basket.legs.filter((l) => legState(l) !== "pending");
+  const wonLegs = basket.legs.filter((l) => legState(l) === "won").length;
+
   // Per-leg colours for the weight bar, in the handoff's order.
   const LEG_COLORS = [
     "var(--bk-gold)", "#b08d2f", "#8a6f2a", "#6b5620", "#d9b356",
@@ -177,7 +203,7 @@ export default async function BasketPage(props: Params) {
                 has no stake input; the app shows the real figure once a size is
                 chosen. An exclusive basket gets the single-winner range instead
                 of an "all hit" total, which for it is unreachable. */}
-            {basket.payout && !settled && (
+            {basket.payout && !isRecord && (
               <section className="mt-3 rounded-2xl border border-[var(--line)] bg-[var(--card)] p-5">
                 <p className="font-mono text-[11px] tracking-[0.06em] text-[var(--faint)]">
                   {t.basket.payoutHeading}
@@ -222,7 +248,29 @@ export default async function BasketPage(props: Params) {
               </section>
             )}
 
-            {settled && <p className="mt-3 text-[13px] text-[var(--mute)]">{t.basket.settled}</p>}
+            {/* The record. This is what a shared link resolves to once the games
+                have gone — previously the page 404'd here and took the results
+                with it, which is precisely when someone follows the link. */}
+            {isRecord && (
+              <section className="mt-3 rounded-2xl border border-[var(--line)] bg-[var(--card)] p-5">
+                <p className="font-mono text-[11px] tracking-[0.06em] text-[var(--faint)]">
+                  {t.basket.resultHeading}
+                </p>
+                <p className="ltr-num mt-2 text-[30px] leading-none font-extrabold">
+                  {t.creatorProfile.hitOf
+                    .replace("{won}", String(wonLegs))
+                    .replace("{n}", String(decidedLegs.length))}
+                </p>
+                <p className="mt-3 text-[13px] leading-relaxed text-[var(--mute)]">
+                  {decidedLegs.length === basket.legs.length
+                    ? t.basket.settled
+                    : t.basket.resultPending}
+                </p>
+                <p className="mt-2 text-[13px] leading-relaxed text-[var(--mute)]">
+                  {t.basket.resultClosed}
+                </p>
+              </section>
+            )}
 
             {/* Stated beside the CTA, not buried in fine print: "buy several
                 positions at once" reads as a parlay to anyone who has used a
@@ -232,7 +280,7 @@ export default async function BasketPage(props: Params) {
               {t.basket.notParlay}
             </p>
 
-            {!settled && (
+            {!isRecord && (
               <BasketCtas
                 slug={slug}
                 tgBot={brand.tgBot}
@@ -284,7 +332,7 @@ export default async function BasketPage(props: Params) {
             <ul className="mt-4 space-y-2">
               {basket.legs.map((leg, i) => {
                 const legTitle = localized(lang, leg.market.title, leg.market.title_fa);
-                const legResolved = leg.market.status !== "active";
+                const state = legState(leg);
                 return (
                   <li
                     key={leg.market.id}
@@ -336,10 +384,37 @@ export default async function BasketPage(props: Params) {
                             </span>
                           </>
                         )}
-                        {legResolved && (
+                        {/* The outcome, in the same colour language the creator
+                            profile's track record already uses, so one basket
+                            never reads two different ways in two places. */}
+                        {isRecord && (
                           <>
                             <span aria-hidden>·</span>
-                            <span>{t.series.resolvedUnknown}</span>
+                            <span
+                              className="rounded-full px-1.5 py-0.5 font-bold"
+                              style={{
+                                background:
+                                  state === "won"
+                                    ? "var(--bk-greenbg)"
+                                    : state === "lost"
+                                      ? "rgba(224,112,90,0.14)"
+                                      : "var(--chip, var(--line))",
+                                color:
+                                  state === "won"
+                                    ? "var(--bk-green)"
+                                    : state === "lost"
+                                      ? "var(--down)"
+                                      : "var(--mute)",
+                              }}
+                            >
+                              {state === "won"
+                                ? t.basket.legWon
+                                : state === "lost"
+                                  ? t.basket.legLost
+                                  : state === "void"
+                                    ? t.basket.legVoid
+                                    : t.basket.legPending}
+                            </span>
                           </>
                         )}
                       </p>
