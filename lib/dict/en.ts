@@ -847,7 +847,7 @@ export const en = {
       onPolygon: "· pUSD on Polygon",
       toAddress: "TO ADDRESS",
       addressPlaceholder: "0x…",
-      amountLabel: "AMOUNT (pUSD)",
+      amountLabel: "AMOUNT (USDC.e)",
       amountPlaceholder: "0.00",
       max: "MAX",
       pctChip: "{p}%",
@@ -863,7 +863,7 @@ export const en = {
        * along; the web sheet claimed USDC and left them holding a token they had
        * no stated way to use.
        */
-      note: "Sends pUSD on Polygon. pUSD is redeemable on polymarket.com or swappable on any Polygon DEX. On-chain transfers cannot be reversed — check the address.",
+      note: "Your balance is unwrapped to USDC.e and sent on Polygon — the token exchanges and wallets recognise. On-chain transfers cannot be reversed — check the address.",
       failed: "The withdrawal failed. Nothing was sent.",
       sending: "Sending…",
       /** Followed by the amount as its own span. */
