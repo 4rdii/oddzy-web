@@ -867,6 +867,12 @@ export const en = {
       /** Bridged routes cost 0.7-1.5%, so the net is stated, never the percentage. */
       quoteLine: "You'll receive about {out} {symbol}.",
       quoting: "Pricing that route…",
+      /**
+       * The flat-fee warning. Bridging costs ~$0.06 whatever you send, which is
+       * under 1% of $20 and a quarter of $0.25 — stating the net alone was not
+       * enough, so this says it in the terms people judge by.
+       */
+      feeWarn: "Fees take about {pct}% of this amount. Bridging costs roughly the same in dollars whatever you send — withdrawing on Polygon is free.",
       quoteFailed: "Couldn't price that route just now — try again, or withdraw on Polygon.",
       bridgeNote: "Enter an amount to see what arrives.",
       /**

@@ -109,11 +109,20 @@ export function WithdrawSheet({
    * The quoted net for a bridged withdrawal. `undefined` = not asked yet,
    * `null` = asked and unpriceable (say so rather than show a stale figure).
    */
-  const [quote, setQuote] = useState<{ out: string; symbol: string } | null | undefined>(undefined);
+  const [quote, setQuote] = useState<
+    { out: string; symbol: string; outUsd?: number | null } | null | undefined
+  >(undefined);
   const [quoting, setQuoting] = useState(false);
 
   const parsed = Number(amount);
   const amountValid = Number.isFinite(parsed) && parsed > 0 && round2(parsed) <= balance;
+  /**
+   * What share of this withdrawal the route costs. Null until a quote lands.
+   * Relay's fee is near-flat, so this is the number that actually varies with
+   * size — and the one worth warning about on small amounts.
+   */
+  const feePct =
+    quote?.outUsd != null && parsed > 0 ? ((parsed - quote.outUsd) / parsed) * 100 : null;
   // Deliberately loose — the server is the authority on address validity. This
   // only catches the obvious typo before costing a round trip.
   const addressValid = /^0x[a-fA-F0-9]{40}$/.test(address.trim());
@@ -139,7 +148,7 @@ export function WithdrawSheet({
         destToken,
         toAddress: address.trim(),
       });
-      authedGet<{ quote: { out: string; symbol: string } | null }>(
+      authedGet<{ quote: { out: string; symbol: string; outUsd?: number | null } | null }>(
         `/webapp/v1/withdraw-quote?${qs}`,
       )
         .then((d) => {
@@ -315,6 +324,16 @@ export function WithdrawSheet({
                         : quote === null
                           ? t.app.withdraw.quoteFailed
                           : t.app.withdraw.bridgeNote}
+                  </p>
+                )}
+
+                {/* The flat fee, stated as a share. Relay charges ~$0.06 whatever
+                    you send, so a small bridge can lose a quarter of itself with
+                    nothing wrong — showing only the net left a real user asking
+                    why $0.25 arrived as $0.11. */}
+                {feePct !== null && feePct > 5 && (
+                  <p className="mt-1 text-[12px] leading-relaxed text-[var(--down)]">
+                    {t.app.withdraw.feeWarn.replace("{pct}", feePct.toFixed(0))}
                   </p>
                 )}
               </div>
