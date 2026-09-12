@@ -674,7 +674,15 @@ export function WalletScreen() {
         <div className="fixed inset-x-0 bottom-20 z-50 mx-auto max-w-md px-4">
           <div className="rounded-xl bg-[var(--ink)] px-4 py-3 text-[13px] text-[var(--on-ink)]">
             <div className="font-semibold">
-              {t.app.wallet.sent} <span className="ltr-num">{usd(sent.amountUsdc)}</span>
+              {/* A BRIDGED withdrawal is not "sent" when this appears — the
+                  Polygon leg only proves the money left, and it lands on the
+                  destination chain up to a minute later (the bot DMs again when
+                  it does). Saying "sent" here would be exactly the overstatement
+                  the bridge worker exists to correct. */}
+              {sent.destChainId && sent.destChainId !== 137
+                ? t.app.wallet.bridging
+                : t.app.wallet.sent}{" "}
+              <span className="ltr-num">{usd(sent.amountUsdc)}</span>
             </div>
             <div className="mt-0.5 font-mono text-[10px] opacity-70">
               {sent.txHash ? (

@@ -771,6 +771,8 @@ export const en = {
         "Your signing wallet. It never holds your balance, and anything sent here is not credited to your account.",
       /** Followed by the amount as its own span. */
       sent: "Sent",
+      /** Same shape, for a bridge that is still in flight. */
+      bridging: "Bridging",
       confirming: "Confirming on-chain",
       dismiss: "Dismiss",
       copy: "Copy",
@@ -848,6 +850,12 @@ export const en = {
       toAddress: "TO ADDRESS",
       addressPlaceholder: "0x…",
       amountLabel: "AMOUNT (USDC.e)",
+      destination: "DESTINATION",
+      /** Bridged routes cost 0.7-1.5%, so the net is stated, never the percentage. */
+      quoteLine: "You'll receive about {out} {symbol}.",
+      quoting: "Pricing that route…",
+      quoteFailed: "Couldn't price that route just now — try again, or withdraw on Polygon.",
+      bridgeNote: "Enter an amount to see what arrives.",
       amountPlaceholder: "0.00",
       max: "MAX",
       pctChip: "{p}%",

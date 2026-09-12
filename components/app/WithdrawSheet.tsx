@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { usd } from "@/lib/format";
-import { authedPost, ApiCallError } from "@/lib/client-api";
+import { authedGet, authedPost, ApiCallError } from "@/lib/client-api";
 import { useLocale } from "./LocaleProvider";
 
 /** Round down to whole cents, mirroring the server so Max never over-asks. */
@@ -10,7 +10,30 @@ const round2 = (n: number) => Math.floor(n * 100) / 100;
 
 const PERCENTS = [25, 50, 100] as const;
 
-export type WithdrawSent = { txHash: string | null; amountUsdc: number; toAddress: string };
+/**
+ * Where a withdrawal can go. Mirrors @sb/vault's SUPPORTED_DEST_CHAINS and the
+ * bot's picker; the labels are presentation, and the SERVER re-validates the
+ * chain on every send — a chain id from this list is still user input by the
+ * time it reaches withdrawCore.
+ *
+ * Polygon is first and default: it settles in one transaction, costs nothing
+ * extra, and is the only option that is done the moment the receipt appears.
+ */
+const DEST_CHAINS = [
+  { id: 137, label: "Polygon" },
+  { id: 8453, label: "Base" },
+  { id: 42161, label: "Arbitrum" },
+  { id: 56, label: "BNB Chain" },
+] as const;
+const POLYGON_ID = 137;
+
+export type WithdrawSent = {
+  txHash: string | null;
+  amountUsdc: number;
+  toAddress: string;
+  /** 137 = done on confirm; anything else is still bridging when this returns. */
+  destChainId?: number;
+};
 
 /**
  * Withdraw sheet.
@@ -38,12 +61,56 @@ export function WithdrawSheet({
   const [confirming, setConfirming] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [destChainId, setDestChainId] = useState<number>(POLYGON_ID);
+  /**
+   * The quoted net for a bridged withdrawal. `undefined` = not asked yet,
+   * `null` = asked and unpriceable (say so rather than show a stale figure).
+   */
+  const [quote, setQuote] = useState<{ out: string; symbol: string } | null | undefined>(undefined);
+  const [quoting, setQuoting] = useState(false);
 
   const parsed = Number(amount);
   const amountValid = Number.isFinite(parsed) && parsed > 0 && round2(parsed) <= balance;
   // Deliberately loose — the server is the authority on address validity. This
   // only catches the obvious typo before costing a round trip.
   const addressValid = /^0x[a-fA-F0-9]{40}$/.test(address.trim());
+
+  /**
+   * Re-price whenever the destination or amount changes. Polygon needs no quote
+   * (nothing is bridged). Debounced, because the amount field fires per
+   * keystroke and each quote is a round trip to Relay.
+   */
+  useEffect(() => {
+    if (destChainId === POLYGON_ID || !amountValid) {
+      setQuote(undefined);
+      return;
+    }
+    let cancelled = false;
+    setQuoting(true);
+    const id = setTimeout(() => {
+      const qs = new URLSearchParams({
+        amount: String(round2(parsed)),
+        destChainId: String(destChainId),
+        toAddress: address.trim(),
+      });
+      authedGet<{ quote: { out: string; symbol: string } | null }>(
+        `/webapp/v1/withdraw-quote?${qs}`,
+      )
+        .then((d) => {
+          if (!cancelled) setQuote(d.quote ?? null);
+        })
+        .catch(() => {
+          if (!cancelled) setQuote(null);
+        })
+        .finally(() => {
+          if (!cancelled) setQuoting(false);
+        });
+    }, 350);
+    return () => {
+      cancelled = true;
+      clearTimeout(id);
+    };
+  }, [destChainId, parsed, amountValid, address]);
 
   async function send() {
     setSubmitting(true);
@@ -52,6 +119,7 @@ export function WithdrawSheet({
       const data = await authedPost<WithdrawSent>("/webapp/v1/withdraw", {
         toAddress: address.trim(),
         amountUsdc: round2(parsed),
+        destChainId,
       });
       onSent(data);
     } catch (e) {
@@ -125,6 +193,48 @@ export function WithdrawSheet({
                 ))}
               </div>
 
+              {/* Destination. Polygon is one transaction and free; the others
+                  bridge, cost a little, and arrive a minute later — so the net
+                  is quoted below rather than left as a surprise. */}
+              <div className="mt-4">
+                <span className="font-mono text-[10px] tracking-[0.06em] text-[var(--faint)]">
+                  {t.app.withdraw.destination}
+                </span>
+                <div className="mt-1 flex flex-wrap gap-2">
+                  {DEST_CHAINS.map((c) => {
+                    const on = c.id === destChainId;
+                    return (
+                      <button
+                        key={c.id}
+                        type="button"
+                        onClick={() => setDestChainId(c.id)}
+                        aria-pressed={on}
+                        className="rounded-xl border px-3 py-1.5 text-[12px] font-semibold"
+                        style={{
+                          borderColor: on ? "var(--accent)" : "var(--line)",
+                          color: on ? "var(--accent)" : "var(--text2)",
+                        }}
+                      >
+                        {c.label}
+                      </button>
+                    );
+                  })}
+                </div>
+                {destChainId !== POLYGON_ID && (
+                  <p className="mt-2 text-[12px] leading-relaxed text-[var(--mute)]">
+                    {quoting
+                      ? t.app.withdraw.quoting
+                      : quote
+                        ? t.app.withdraw.quoteLine
+                            .replace("{out}", quote.out)
+                            .replace("{symbol}", quote.symbol)
+                        : quote === null
+                          ? t.app.withdraw.quoteFailed
+                          : t.app.withdraw.bridgeNote}
+                  </p>
+                )}
+              </div>
+
               {amount !== "" && !amountValid && (
                 <p className="mt-3 text-[13px] text-[var(--down)]">
                   {parsed > balance ? t.app.withdraw.tooMuch : t.app.withdraw.positive}
@@ -161,6 +271,24 @@ export function WithdrawSheet({
                     <span className="ltr-num">{address.trim()}</span>
                   </code>
                 </div>
+                {/* The destination and what actually arrives, restated at the
+                    last step — this is the screen someone reads before an
+                    irreversible transfer. */}
+                <div className="mt-3 flex items-baseline justify-between">
+                  <span className="text-[13px] text-[var(--mute)]">
+                    {t.app.withdraw.destination}
+                  </span>
+                  <span className="text-[13px] font-semibold">
+                    {DEST_CHAINS.find((c) => c.id === destChainId)?.label ?? destChainId}
+                  </span>
+                </div>
+                {destChainId !== POLYGON_ID && quote && (
+                  <p className="mt-2 text-[12px] leading-relaxed text-[var(--mute)]">
+                    {t.app.withdraw.quoteLine
+                      .replace("{out}", quote.out)
+                      .replace("{symbol}", quote.symbol)}
+                  </p>
+                )}
               </div>
 
               <p className="mt-3 text-[11px] leading-relaxed text-[var(--faint)]">
