@@ -269,6 +269,39 @@ export default async function BasketPage(props: Params) {
                 <p className="mt-2 text-[13px] leading-relaxed text-[var(--mute)]">
                   {t.basket.resultClosed}
                 </p>
+
+                {/* What $100 would have done. Withheld entirely while any leg is
+                    undecided — the server returns null rather than a partial
+                    score, and a half-finished number here would read as final. */}
+                {basket.result && (
+                  <div className="mt-4 border-t border-[var(--line)] pt-3">
+                    <p className="font-mono text-[10px] tracking-[0.08em] text-[var(--faint)]">
+                      {t.basket.resultReturn.replace(
+                        "{stake}",
+                        usd(basket.result.notional),
+                      )}
+                    </p>
+                    <p
+                      dir="ltr"
+                      className="ltr-num mt-1 text-[26px] leading-none font-extrabold tabular-nums"
+                      style={{
+                        color: basket.result.pnl >= 0 ? "var(--up)" : "var(--down)",
+                      }}
+                    >
+                      {basket.result.pnl >= 0 ? "+" : "−"}
+                      {usd(Math.abs(basket.result.pnl))}
+                    </p>
+                    <p className="mt-2 text-[13px] leading-relaxed text-[var(--mute)]">
+                      {t.basket.resultReturnLine
+                        .replace("{returned}", usd(basket.result.returned))
+                        .replace("{stake}", usd(basket.result.notional))
+                        .replace("{multiple}", basket.result.multiple.toFixed(2))}
+                    </p>
+                    <p className="mt-2 text-[12px] leading-relaxed text-[var(--faint)]">
+                      {t.basket.resultBasis}
+                    </p>
+                  </div>
+                )}
               </section>
             )}
 

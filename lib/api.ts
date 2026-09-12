@@ -372,6 +372,23 @@ export type BasketDetail = {
     single_multiple: number | null;
     sizing: string;
   } | null;
+  /**
+   * What $100 in this basket would have returned, scored at the legs' PUBLISH
+   * prices — deliberately the same basis as the creator profile's per-basket
+   * return, so one basket never shows two different numbers on two pages. It is
+   * not what any individual buyer made; their entry price differed.
+   *
+   * Null while any leg is undecided or unpriced: a partially-scored basket would
+   * read as a finished one.
+   */
+  result: {
+    notional: number;
+    returned: number;
+    pnl: number;
+    multiple: number;
+    won: number;
+    settled: number;
+  } | null;
   stats: { buys: number; volume_usdc: number | null };
   legs: BasketLeg[];
   as_of: string;

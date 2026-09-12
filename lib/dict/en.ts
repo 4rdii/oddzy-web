@@ -400,6 +400,15 @@ export const en = {
      * one they are looking at rather than seeing a half-empty scoreline.
      */
     resultHeading: "Result",
+    resultReturn: "Return on {stake}",
+    resultReturnLine: "{stake} in this basket would have come back as {returned} — {multiple}×.",
+    /**
+     * Says WHOSE return this is. It is scored at the prices when the basket was
+     * published — the creator's record. Someone who bought later paid different
+     * prices and made a different number, and letting them read this as their
+     * own would be a lie by omission.
+     */
+    resultBasis: "Scored at the prices when this basket was published, not at what any individual buyer paid.",
     resultClosed: "This basket is closed — it can't be bought any more.",
     resultPending: "Some positions haven't settled yet; this updates as they do.",
     legWon: "Won",
