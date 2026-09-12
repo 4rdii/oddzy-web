@@ -534,6 +534,9 @@ export const en = {
        */
       resultHeading: "Result",
       hitOf: "{won} of {n} hit",
+      resultReturn: "Return on {stake}",
+      resultReturnLine: "{stake} in this basket would have come back as {returned} — {multiple}×.",
+      resultBasis: "Scored at the prices when this basket was published, not at what any individual buyer paid.",
       resultClosed: "This basket is closed — it can't be bought any more.",
       resultPending: "Some positions haven't settled yet.",
       legWon: "Won",

@@ -91,6 +91,19 @@ type BasketDetail = {
     singleEven: number | null;
     singleMultiple: number | null;
   };
+  /**
+   * What $100 would have returned, scored at the legs' PUBLISH prices — the same
+   * basis the creator profile and the web basket page use, so one basket never
+   * shows two different numbers. Null while any leg is undecided or unpriced.
+   */
+  result: {
+    notional: number;
+    returned: number;
+    pnl: number;
+    multiple: number;
+    won: number;
+    settled: number;
+  } | null;
   legs: QuotedLeg[];
 };
 
@@ -655,6 +668,34 @@ function BasketDetailScreen({
                   ? t.app.baskets.resultClosed
                   : t.app.baskets.resultPending}
               </p>
+
+              {/* The money line. Server-side null while anything is undecided,
+                  so this simply does not render rather than showing a partial
+                  score that would read as final. */}
+              {detail.result && (
+                <div className="mt-3 border-t border-[var(--line)] pt-3">
+                  <p className="font-mono text-[10px] tracking-[0.06em] text-[var(--faint)]">
+                    {t.app.baskets.resultReturn.replace("{stake}", money(detail.result.notional))}
+                  </p>
+                  <p
+                    dir="ltr"
+                    className="mt-1 text-[24px] leading-none font-extrabold tabular-nums"
+                    style={{ color: detail.result.pnl >= 0 ? "var(--up)" : "var(--down)" }}
+                  >
+                    {detail.result.pnl >= 0 ? "+" : "−"}
+                    {money(Math.abs(detail.result.pnl))}
+                  </p>
+                  <p className="mt-2 text-[12px] leading-relaxed text-[var(--mute)]">
+                    {t.app.baskets.resultReturnLine
+                      .replace("{returned}", money(detail.result.returned))
+                      .replace("{stake}", money(detail.result.notional))
+                      .replace("{multiple}", detail.result.multiple.toFixed(2))}
+                  </p>
+                  <p className="mt-2 text-[11px] leading-relaxed text-[var(--faint)]">
+                    {t.app.baskets.resultBasis}
+                  </p>
+                </div>
+              )}
             </div>
           )}
 
