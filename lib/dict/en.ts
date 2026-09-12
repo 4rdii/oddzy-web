@@ -769,6 +769,19 @@ export const en = {
       privyLabel: "🔑 PRIVY WALLET · SIGNER",
       privySub:
         "Your signing wallet. It never holds your balance, and anything sent here is not credited to your account.",
+      /** Recent activity panel — deposits and withdrawals, newest first. */
+      activity: "RECENT ACTIVITY",
+      activityEmpty: "No deposits or withdrawals yet.",
+      actDeposit: "Deposit",
+      actWithdrawal: "Withdrawal",
+      stCredited: "Credited",
+      /** Detected on-chain, not yet converted to buying power. */
+      stPending: "Confirming",
+      stArrived: "Arrived",
+      /** Covers submitted/bridging and any status the server adds later. */
+      stInTransit: "In transit",
+      stReturned: "Returned",
+      stFailed: "Failed",
       /** Followed by the amount as its own span. */
       sent: "Sent",
       /** Same shape, for a bridge that is still in flight. */

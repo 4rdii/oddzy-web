@@ -651,6 +651,11 @@ export function WalletScreen() {
         </div>
       )}
 
+      {/* Money in and out. Sits under the addresses block because it answers the
+          same class of question — "what has actually happened to my funds" —
+          and because both are reference, not actions. */}
+      <WalletActivity />
+
       {sheet === "deposit" && addr && (
         <DepositSheet address={addr} onClose={() => setSheet(null)} />
       )}
@@ -879,6 +884,150 @@ function DepositSheet({
 
 /** One labeled address block: mono address, per-row copy, a sublabel/warning,
  *  and an optional external link (e.g. "View on Polymarket ↗"). */
+type ActivityItem = {
+  kind: "deposit" | "withdrawal";
+  id: string;
+  amount: number;
+  at: string;
+  txHash: string | null;
+  status: string;
+  chainId: number;
+  token: string | null;
+};
+
+/** Labels for the destination chains a withdrawal can target. */
+const CHAIN_LABEL: Record<number, string> = {
+  137: "Polygon",
+  8453: "Base",
+  42161: "Arbitrum",
+  56: "BNB Chain",
+};
+
+/**
+ * Money in and out of the wallet — deposits and withdrawals in one list.
+ *
+ * Collapsed by default and fetched only when opened: it answers a question most
+ * visits do not ask ("where is my money?"), and every wallet view paying for a
+ * request nobody reads is a cost with no reader.
+ *
+ * Status comes normalised from the server. A deposit's truth is a boolean and a
+ * withdrawal's is an open-text column, and a UI that has to know both is a UI
+ * that eventually gets one wrong — so the mapping below is deliberately total,
+ * with anything unrecognised falling to "in transit" rather than to an error.
+ * A new server-side status must never render as a failure.
+ */
+function WalletActivity() {
+  const { t, locale } = useLocale();
+  const [open, setOpen] = useState(false);
+  const [items, setItems] = useState<ActivityItem[] | null>(null);
+  const w = t.app.wallet;
+
+  useEffect(() => {
+    if (!open || items) return;
+    let cancelled = false;
+    authedGet<{ items: ActivityItem[] }>("/webapp/v1/activity")
+      .then((d) => {
+        if (!cancelled) setItems(d.items ?? []);
+      })
+      .catch(() => {
+        // An empty list, not an error banner: this panel supports the balance
+        // above it and must never be the reason the wallet screen looks broken.
+        if (!cancelled) setItems([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [open, items]);
+
+  const statusLabel = (it: ActivityItem) => {
+    switch (it.status) {
+      case "credited":
+        return w.stCredited;
+      case "pending":
+        return w.stPending;
+      case "landed":
+        return w.stArrived;
+      case "refunded":
+        return w.stReturned;
+      case "abandoned":
+        return w.stFailed;
+      default:
+        // submitted | bridging | anything the server grows later.
+        return w.stInTransit;
+    }
+  };
+  const tone = (it: ActivityItem) =>
+    it.status === "abandoned"
+      ? "var(--down)"
+      : it.status === "credited" || it.status === "landed"
+        ? "var(--up)"
+        : "var(--mute)";
+
+  return (
+    <div className="mt-4 rounded-2xl border border-[var(--line)] bg-[var(--card)] p-5">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        className="flex w-full items-center justify-between gap-3 text-start"
+      >
+        <span className="font-mono text-[10px] tracking-[0.08em] text-[var(--faint)] uppercase">
+          {w.activity}
+        </span>
+        <span className="text-[13px] font-semibold text-[var(--mute)]">
+          {open ? w.accountsHide : w.accountsShow}
+        </span>
+      </button>
+
+      {open &&
+        (items === null ? (
+          <div className="mt-4 h-16 rounded-xl border border-[var(--line)]" aria-busy />
+        ) : items.length === 0 ? (
+          <p className="mt-3 text-[13px] text-[var(--mute)]">{w.activityEmpty}</p>
+        ) : (
+          <ul className="mt-2 flex flex-col divide-y divide-[var(--line)]">
+            {items.map((it) => (
+              <li
+                key={`${it.kind}-${it.id}`}
+                className="flex items-center justify-between gap-3 py-2.5"
+              >
+                <div className="min-w-0">
+                  <div className="text-[13px] font-semibold">
+                    {it.kind === "deposit" ? w.actDeposit : w.actWithdrawal}
+                    {/* Only worth naming when it is not the default chain. */}
+                    {it.kind === "withdrawal" && it.chainId !== 137 && (
+                      <span className="text-[var(--mute)]">
+                        {" · "}
+                        {CHAIN_LABEL[it.chainId] ?? it.chainId}
+                      </span>
+                    )}
+                  </div>
+                  <div className="mt-0.5 font-mono text-[10px] text-[var(--faint)]">
+                    {new Intl.DateTimeFormat(locale === "fa" ? "fa-IR" : "en-US", {
+                      month: "short",
+                      day: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    }).format(new Date(it.at))}
+                  </div>
+                </div>
+                <div className="shrink-0 text-end">
+                  <div dir="ltr" className="ltr-num text-[13px] font-bold">
+                    {it.kind === "deposit" ? "+" : "−"}
+                    {usd(it.amount)}
+                  </div>
+                  <div className="mt-0.5 text-[11px]" style={{ color: tone(it) }}>
+                    {statusLabel(it)}
+                  </div>
+                </div>
+              </li>
+            ))}
+          </ul>
+        ))}
+    </div>
+  );
+}
+
 function AddressRow({
   label,
   address,
