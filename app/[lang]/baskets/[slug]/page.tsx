@@ -168,7 +168,13 @@ export default async function BasketPage(props: Params) {
             {/* Two stats, side by side: what a unit costs, and what it returns.
                 Both are withheld rather than estimated when any leg is unpriced
                 — see blended_probability. */}
-            {(basket.blended_probability !== null || basket.payout) && (
+            {/* Live pricing tiles — blended cost and best case — belong to a
+                basket you can still buy. On a closed one they are not just
+                irrelevant but WRONG: a settled leg prices at ~0, and best case
+                divides the stake by that price, so it explodes into a nonsense
+                multiple (×369.03 was showing on auto-risky-2026-09-08). The
+                result card below is what a finished basket gets instead. */}
+            {!isRecord && (basket.blended_probability !== null || basket.payout) && (
               <div className="grid grid-cols-2 gap-3">
                 {basket.blended_probability !== null && (
                   <div className="rounded-2xl border border-[var(--line)] bg-[var(--card)] p-4">
