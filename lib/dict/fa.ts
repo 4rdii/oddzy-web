@@ -746,6 +746,8 @@ export const fa: Dict = {
       activityEmpty: "هنوز واریز یا برداشتی ثبت نشده است.",
       actDeposit: "واریز",
       actWithdrawal: "برداشت",
+      actWinnings: "سود پیش‌بینی",
+      viewTx: "مشاهدهٔ تراکنش",
       stCredited: "واریز شد",
       stPending: "در حال تأیید",
       stArrived: "رسید",

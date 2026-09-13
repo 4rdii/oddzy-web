@@ -897,11 +897,22 @@ function DepositSheet({
 /** One labeled address block: mono address, per-row copy, a sublabel/warning,
  *  and an optional external link (e.g. "View on Polymarket ↗"). */
 type ActivityItem = {
-  kind: "deposit" | "withdrawal";
+  /**
+   * `winnings` is a resolved market paying out. It lands in the wallet exactly
+   * like a deposit does, and was shown as one until the server started telling
+   * them apart — a user saw 24 "deposits" against the 2 they had made.
+   */
+  kind: "deposit" | "winnings" | "withdrawal";
   id: string;
   amount: number;
   at: string;
   txHash: string | null;
+  /**
+   * The chain `txHash` lives on. Not always `chainId`: a bridged withdrawal
+   * still in flight has only its Polygon leg. Optional because an older server
+   * omits it, and Polygon is then the right answer for every row it returns.
+   */
+  txChainId?: number;
   status: string;
   chainId: number;
   token: string | null;
@@ -914,6 +925,17 @@ const CHAIN_LABEL: Record<number, string> = {
   42161: "Arbitrum",
   56: "BNB Chain",
 };
+
+/** Block explorer tx URLs, per chain. An unknown chain gets no link, not a wrong one. */
+const EXPLORER_TX: Record<number, string> = {
+  137: "https://polygonscan.com/tx/",
+  8453: "https://basescan.org/tx/",
+  42161: "https://arbiscan.io/tx/",
+  56: "https://bscscan.com/tx/",
+};
+
+/** A tx hash is only linkable if it is one — legacy rows hold other ids. */
+const isTxHash = (h: string | null): h is string => !!h && /^0x[0-9a-fA-F]{64}$/.test(h);
 
 /**
  * Money in and out of the wallet — deposits and withdrawals in one list.
@@ -1005,7 +1027,11 @@ function WalletActivity() {
               >
                 <div className="min-w-0">
                   <div className="text-[13px] font-semibold">
-                    {it.kind === "deposit" ? w.actDeposit : w.actWithdrawal}
+                    {it.kind === "withdrawal"
+                      ? w.actWithdrawal
+                      : it.kind === "winnings"
+                        ? w.actWinnings
+                        : w.actDeposit}
                     {/* Only worth naming when it is not the default chain. */}
                     {it.kind === "withdrawal" && it.chainId !== 137 && (
                       <span className="text-[var(--mute)]">
@@ -1021,11 +1047,34 @@ function WalletActivity() {
                       hour: "2-digit",
                       minute: "2-digit",
                     }).format(new Date(it.at))}
+                    {(() => {
+                      const chain = it.txChainId ?? 137;
+                      const base = EXPLORER_TX[chain];
+                      if (!base || !isTxHash(it.txHash)) return null;
+                      return (
+                        <>
+                          {" · "}
+                          <a
+                            href={`${base}${it.txHash}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-[var(--accent)] underline-offset-2 hover:underline"
+                          >
+                            {w.viewTx}{" "}
+                            <span dir="ltr" className="ltr-num">
+                              {it.txHash.slice(0, 6)}…{it.txHash.slice(-4)} ↗
+                            </span>
+                          </a>
+                        </>
+                      );
+                    })()}
                   </div>
                 </div>
                 <div className="shrink-0 text-end">
                   <div dir="ltr" className="ltr-num text-[13px] font-bold">
-                    {it.kind === "deposit" ? "+" : "−"}
+                    {/* Sign by direction, not by "is it a deposit": winnings are
+                        money IN, and the old test rendered them as "−". */}
+                    {it.kind === "withdrawal" ? "−" : "+"}
                     {usd(it.amount)}
                   </div>
                   <div className="mt-0.5 text-[11px]" style={{ color: tone(it) }}>

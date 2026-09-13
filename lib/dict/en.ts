@@ -798,6 +798,10 @@ export const en = {
       activityEmpty: "No deposits or withdrawals yet.",
       actDeposit: "Deposit",
       actWithdrawal: "Withdrawal",
+      /** A resolved market paying out — money in, but not money the user sent. */
+      actWinnings: "Winnings",
+      /** Link under an activity row to the transaction on a block explorer. */
+      viewTx: "View tx",
       stCredited: "Credited",
       /** Detected on-chain, not yet converted to buying power. */
       stPending: "Confirming",
