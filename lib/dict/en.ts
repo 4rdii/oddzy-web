@@ -528,6 +528,25 @@ export const en = {
       insufficient: "That's more than your balance.",
       skipping: "{count} skipped — no price right now",
       /**
+       * Buy-time customization. The wording avoids "edit the basket" on
+       * purpose: nothing about the creator's basket changes, only what this
+       * purchase buys.
+       */
+      customize: "Customize",
+      customizeDone: "Done",
+      customizeLead:
+        "Switch off anything you don't want. Your amount is re-split across whatever you keep.",
+      customizeReset: "Reset to curated",
+      customizeKept: "Your version — {kept} of {count} positions",
+      customizeWeights: "Adjust the split",
+      customizeEven: "Split evenly",
+      customizeEqualShares:
+        "This basket buys the same number of shares in each position, so the split comes from live prices — you can drop positions, but not re-weight them.",
+      customizeLast: "Keep at least one position.",
+      legDropped: "Not buying",
+      /** Receipt note, so a deliberate 3-of-5 never reads as two legs lost. */
+      customizedReceipt: "Your version of this basket — {count} positions.",
+      /**
        * Record mode: a shared link opened after the basket closed. Archiving
        * happens at close time rather than settlement, so `resultPending` covers
        * the window where the games are over but the results are not in yet.

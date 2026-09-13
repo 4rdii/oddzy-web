@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { authedGet, authedPost } from "@/lib/client-api";
 import { attribution } from "@/lib/track";
 import { BasketCard, type CommunityBasket } from "@/components/baskets/BasketCard";
@@ -43,6 +43,12 @@ type FeedCat = (typeof FEED_CATS)[number]["key"];
 type QuotedLeg = {
   /** Persian market title; null when untranslated. */
   titleFa?: string | null;
+  /**
+   * This purchase will buy this leg. False once the buyer switches it off —
+   * the row still comes back (with a zero stake and no price) so it can be
+   * rendered and switched back on.
+   */
+  kept?: boolean;
   marketId: string;
   slug: string;
   title: string;
@@ -66,8 +72,18 @@ type BasketDetail = {
   titleFa: string | null;
   description: string | null;
   descriptionFa: string | null;
+  /**
+   * `equal_shares` buys the same number of shares in every leg, so the split is
+   * derived from live prices and the stored weights are unused. The weight
+   * editor is hidden for those — offering a slider that changes nothing is
+   * worse than not offering one.
+   */
+  sizing: "weights" | "equal_shares";
+  /** The minimum for the CURRENT selection, not the curated basket. */
   minStake: number;
   quotedFor: number;
+  /** This response reflects a buyer edit (legs dropped, or weights re-split). */
+  customized: boolean;
   /**
    * Closed — not buyable any more. Archiving happens at CLOSE time and can
    * precede settlement, so this is true while the legs may still look live.
@@ -121,6 +137,12 @@ type ReceiptLeg = {
 export type BasketReceipt = {
   /** Purchase id — what /basket-retry re-attempts failed legs against. */
   buyId?: string | null;
+  /**
+   * The buyer trimmed the basket. The receipt counts legs against what this
+   * purchase ATTEMPTED, so without this a deliberate 3-of-5 reads as two legs
+   * having gone missing.
+   */
+  customized?: boolean;
   status: "filled" | "partial" | "failed";
   requestedUsdc: number;
   filledUsdc: number;
@@ -330,14 +352,64 @@ function BasketDetailScreen({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Re-quote whenever the chosen size changes, so the split on screen is the
-  // one the server will execute. Without a size, the API prices at a nominal
-  // $100 and we render weights only.
+  /**
+   * The buyer's edit of this basket, held as market ids.
+   *
+   * `dropped` is the removals rather than the keeps so that a basket whose legs
+   * change under an open screen degrades towards buying MORE of the basket,
+   * never towards buying a leg the buyer never saw.
+   *
+   * `weights` is whole percents per kept leg, or null for "use the curated
+   * split". Percents in the UI, basis points on the wire — the same boundary
+   * the builder keeps, so a rounding drift can't reach the sizing math.
+   */
+  const [dropped, setDropped] = useState<string[]>([]);
+  const [weights, setWeights] = useState<Record<string, number> | null>(null);
+  const [editing, setEditing] = useState(false);
+  const [editNote, setEditNote] = useState<string | null>(null);
+
+  /**
+   * The selection as query params, or "" when the basket is untouched.
+   *
+   * Deriving this as a plain string (rather than passing objects into the
+   * effect) is what keeps the re-quote from firing on every render: identical
+   * selections produce an identical string and the effect stands still.
+   */
+  const selectionQs = useMemo(() => {
+    if (dropped.length === 0 && weights === null) return "";
+    const kept = (detail?.legs ?? [])
+      .filter((l) => !dropped.includes(l.marketId))
+      .map((l) => l.marketId);
+    if (kept.length === 0) return "";
+    const parts = [`&keep=${kept.map(encodeURIComponent).join(",")}`];
+    if (weights) {
+      // Every kept leg must carry an override or the server rejects the set —
+      // a partial map would silently mean "invent the rest".
+      const w = kept.map((id) => `${encodeURIComponent(id)}:${(weights[id] ?? 1) * 100}`);
+      parts.push(`&w=${w.join(",")}`);
+    }
+    return parts.join("");
+  }, [dropped, weights, detail?.legs]);
+
+  /**
+   * Debounced copy of the selection. A weight slider fires an input event per
+   * pixel dragged, and each one would otherwise be a priced round trip against
+   * every leg's order book.
+   */
+  const [quotedSel, setQuotedSel] = useState("");
+  useEffect(() => {
+    const id = setTimeout(() => setQuotedSel(selectionQs), 220);
+    return () => clearTimeout(id);
+  }, [selectionQs]);
+
+  // Re-quote whenever the chosen size or the selection changes, so the split on
+  // screen is the one the server will execute. Without a size, the API prices at
+  // a nominal $100 and we render weights only.
   const load = useCallback(
-    (forSize: number | null, signal?: AbortSignal) => {
+    (forSize: number | null, sel: string, signal?: AbortSignal) => {
       const qs = forSize ? `&size=${forSize}` : "";
       return authedGet<BasketDetail>(
-        `/webapp/v1/basket?slug=${encodeURIComponent(slug)}${qs}`,
+        `/webapp/v1/basket?slug=${encodeURIComponent(slug)}${qs}${sel}`,
         signal,
       );
     },
@@ -346,20 +418,77 @@ function BasketDetailScreen({
 
   useEffect(() => {
     const ctrl = new AbortController();
-    load(size, ctrl.signal)
+    load(size, quotedSel, ctrl.signal)
       .then(setDetail)
       .catch((e: unknown) => {
         if ((e as Error)?.name !== "AbortError") setError(t.app.errors.unavailable);
       });
     return () => ctrl.abort();
-  }, [load, size, t.app.errors.unavailable]);
+  }, [load, size, quotedSel, t.app.errors.unavailable]);
+
+  /** Switch one leg off or back on. The last one can't be switched off. */
+  const toggleLeg = useCallback(
+    (marketId: string) => {
+      setEditNote(null);
+      setDropped((prev) => {
+        if (prev.includes(marketId)) return prev.filter((id) => id !== marketId);
+        const total = detail?.legs.length ?? 0;
+        if (total > 0 && prev.length + 1 >= total) {
+          setEditNote(t.app.baskets.customizeLast);
+          return prev;
+        }
+        // A dropped leg's weight override goes with it: the server requires the
+        // map to cover exactly the kept legs.
+        setWeights((w) => {
+          if (!w) return w;
+          const next = { ...w };
+          delete next[marketId];
+          return next;
+        });
+        return [...prev, marketId];
+      });
+    },
+    [detail?.legs.length, t.app.baskets.customizeLast],
+  );
+
+  /**
+   * Seed the weight map from whatever is on screen right now, so the first drag
+   * moves one slider instead of snapping every leg to a default.
+   */
+  const seedWeights = useCallback(() => {
+    const kept = (detail?.legs ?? []).filter((l) => !dropped.includes(l.marketId));
+    const seeded: Record<string, number> = {};
+    for (const l of kept) seeded[l.marketId] = Math.max(1, Math.round(l.weightBps / 100));
+    return seeded;
+  }, [detail?.legs, dropped]);
+
+  const setLegWeight = useCallback(
+    (marketId: string, pct: number) => {
+      const clamped = Math.min(100, Math.max(1, Math.round(pct)));
+      setWeights((prev) => ({ ...(prev ?? seedWeights()), [marketId]: clamped }));
+    },
+    [seedWeights],
+  );
+
+  const resetSelection = useCallback(() => {
+    setDropped([]);
+    setWeights(null);
+    setEditNote(null);
+  }, []);
 
   const title = detail ? (locale === "fa" ? (detail.titleFa ?? detail.title) : detail.title) : "";
   const min = detail?.minStake ?? 0;
   const affordable = PRESETS.filter((p) => p >= min);
   const tooSmall = size !== null && size < min;
   const tooBig = size !== null && balance !== null && size > balance;
-  const skipped = detail ? detail.legs.filter((l) => !l.buyable).length : 0;
+  // Only legs this purchase is actually trying to buy. A leg the buyer switched
+  // off is not "skipped — no price right now"; it is a choice they just made.
+  const skipped = detail
+    ? detail.legs.filter((l) => l.kept !== false && !l.buyable).length
+    : 0;
+  const keptLegs = detail ? detail.legs.filter((l) => l.kept !== false) : [];
+  /** Weight editing is meaningless under equal-shares sizing. See BasketDetail. */
+  const canWeight = detail?.sizing !== "equal_shares";
 
   /**
    * A closed basket, opened from a shared link that outlived it. It renders as
@@ -388,6 +517,19 @@ function BasketDetailScreen({
       const res = await authedPost<BasketReceipt>("/webapp/v1/basket-buy", {
         slug: detail.slug,
         sizeUsdc: size,
+        /**
+         * The buyer's selection, sent only when they actually edited something.
+         * Which legs and (weights-sized baskets only) how to split between them
+         * is the one thing the client gets to say; the server re-validates every
+         * id against the basket and re-derives the split and the prices itself.
+         */
+        ...(detail.customized
+          ? {
+              legs: detail.legs
+                .filter((l) => l.kept !== false)
+                .map((l) => ({ marketId: l.marketId, weightBps: l.weightBps })),
+            }
+          : {}),
         // Reporting only: which shared link (if any) this buyer followed.
         ...attribution(),
       });
@@ -420,11 +562,68 @@ function BasketDetailScreen({
             {t.app.baskets.minStake.replace("{amount}", min.toFixed(2))}
           </p>
 
+          {/* Customize. Off by default and one tap away — a curated basket is
+              the product, and putting per-leg controls in everyone's path would
+              turn a one-tap buy into a form. Live baskets only: there is nothing
+              to customize about a record. */}
+          {!isRecord && (
+            <div className="mt-4 flex flex-wrap items-center justify-between gap-2">
+              {/* Left side is empty on an untouched basket: the header line
+                  above already says how many positions it holds, and repeating
+                  it here would read as two different counts. */}
+              <p
+                className="font-mono text-[10px] tracking-[0.06em]"
+                style={{ color: "var(--bk-gold)" }}
+              >
+                {detail.customized
+                  ? t.app.baskets.customizeKept
+                      .replace("{kept}", String(keptLegs.length))
+                      .replace("{count}", String(detail.legs.length))
+                  : ""}
+              </p>
+              <div className="flex items-center gap-2">
+                {detail.customized && (
+                  <button
+                    type="button"
+                    onClick={resetSelection}
+                    className="rounded-lg px-2.5 py-1 font-mono text-[11px] font-bold text-[var(--mute)]"
+                    style={{ background: "var(--btn)" }}
+                  >
+                    {t.app.baskets.customizeReset}
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEditing((v) => !v);
+                    setEditNote(null);
+                  }}
+                  className="rounded-lg px-2.5 py-1 font-mono text-[11px] font-bold"
+                  style={
+                    editing
+                      ? { background: "var(--bk-gold)", color: "var(--bk-cta-ink)" }
+                      : { background: "var(--btn)", color: "var(--text2)" }
+                  }
+                >
+                  {editing ? t.app.baskets.customizeDone : t.app.baskets.customize}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {editing && !isRecord && (
+            <p className="mt-2 text-[12px] leading-relaxed text-[var(--mute)]">
+              {canWeight ? t.app.baskets.customizeLead : t.app.baskets.customizeEqualShares}
+            </p>
+          )}
+          {editNote && <p className="mt-2 text-[12px] text-[var(--down)]">{editNote}</p>}
+
           {/* Position cards. Each carries its own share of the stake, because
               "33%" and "$33 of your $100" are different questions and the
               second is the one being decided. */}
-          <ul className="mt-4 space-y-2">
+          <ul className="mt-3 space-y-2">
             {detail.legs.map((leg, i) => {
+              const dropped_ = leg.kept === false;
               const weightPct = leg.weightBps / 100;
               // What this leg alone returns if it resolves YES.
               const legPayout =
@@ -435,29 +634,78 @@ function BasketDetailScreen({
                   className="overflow-hidden rounded-2xl border border-[var(--line)] bg-[var(--card)]"
                   // On a record EVERY leg is unbuyable, so the dimming that
                   // usefully marks one skipped leg would grey out the whole list.
-                  style={{ opacity: isRecord || leg.buyable ? 1 : 0.5 }}
+                  // A leg the buyer switched off is dimmed further — it reads as
+                  // "off", not as "the market has no price".
+                  style={{
+                    opacity: dropped_ ? 0.4 : isRecord || leg.buyable ? 1 : 0.5,
+                    borderStyle: dropped_ ? "dashed" : "solid",
+                  }}
                 >
                   {/* Strip width = weight. Ties the row to its share without a
                       legend, and reads at a glance on a phone. */}
                   <div
                     className="h-[3px]"
                     style={{
-                      width: `${weightPct}%`,
+                      width: dropped_ ? "0%" : `${weightPct}%`,
                       background: LEG_COLORS[i % LEG_COLORS.length],
                     }}
                   />
                   <div className="p-3">
                     <div className="flex items-start justify-between gap-3">
-                      <span className="text-[13px] leading-snug font-semibold">
+                      <span
+                        className="text-[13px] leading-snug font-semibold"
+                        style={dropped_ ? { textDecoration: "line-through" } : undefined}
+                      >
                         {locale === "fa" ? (leg.titleFa ?? leg.title) : leg.title}
                       </span>
-                      <span
-                        className="ltr-num shrink-0 rounded-lg px-2 py-0.5 font-mono text-[11px] font-bold text-[var(--text2)]"
-                        style={{ background: "var(--btn)" }}
-                      >
-                        {weightPct.toFixed(0)}%
-                      </span>
+                      {editing && !isRecord ? (
+                        /* The toggle replaces the weight chip while editing: the
+                           same corner, so the eye doesn't have to move, and one
+                           tap rather than a separate control column. */
+                        <button
+                          type="button"
+                          onClick={() => toggleLeg(leg.marketId)}
+                          aria-pressed={!dropped_}
+                          className="ltr-num shrink-0 rounded-lg px-2 py-1 font-mono text-[11px] font-bold"
+                          style={
+                            dropped_
+                              ? { background: "var(--btn)", color: "var(--faint)" }
+                              : { background: "var(--bk-greenbg)", color: "var(--bk-green)" }
+                          }
+                        >
+                          {dropped_ ? "＋" : "✕"}
+                        </button>
+                      ) : (
+                        <span
+                          className="ltr-num shrink-0 rounded-lg px-2 py-0.5 font-mono text-[11px] font-bold text-[var(--text2)]"
+                          style={{ background: "var(--btn)" }}
+                        >
+                          {dropped_ ? t.app.baskets.legDropped : `${weightPct.toFixed(0)}%`}
+                        </span>
+                      )}
                     </div>
+
+                    {/* Weight editor. Only while editing, only on kept legs, and
+                        only when the basket is actually sized by weights —
+                        equal-shares baskets derive the split from live prices
+                        and a slider here would move nothing. */}
+                    {editing && !isRecord && !dropped_ && canWeight && (
+                      <div dir="ltr" className="mt-2 flex items-center gap-2">
+                        <input
+                          type="range"
+                          min={1}
+                          max={100}
+                          value={Math.max(1, Math.round(weightPct))}
+                          onChange={(e) => setLegWeight(leg.marketId, Number(e.target.value))}
+                          className="flex-1"
+                          style={{ accentColor: "var(--bk-gold)", direction: "ltr" }}
+                          aria-label={t.app.baskets.weight}
+                        />
+                        <span className="ltr-num w-[42px] text-right font-mono text-[11px] font-bold text-[var(--text2)]">
+                          {weightPct.toFixed(0)}%
+                        </span>
+                      </div>
+                    )}
 
                     <p
                       dir="ltr"
@@ -542,17 +790,24 @@ function BasketDetailScreen({
               {size === null ? "—" : money(size)}
             </p>
 
+            {/* The split bar shows what the money actually does, so it is drawn
+                from the KEPT legs — a dropped leg holding a slice of a bar above
+                a stake it will never touch is a lie about where the money goes.
+                Colours stay pinned to each leg's position in the full basket, so
+                dropping one doesn't re-colour the rest. */}
             <div dir="ltr" className="mt-3 flex h-[14px] gap-[3px] overflow-hidden rounded-[7px]">
-              {detail.legs.map((leg, i) => (
-                <div
-                  key={leg.marketId}
-                  style={{
-                    flexGrow: leg.weightBps,
-                    flexBasis: 0,
-                    background: LEG_COLORS[i % LEG_COLORS.length],
-                  }}
-                />
-              ))}
+              {detail.legs.map((leg, i) =>
+                leg.kept === false ? null : (
+                  <div
+                    key={leg.marketId}
+                    style={{
+                      flexGrow: leg.weightBps,
+                      flexBasis: 0,
+                      background: LEG_COLORS[i % LEG_COLORS.length],
+                    }}
+                  />
+                ),
+              )}
             </div>
 
             <div className="mt-3 flex flex-wrap gap-2">
@@ -844,6 +1099,14 @@ export function BasketReceiptScreen({
           .replace("{filled}", receipt.filledUsdc.toFixed(2))
           .replace("{requested}", receipt.requestedUsdc.toFixed(2))}
       </p>
+      {/* The legs below are the ones this purchase ATTEMPTED. On a trimmed
+          basket that is fewer than the basket holds, and saying so is what stops
+          the list reading as though positions went missing. */}
+      {receipt.customized && (
+        <p className="mt-1 font-mono text-[11px] tracking-[0.06em]" style={{ color: "var(--bk-gold)" }}>
+          {b.customizedReceipt.replace("{count}", String(receipt.legs.length))}
+        </p>
+      )}
 
       <ul className="mt-5 space-y-2">
         {receipt.legs.map((leg) => (
