@@ -415,19 +415,31 @@ function SettledCard({ r, onOpen }: { r: HistoryRow; onOpen: () => void }) {
 
 /** Close / reduce a position. A resolved winner claims 1:1; an open position
  *  sells a chosen fraction (25/50/75/all) into the book with a confirm step
- *  showing the live proceeds. Posts to /webapp/v1/close. */
-function ReduceSheet({
+ *  showing the live proceeds. Posts to /webapp/v1/close.
+ *
+ *  Exported for the Up/Down screen's positions pane, so closing from there is
+ *  the same sheet and the same request as closing from Positions — one close
+ *  path, not two that can disagree about fractions or claims. */
+export function ReduceSheet({
   position,
   onClose,
   onDone,
+  defaultPct = 50,
 }: {
   position: Position;
   onClose: () => void;
   onDone: () => void;
+  /**
+   * The fraction pre-selected when the sheet opens. 50 on the Positions tab,
+   * where "reduce" is the question; 100 where the button that opened it said
+   * "Close" — pre-selecting half there would sell half of what someone asked
+   * to close.
+   */
+  defaultPct?: 25 | 50 | 75 | 100;
 }) {
   const { t, tf } = useLocale();
   const claimable = position.settled && position.won;
-  const [pct, setPct] = useState<number>(claimable ? 100 : 50);
+  const [pct, setPct] = useState<number>(claimable ? 100 : defaultPct);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 

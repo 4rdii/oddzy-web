@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import type { Market, SettledUpDownWindow, UpDownWindow } from "@/lib/api";
 import { cents, payoutFor, usd } from "@/lib/format";
-import { authedPost, ApiCallError } from "@/lib/client-api";
+import { authedGet, authedPost, ApiCallError } from "@/lib/client-api";
 import { useTelegram } from "@/lib/telegram";
 import { useLocale } from "./LocaleProvider";
 import { PriceChart, useWindowPrices } from "../updown/PriceChart";
@@ -20,6 +20,7 @@ import {
   zoneFor,
 } from "../updown/desk";
 import type { PlacedBet } from "./MarketDetail";
+import { ReduceSheet, type Position } from "./AccountScreens";
 
 /**
  * Up or Down, tradeable.
@@ -37,6 +38,20 @@ import type { PlacedBet } from "./MarketDetail";
  */
 
 const POLL_MS = 5000;
+
+/**
+ * Positions refresh. Slower than the board: /webapp/v1/positions goes to the
+ * data API and the CLOB for every holding, and it shares a 60/minute budget
+ * with the Positions tab. Six a minute leaves that tab plenty.
+ */
+const POSITIONS_POLL_MS = 10_000;
+
+/**
+ * The data API lags a fill by 10-30s, so the refresh right after a bet usually
+ * comes back without it. One follow-up at this delay is what makes a new
+ * position appear promptly instead of on whichever poll happens to land.
+ */
+const POST_BET_REFRESH_MS = 12_000;
 
 /** Stake chips. Lower than MarketDetail's: these are fifteen-minute punts. */
 const STAKE_CHIPS = [5, 10, 25, 50];
@@ -60,6 +75,41 @@ export function UpDownScreen({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [now, setNow] = useState<number | null>(null);
+  /**
+   * Everything the viewer holds, or null before the first read / when they
+   * can't be read (signed out, no wallet). Null hides the pane rather than
+   * showing an error: positions are a convenience on this screen, and a sign-in
+   * prompt wedged between the chart and the other coins would be louder than the
+   * trade it sits beside.
+   */
+  const [positions, setPositions] = useState<Position[] | null>(null);
+  const [posNonce, setPosNonce] = useState(0);
+  const [manage, setManage] = useState<Position | null>(null);
+
+  useEffect(() => {
+    const ctrl = new AbortController();
+    const load = () => {
+      // A backgrounded tab has no one to show positions to, and every read spends
+      // the shared per-user budget.
+      if (typeof document !== "undefined" && document.hidden) return;
+      authedGet<{ positions: Position[] }>("/webapp/v1/positions", ctrl.signal)
+        .then((d) => setPositions(d.positions))
+        .catch((e: unknown) => {
+          if ((e as Error)?.name === "AbortError") return;
+          // Rate-limited or a transient failure: keep what's on screen. Only a
+          // hard "you can't have positions" clears it.
+          if (e instanceof ApiCallError && (e.kind === "unauthenticated" || e.kind === "no_account")) {
+            setPositions(null);
+          }
+        });
+    };
+    load();
+    const id = setInterval(load, POSITIONS_POLL_MS);
+    return () => {
+      clearInterval(id);
+      ctrl.abort();
+    };
+  }, [posNonce]);
 
   useEffect(() => {
     const ctrl = new AbortController();
@@ -152,6 +202,23 @@ export function UpDownScreen({
 
   const nextOpen = slots.find((s) => s.kind === "future");
 
+  /*
+   * Holdings in the window ON SCREEN, matched by slug — the data API reports the
+   * same btc-updown-15m-<start> slug the board uses. Scoped to the viewed window
+   * rather than the whole coin because that is the question this spot answers:
+   * "what do I have riding on the thing I'm looking at?"
+   *
+   * A resolved loser is dropped with the same conservative test the Positions tab
+   * uses (worthless AND at a loss): losing shares never leave the wallet, and a
+   * $0 row offering a Close button that can only fail is noise. A resolved
+   * WINNER stays, with Claim instead of Close.
+   */
+  const windowPositions = (positions ?? []).filter(
+    (p) =>
+      p.slug === current.row.slug &&
+      !(p.settled && !p.won && p.value < 0.01 && p.pnl < 0),
+  );
+
   async function place() {
     if (!current || current.kind === "past" || !tradable) return;
     setSubmitting(true);
@@ -193,6 +260,8 @@ export function UpDownScreen({
         orderId: data.orderId,
       });
       setSheetOpen(false);
+      setPosNonce((n) => n + 1);
+      setTimeout(() => setPosNonce((n) => n + 1), POST_BET_REFRESH_MS);
     } catch (e) {
       const server = (e as ApiCallError & { serverMessage?: string })?.serverMessage;
       if (e instanceof ApiCallError && e.kind === "unauthenticated") {
@@ -328,6 +397,60 @@ export function UpDownScreen({
         )}
       </div>
 
+      {windowPositions.length > 0 && (
+        <section className="mx-4 mt-4 rounded-2xl border border-[var(--line)] bg-[var(--card)] p-4">
+          <h2 className="font-mono text-[10px] tracking-[0.06em] text-[var(--faint)]">
+            {u.yourPositions}
+          </h2>
+          <ul className="mt-2 divide-y divide-[var(--line)]">
+            {windowPositions.map((p) => {
+              const isUp = /^up$/i.test(p.side);
+              const claimable = p.settled && p.won;
+              return (
+                <li key={`${p.marketId}-${p.side}`} className="flex items-center gap-3 py-2.5">
+                  <span
+                    className="shrink-0 rounded-full px-2.5 py-1 text-[12px] font-bold"
+                    style={{
+                      background: isUp ? "var(--up)" : "var(--down)",
+                      color: "var(--card)",
+                    }}
+                  >
+                    {isUp ? u.up : u.down}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-baseline justify-between gap-2 font-mono text-[13px]">
+                      <span className="ltr-num font-semibold">{usd(p.value)}</span>
+                      <span
+                        className="ltr-num text-[12px]"
+                        style={{ color: p.pnl >= 0 ? "var(--up)" : "var(--down)" }}
+                      >
+                        {p.pnl >= 0 ? "+" : "−"}
+                        {usd(Math.abs(p.pnl))}
+                      </span>
+                    </div>
+                    <div className="mt-0.5 font-mono text-[11px] text-[var(--faint)]">
+                      <span className="ltr-num">{p.shares.toFixed(1)}</span> {t.app.positions.shares}
+                      {" · "}
+                      {u.avgAt} <span className="ltr-num">{cents(p.avgPrice)}</span>
+                      {" → "}
+                      <span className="ltr-num">{cents(p.curPrice)}</span>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setManage(p)}
+                    className="min-h-[40px] shrink-0 rounded-xl border border-[var(--line)] bg-[var(--btn)] px-4 text-[13px] font-semibold"
+                    style={{ color: claimable ? "var(--up)" : "var(--ink)" }}
+                  >
+                    {claimable ? u.claim : u.close}
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      )}
+
       <div className="mt-5 px-4">
         <OtherCoins
           assets={assets}
@@ -462,6 +585,20 @@ export function UpDownScreen({
             {t.app.bet.signedOnChain}
           </p>
         </div>
+      )}
+
+      {manage && (
+        <ReduceSheet
+          position={manage}
+          defaultPct={100}
+          onClose={() => setManage(null)}
+          onDone={() => {
+            setManage(null);
+            // Same lag as a buy: the sold shares linger in the data API briefly.
+            setPosNonce((n) => n + 1);
+            setTimeout(() => setPosNonce((n) => n + 1), POST_BET_REFRESH_MS);
+          }}
+        />
       )}
     </div>
   );

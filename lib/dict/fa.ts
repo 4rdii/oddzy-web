@@ -644,6 +644,10 @@ export const fa: Dict = {
       upWon: "صعودی برد",
       downWon: "نزولی برد",
       otherMarkets: "ارزهای دیگر",
+      yourPositions: "موقعیت‌های شما در این بازه",
+      close: "بستن",
+      claim: "دریافت",
+      avgAt: "میانگین",
       recent: "نتایج اخیر",
     },
 

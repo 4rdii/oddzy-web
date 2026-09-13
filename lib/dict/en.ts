@@ -691,6 +691,11 @@ export const en = {
       upWon: "Up won",
       downWon: "Down won",
       otherMarkets: "Other coins",
+      /** Positions pane: what the viewer holds in the window on screen. */
+      yourPositions: "Your positions in this window",
+      close: "Close",
+      claim: "Claim",
+      avgAt: "avg",
       recent: "RECENT RESULTS",
     },
 
