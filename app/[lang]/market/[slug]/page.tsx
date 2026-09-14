@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { SiteChrome } from "@/components/site/Chrome";
-import { getIndexableMarkets, getMarketDetail, getQuestionSeries } from "@/lib/api";
+import { getIndexableMarkets, getMarketDetail, getQuestionSeries, MARKET_TTL } from "@/lib/api";
 import { BRANDS, brandFor, isLocale, LOCALES, type Locale } from "@/lib/i18n";
 import { getDict } from "@/lib/dict";
 import { compactUsd, deadlineDate, localized, pct } from "@/lib/format";
@@ -24,17 +24,22 @@ import { RelatedGuides } from "@/components/site/RelatedGuides";
  * cached by a search engine.
  */
 /**
- * ISR window. Deliberately an hour, and deliberately matched by the fetch
- * inside the page: a route revalidates at the LOWEST revalidate of any fetch it
- * makes, so raising this number alone would have changed nothing.
+ * ISR window: a day. Must equal MARKET_TTL in lib/api.ts (segment config has to
+ * be a literal, so it cannot import it), and every fetch this page makes —
+ * including SiteChrome's catalog calls — must be at least this long: a route
+ * revalidates at the LOWEST revalidate of any fetch it makes.
  *
- * Every regeneration is a billed ISR write, and this route is ~1000 of them
- * across the two locales — enough that ordinary crawler traffic, not users,
- * exhausted a 200k/month quota in August 2026. Nothing here needs 10-minute
- * freshness: the upstream snapshot only moves every ~30 min, and the live
- * numbers are in the mini-app, which is not cached at all.
+ * That rule is why the previous "hour" was really 15 minutes: the footer's
+ * getTopics() sat at 900s and capped this route. Market pages are ~1000 ISR
+ * entries across two locales, each visited a few times a day by crawlers and
+ * users, so almost every visit found its page expired and paid a ~50KB write —
+ * ~90% of the account's ISR write units on the 2026-09-14 Observability view,
+ * with writes nearly equal to reads.
+ *
+ * The odds shown here can be up to a day old. These pages exist to be found in
+ * search; the live, second-by-second numbers are in the mini-app.
  */
-export const revalidate = 3600;
+export const revalidate = 86400;
 
 export async function generateStaticParams() {
   const markets = await getIndexableMarkets();
@@ -118,7 +123,7 @@ export default async function MarketPage(props: Params) {
   // resolved page is a dead end: it answers a question whose date has passed and
   // gives the reader nowhere to go, which is exactly when they want the next one.
   const seriesKey = await seriesKeyFor(slug);
-  const series = seriesKey ? await getQuestionSeries(seriesKey) : null;
+  const series = seriesKey ? await getQuestionSeries(seriesKey, MARKET_TTL) : null;
   const currentLeg = series?.members.find((m) => m.current) ?? null;
   const isCurrentLeg = currentLeg?.slug === slug;
   const brand = brandFor(lang);

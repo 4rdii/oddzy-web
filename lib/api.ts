@@ -121,11 +121,38 @@ async function get<T>(path: string, revalidate: number): Promise<T> {
 const DETAIL_TTL = 3600;
 
 /**
+ * Cache window for the SITE CATALOG: which topics, indexable markets and question
+ * families exist. A day, because these describe the shape of the site, not a
+ * price — and because they are read by SiteChrome on every page.
+ *
+ * That second fact is what made them expensive. A route regenerates at the
+ * LOWEST revalidate of any fetch it makes (the trap e351ac9 fixed once), and the
+ * footer's getTopics() sat at 900s. Measured from the build's prerender manifest
+ * on 2026-09-14: all 1000 market pages, 232 question pages and every topic,
+ * learn, faq and basket page regenerated every 15 minutes regardless of the
+ * `revalidate` each one declared — and market pages alone were ~90% of the
+ * account's ISR write units, nearly one write per read.
+ *
+ * Cost of a day: a newly added topic, or a market that just crossed the
+ * indexable gate, takes up to 24h to appear in the nav, footer and sitemap. The
+ * pages themselves still render on demand in the meantime.
+ */
+const CATALOG_TTL = 86400;
+
+/**
+ * Cache window for a single market page. See app/[lang]/market/[slug]/page.tsx —
+ * the segment's `revalidate` must equal this, and every fetch the page makes
+ * must be at least this, or the route silently regenerates faster.
+ */
+export const MARKET_TTL = 86400;
+
+/**
  * The navigation tree, exactly as the bot models it (see /topics upstream).
- * Cached for 15 min — the shape changes when topics are added, not per-request.
+ * CATALOG_TTL — the shape changes when topics are added, not per-request, and
+ * this is read on every page via SiteChrome, so its window caps the whole site.
  */
 export async function getTopics(): Promise<Topic[]> {
-  const data = await get<{ topics: Topic[] }>("/topics", 900);
+  const data = await get<{ topics: Topic[] }>("/topics", CATALOG_TTL);
   return data.topics;
 }
 
@@ -200,7 +227,7 @@ export type IndexableMarket = {
 /** One market plus its price history — the market page's only data source. */
 export async function getMarketDetail(slug: string): Promise<MarketDetail | null> {
   try {
-    return await get<MarketDetail>(`/markets/${encodeURIComponent(slug)}`, DETAIL_TTL);
+    return await get<MarketDetail>(`/markets/${encodeURIComponent(slug)}`, MARKET_TTL);
   } catch (e) {
     if (e instanceof ApiError && e.status === 404) return null;
     throw e;
@@ -215,12 +242,12 @@ export async function getMarketDetail(slug: string): Promise<MarketDetail | null
  * second copy of that logic here would drift. Used by generateStaticParams and
  * by the sitemap, so both always agree on what exists.
  *
- * Cached for an hour: the set changes as markets cross the volume threshold or
- * resolve, which is not a per-request concern.
+ * CATALOG_TTL: the set changes as markets cross the volume threshold or resolve,
+ * which is not a per-request concern — and SiteChrome reads it on every page.
  */
 export async function getIndexableMarkets(): Promise<IndexableMarket[]> {
   try {
-    const data = await get<{ markets: IndexableMarket[] }>("/markets/indexable", 3600);
+    const data = await get<{ markets: IndexableMarket[] }>("/markets/indexable", CATALOG_TTL);
     return data.markets;
   } catch {
     // A build must not fail because the API blinked; an empty list just means
@@ -272,7 +299,8 @@ export type QuestionSeries = {
  */
 export async function getQuestionSeriesIndex(): Promise<SeriesSummary[]> {
   try {
-    const data = await get<{ series: SeriesSummary[] }>("/markets/series", 3600);
+    // CATALOG_TTL: read by SiteChrome on every page, via publishedTopicSlugs.
+    const data = await get<{ series: SeriesSummary[] }>("/markets/series", CATALOG_TTL);
     return data.series;
   } catch {
     // Same rule as getIndexableMarkets: a blinking API must not fail a build.
@@ -280,9 +308,18 @@ export async function getQuestionSeriesIndex(): Promise<SeriesSummary[]> {
   }
 }
 
-export async function getQuestionSeries(key: string): Promise<QuestionSeries | null> {
+/**
+ * `revalidate` is a parameter because two routes read this with different
+ * budgets: the question page at DETAIL_TTL, and the market page (to find a
+ * market's family) at MARKET_TTL — where DETAIL_TTL would drag the market route
+ * back down to an hour.
+ */
+export async function getQuestionSeries(
+  key: string,
+  revalidate: number = DETAIL_TTL,
+): Promise<QuestionSeries | null> {
   try {
-    return await get<QuestionSeries>(`/markets/series/${encodeURIComponent(key)}`, DETAIL_TTL);
+    return await get<QuestionSeries>(`/markets/series/${encodeURIComponent(key)}`, revalidate);
   } catch (e) {
     if (e instanceof ApiError && e.status === 404) return null;
     throw e;
