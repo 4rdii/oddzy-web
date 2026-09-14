@@ -1,0 +1,72 @@
+---
+title: "How do I withdraw money from Polymarket?"
+description: "Your balance leaves as USDC on Polygon to an address you name. What has to be sold first, which route out costs least, and where a withdrawal goes wrong."
+tag: GUIDE
+topics: ["crypto"]
+readingMinutes: 4
+publishedAt: "2026-09-14"
+lead: "Getting money out of a prediction market is not a bank payout with a pending status and a three-day wait. It is an on-chain transfer you authorise and nobody can reverse — which makes it fast, and makes the address field the most important box on the screen."
+keywords:
+  - "withdraw money from Polymarket"
+  - "cash out of Polymarket"
+  - "Polymarket withdrawal fees"
+  - "USDC on Polygon"
+  - "prediction market withdrawal"
+takeaways:
+  - "Withdrawing is an on-chain transfer, not a bank payout: your balance leaves as USDC on the Polygon network to an address you name, and nobody can reverse it once it is sent."
+  - "Only your free balance can be withdrawn — money sitting in an open position has to be sold, or held to resolution, before it is yours to move."
+  - "Withdrawing on Polygon is free on Oddzy, while bridging to another chain costs roughly the same number of cents whatever you send, so small withdrawals lose the largest share of themselves."
+  - "Polygon carries two different tokens both called USDC. Your withdrawal arrives as the bridged one, USDC.e, and a destination that only credits the other will show nothing."
+  - "The crypto leg settles in seconds. The slow part is converting to local currency, which depends on your exchange and your bank, not on the market you traded."
+faq:
+  - q: "Do I have to verify my identity to withdraw?"
+    a: "Not to move the money on-chain. The wallet is yours and the transfer is signed by you, so there is no account review, no document upload and no withdrawal approval step on the crypto side. Identity checks appear at the next stage instead: the exchange or service you use to convert USDC into local currency is the party that asks, and its rules depend on where it operates and where you are."
+  - q: "Can Oddzy freeze or refuse my withdrawal?"
+    a: "Your balance sits in a self-custodial wallet whose keys you hold, not on a company ledger, so there is no balance for anyone else to hold back. You can export the private key and move the funds from any wallet software without going through the app at all. What can fail is the route rather than the permission — a bridge to another chain can be unable to price a transfer, in which case the withdrawal simply does not go, and a Polygon withdrawal remains available."
+  - q: "What happens if I send a withdrawal to the wrong address?"
+    a: "The funds are gone and no one can retrieve them. An on-chain transfer is final the moment it confirms, there is no support queue that can reverse it, and this is the single most expensive mistake available on the way out. Paste the address rather than typing it, check the first and last four characters against the destination, and send a small test amount first when you are using an address for the first time."
+  - q: "Can I withdraw to a chain other than Polygon?"
+    a: "Yes. A withdrawal can be bridged to other networks, and the sheet prices the route and tells you what will actually arrive before you confirm rather than after. Two things are worth knowing: the cost is close to fixed in dollars, so it is trivial on a few hundred dollars and painful on ten, and if you choose to receive a network's own coin instead of a stablecoin, its value can move between the quote and the arrival."
+  - q: "Can I withdraw winnings as soon as a market resolves?"
+    a: "Yes. When a market resolves, winning shares pay one dollar each straight into your wallet, and that money is ordinary balance from the moment it lands — it carries no holding period and no separate clearing step. The wait is entirely in the resolution itself: an undisputed outcome pays out within hours of being reported, while a disputed one goes to the oracle and takes days."
+---
+
+You withdraw from Polymarket by sending your balance out as an on-chain transfer. You name a destination address, your balance is unwrapped to USDC on the Polygon network, and it arrives there within seconds. There is no bank payout, no pending status and no approval step — and no way to reverse it once it is sent.
+
+## What has to happen before you can withdraw?
+
+Only free balance can leave. Money committed to an open position is not spendable until that position becomes cash, and there are exactly two ways for that to happen: you sell the shares to another trader, or you hold them until the market resolves and pays out.
+
+This is the part people misjudge, because a position with a good price on it feels like money. It is not money until someone buys it. As of 14 September 2026 on Oddzy, [Bitcoin reaching $95,000 by 31 December 2026](/market/will-bitcoin-reach-95000-by-december-31-2026-from-june-8) trades at 32.5¢ on about $79,700 of 24-hour volume — a book deep enough to sell into today, but a question that does not settle until the end of the year. If you want that capital in December, you sell it; [selling before resolution](/learn/can-you-sell-before-a-market-resolves) is always available while the market is open, at the best bid rather than the price on the card.
+
+## How long does it take to withdraw money from Polymarket?
+
+The transfer itself takes seconds. A withdrawal on Polygon is a single Polygon transaction, and Polygon confirms in a couple of seconds for a network fee measured in fractions of a cent. A withdrawal bridged to another chain takes longer — minutes rather than seconds — because it is two transfers and a conversion rather than one.
+
+Nothing in that is the slow part. The delays that matter are the two either side of it: waiting for a position to become cash, and waiting for an exchange to turn USDC into currency you can spend.
+
+## Which route out costs the least?
+
+Polygon, by a wide margin, because on Oddzy a Polygon withdrawal is free and every other route pays a bridge. The rule of thumb is that bridging costs roughly the same number of cents regardless of size, which means the cost as a percentage depends entirely on how much you send.
+
+| Route | What arrives | What it costs | Sensible when |
+| --- | --- | --- | --- |
+| Polygon | USDC.e on Polygon | Free, plus a network fee of well under a cent | Your destination accepts Polygon — most major exchanges do |
+| Bridged to another chain | USDC on that chain | Close to a fixed amount in dollars, quoted before you confirm | The destination cannot take Polygon, and the amount is large enough that a fixed cost disappears |
+| Bridged to a native coin | That network's own coin | The bridge cost, plus whatever the coin's price does meanwhile | You actually want that coin, not dollars |
+
+The withdrawal sheet prices the route and shows you the net figure before you confirm, and it warns you outright when the route would take more than 5% of the amount. That warning is not decoration — it is what a $10 bridged withdrawal looks like, and the fix is to withdraw on Polygon or to withdraw less often in larger amounts.
+
+## How do you turn USDC into your local currency?
+
+Send the USDC to an account that converts it, then withdraw from there in the currency you want. In practice that means a centralised exchange: you deposit USDC on Polygon, sell it for your local currency, and withdraw to a bank account or payment method the exchange supports. This leg is the one part of the journey that is not on-chain, and it is where identity checks, limits and processing times live.
+
+Two things decide whether it works. The first is whether your exchange credits deposits on Polygon at all — many do, some only accept USDC on Ethereum, and sending to an unsupported network is unrecoverable. The second is which token it credits. Polygon carries two different tokens named USDC: the bridged one, USDC.e, at contract 0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174, and a separate native USDC at 0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359. Your withdrawal arrives as USDC.e. Confirm the destination accepts that specific token before you send anything, and send a small amount first.
+
+## What can go wrong on the way out?
+
+Three things, and the first two are permanent. A transfer to a wrong address is gone, because nothing on-chain can be recalled. A transfer on a network the destination does not support is gone in the same way, which is why the network selector matters as much as the address.
+
+The third is reversible but expensive: withdrawing small amounts repeatedly over a bridge, and paying a fixed cost each time on a shrinking balance. Batch them.
+
+Worth being clear about what withdrawal is not protecting you from. Self-custody means no one can freeze your balance or decide you cannot have it, and that is genuinely [where your money sits](/learn/is-it-safe-where-your-money-sits) — but it also means no one can undo your mistakes, and that the trade you are withdrawing the proceeds of could have gone the other way. If you have not funded an account yet, [how it works](/how-it-works) covers the same path in the opposite direction, and [how a market resolves and when you get paid](/learn/how-markets-resolve-and-when-you-get-paid) covers the step that puts the money in your balance in the first place.
