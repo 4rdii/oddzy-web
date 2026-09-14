@@ -91,6 +91,13 @@ export async function authedPost<T>(path: string, body: unknown): Promise<T> {
   );
   (err as ApiCallError & { serverMessage?: string }).serverMessage =
     typeof data?.message === "string" ? data.message : undefined;
+  // The machine-readable reason and, on a refused fast-market bet, the price the
+  // book is at now — so the bet sheet can offer that price in one tap instead of
+  // showing a dead-end sentence.
+  (err as ApiCallError & { serverCode?: string }).serverCode =
+    typeof data?.error === "string" ? data.error : undefined;
+  (err as ApiCallError & { serverFresh?: number }).serverFresh =
+    typeof data?.fresh === "number" && Number.isFinite(data.fresh) ? data.fresh : undefined;
   // Validation failures (422) carry a LIST, not a sentence: the basket rules
   // report every broken rule at once so a builder can fix them in one pass
   // instead of resubmitting to discover the next one.

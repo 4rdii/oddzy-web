@@ -41,10 +41,22 @@ const POLL_MS = 5000;
 
 /**
  * Positions refresh. Slower than the board: /webapp/v1/positions goes to the
- * data API and the CLOB for every holding, and it shares a 60/minute budget
- * with the Positions tab. Six a minute leaves that tab plenty.
+ * data API and the CLOB for every holding, shares a 60/minute budget with the
+ * Positions tab, and — like every signed-in call — runs through a Vercel
+ * function, which is the Fluid CPU budget. 30s plus the post-bet refresh below
+ * keeps a new position prompt without paying for a poll nobody is waiting on.
  */
-const POSITIONS_POLL_MS = 10_000;
+const POSITIONS_POLL_MS = 30_000;
+
+/**
+ * While the bet sheet is open, re-read the live quote this often.
+ *
+ * The board's price is up to a poll behind; the sheet is where a number becomes
+ * an order, so it reads the book directly (GET /webapp/v1/quote — the same
+ * source placement checks against). Only while the sheet is open, so the cost
+ * is a handful of requests per bet, not per viewer-minute.
+ */
+const QUOTE_REFRESH_MS = 4_000;
 
 /**
  * The data API lags a fill by 10-30s, so the refresh right after a bet usually
@@ -85,6 +97,14 @@ export function UpDownScreen({
   const [positions, setPositions] = useState<Position[] | null>(null);
   const [posNonce, setPosNonce] = useState(0);
   const [manage, setManage] = useState<Position | null>(null);
+  /**
+   * The live price for the side in the open sheet, from the book. Null until the
+   * first read lands (the board's price stands in meanwhile), and cleared when
+   * the sheet closes or the side changes so a quote never outlives its question.
+   */
+  const [quote, setQuote] = useState<number | null>(null);
+  /** Set when the server refused a bet because the book moved; holds the new price. */
+  const [movedTo, setMovedTo] = useState<number | null>(null);
 
   useEffect(() => {
     const ctrl = new AbortController();
@@ -146,6 +166,36 @@ export function UpDownScreen({
     now,
   });
 
+  const sheetMarketId =
+    sheetOpen && current && current.kind !== "past"
+      ? (current.row as { market_id: string }).market_id
+      : null;
+
+  useEffect(() => {
+    if (!sheetMarketId) return;
+    const ctrl = new AbortController();
+    const read = () => {
+      if (typeof document !== "undefined" && document.hidden) return;
+      authedGet<{ price: number }>(
+        `/webapp/v1/quote?marketId=${encodeURIComponent(sheetMarketId)}&side=${side === "up" ? "YES" : "NO"}`,
+        ctrl.signal,
+      )
+        .then((d) => {
+          if (typeof d.price === "number" && d.price > 0 && d.price < 1) setQuote(d.price);
+        })
+        .catch(() => {
+          // Keep the last quote (or the board price). Placement re-checks the
+          // live book regardless, so a missed read cannot cause a bad fill.
+        });
+    };
+    read();
+    const id = setInterval(read, QUOTE_REFRESH_MS);
+    return () => {
+      clearInterval(id);
+      ctrl.abort();
+    };
+  }, [sheetMarketId, side]);
+
   const series = useWindowPrices(
     current?.row.slug ?? "",
     current?.kind === "live",
@@ -194,7 +244,10 @@ export function UpDownScreen({
    * already gone, while treating it as closed costs one refresh.
    */
   const closing = current.kind === "live" && (secondsLeft == null || secondsLeft < CUTOFF_S);
-  const price = side === "up" ? upPrice : downPrice;
+  // In the sheet, the live quote wins over the board: it is newer, and it is the
+  // number placement compares against. The board's price only fills the gap
+  // until the first quote arrives.
+  const price = (sheetOpen ? quote : null) ?? (side === "up" ? upPrice : downPrice);
   const tradable = !settledView && !closing && price != null && price > 0;
   const shares = price != null && price > 0 ? stake / price : 0;
   const payout = price != null && price > 0 ? payoutFor(stake, price) : 0;
@@ -234,6 +287,10 @@ export function UpDownScreen({
         marketId: (current.row as { market_id: string }).market_id,
         side: side === "up" ? "YES" : "NO",
         sizeUsdc: stake,
+        // The price on screen. The server checks the live book against THIS, so
+        // a bet is only refused when the market really moved past what the user
+        // agreed to — not because the server's own quote was stale.
+        quotedPrice: price,
       });
 
       /*
@@ -260,10 +317,21 @@ export function UpDownScreen({
         orderId: data.orderId,
       });
       setSheetOpen(false);
+      setQuote(null);
+      setMovedTo(null);
       setPosNonce((n) => n + 1);
       setTimeout(() => setPosNonce((n) => n + 1), POST_BET_REFRESH_MS);
     } catch (e) {
-      const server = (e as ApiCallError & { serverMessage?: string })?.serverMessage;
+      const err = e as ApiCallError & { serverMessage?: string; serverCode?: string; serverFresh?: number };
+      const server = err?.serverMessage;
+      if (err?.serverCode === "price_moved" && err.serverFresh != null) {
+        // Not an error the user has to recover from: adopt the live price so the
+        // very next tap sends it as the quote, and say what happened.
+        setQuote(err.serverFresh);
+        setMovedTo(err.serverFresh);
+        setError(null);
+        return;
+      }
       if (e instanceof ApiCallError && e.kind === "unauthenticated") {
         setError(inTelegram ? t.app.errors.telegramSession : t.app.bet.sessionExpired);
       } else {
@@ -390,6 +458,8 @@ export function UpDownScreen({
             onPick={(s) => {
               setSide(s);
               setError(null);
+              setQuote(null);
+              setMovedTo(null);
               setSheetOpen(true);
             }}
             labels={{ up: u.up, down: u.down }}
@@ -487,7 +557,11 @@ export function UpDownScreen({
             </span>
             <button
               type="button"
-              onClick={() => setSheetOpen(false)}
+              onClick={() => {
+                setSheetOpen(false);
+                setQuote(null);
+                setMovedTo(null);
+              }}
               className="min-h-[40px] px-2 font-mono text-[12px] text-[var(--mute)]"
             >
               {t.app.detail.back}
@@ -559,6 +633,11 @@ export function UpDownScreen({
           {closing && <p className="mt-3 text-[13px] text-[var(--down)]">{u.tooLate}</p>}
           {insufficient && (
             <p className="mt-3 text-[13px] text-[var(--down)]">{t.app.bet.insufficient}</p>
+          )}
+          {movedTo != null && (
+            <p className="mt-3 rounded-lg bg-[var(--btn)] px-3 py-2 text-[13px] text-[var(--ink)]">
+              {tf(u.priceMoved, { price: cents(movedTo) })}
+            </p>
           )}
           {error && (
             <p className="mt-3 rounded-lg bg-[color-mix(in_srgb,var(--down)_12%,transparent)] px-3 py-2 text-[13px] text-[var(--down)]">

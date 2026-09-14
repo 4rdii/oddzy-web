@@ -644,6 +644,7 @@ export const fa: Dict = {
       upWon: "صعودی برد",
       downWon: "نزولی برد",
       otherMarkets: "ارزهای دیگر",
+      priceMoved: "قیمت پیش از ثبت سفارش به {price} رسید. چیزی ثبت نشد — برای خرید با قیمت {price} دوباره بزنید.",
       yourPositions: "موقعیت‌های شما در این بازه",
       close: "بستن",
       claim: "دریافت",

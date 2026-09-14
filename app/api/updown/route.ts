@@ -5,7 +5,7 @@ import { getUpDownWindows } from "@/lib/api";
  * Live 15-minute crypto up/down windows.
  * Proxies the token-authenticated upstream so the browser never sees it.
  *
- * Cached for THREE SECONDS at the edge, which is the whole point of this route.
+ * Cached for TWO SECONDS at the edge, which is the whole point of this route.
  * Every open desk polls it every 5s, so without a shared cache the cost is
  * linear in concurrent viewers: one function invocation per viewer per 5s,
  * forever, all returning the identical 5KB body. With s-maxage the entire
@@ -27,14 +27,23 @@ export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    // 3s, matching the edge cache below — the two together mean a burst of
+    // 2s, matching the edge cache below — the two together mean a burst of
     // polls costs one upstream call, not one per invocation that slips through.
-    const { windows, settled } = await getUpDownWindows(0, 3);
+    const { windows, settled } = await getUpDownWindows(0, 2);
     return NextResponse.json(
       { windows, settled },
       {
         headers: {
-          "Cache-Control": "public, s-maxage=3, stale-while-revalidate=12",
+          /*
+           * No stale-while-revalidate. With swr=12 on top of s-maxage=3, every
+           * poll measured on 2026-09-14 came back `x-vercel-cache: STALE` about
+           * 10s old: under steady polling the edge always has a stale copy to
+           * hand out, so the fresh one only ever reaches the NEXT viewer. Prices
+           * upstream now move every 3s (read from the CLOB book), so that
+           * staleness was the largest delay left. Without swr a request at
+           * expiry waits one origin round trip instead — tens of milliseconds.
+           */
+          "Cache-Control": "public, s-maxage=2",
         },
       },
     );

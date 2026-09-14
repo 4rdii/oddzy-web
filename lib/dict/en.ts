@@ -691,6 +691,8 @@ export const en = {
       upWon: "Up won",
       downWon: "Down won",
       otherMarkets: "Other coins",
+      /** Bet sheet, after the server refused a bet because the book moved. */
+      priceMoved: "The price moved to {price} before your order went through. Nothing was placed — tap again to buy at {price}.",
       /** Positions pane: what the viewer holds in the window on screen. */
       yourPositions: "Your positions in this window",
       close: "Close",
