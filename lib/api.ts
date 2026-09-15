@@ -190,17 +190,6 @@ export async function getMarkets(opts: {
 }
 
 /**
- * Live markets whose English title contains `q` (a case-insensitive substring
- * match upstream, not full-text — "Iran" hits, "Iran nuclear deal" does not, so
- * pass single keywords). Sorted by 24h volume.
- */
-export async function searchMarkets(q: string, limit = 40): Promise<Market[]> {
-  const params = new URLSearchParams({ q: q.slice(0, 100), limit: String(Math.min(limit, 100)) });
-  const snap = await get<Snapshot>(`/markets/snapshot?${params}`, 300);
-  return snap.markets;
-}
-
-/**
  * Event-grouped feed. Matches sort by kick-off, everything else by volume.
  * `category` accepts any topic slug and includes its descendants.
  */
