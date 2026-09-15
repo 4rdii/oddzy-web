@@ -1098,6 +1098,8 @@ type ReferralInfo = {
   pendingUsdc: number;
   paidUsdc: number;
   feeSharePct: number;
+  /** The same rebate as a % of the friend's trade amount, e.g. 0.25. */
+  tradePct: number;
 };
 
 /**
@@ -1158,7 +1160,9 @@ function ReferralCard() {
         🎁 {w.refTitle}
       </div>
       <p className="mt-2 text-[13px] leading-relaxed text-[var(--text2)]">
-        {w.refLead.replace("{pct}", String(info.feeSharePct))}
+        {w.refLead
+          .replace("{pct}", String(info.feeSharePct))
+          .replace("{tradePct}", String(info.tradePct))}
       </p>
 
       <div

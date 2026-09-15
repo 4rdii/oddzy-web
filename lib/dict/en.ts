@@ -815,8 +815,8 @@ export const en = {
       stFailed: "Failed",
       /** Referral card — invite link, count and rev-share earnings. */
       refTitle: "INVITE & EARN",
-      /** {pct} = share of trading fees, e.g. "10". */
-      refLead: "Earn {pct}% of the trading fees on every trade your friends make — for life, paid weekly to your balance.",
+      /** {pct} = share of our trading fee, e.g. "50"; {tradePct} = same rebate as % of trade amount. */
+      refLead: "Earn {pct}% of the trading fees ({tradePct}% of the trade amount) on every trade your friends make, for life, paid weekly to your balance.",
       refLink: "YOUR INVITE LINK",
       /** Link switcher: the bot deep link vs the website link. Same referral either way. */
       refTabTg: "Telegram",
@@ -825,8 +825,7 @@ export const en = {
       refInvited: "Friends invited",
       refPending: "Pending earnings",
       refPaid: "Paid so far",
-      /** Pending also includes group copy-trade rev-share, as the bot says. */
-      refNote: "Friends must use your link before they first sign up — in the bot or on the website. Pending includes group copy-trade earnings.",
+      refNote: "Friends must use your link before they first sign up, in the bot or on the website.",
       /** Pre-filled text for the share dialog; the link is appended. */
       refShareText: "Join me on Oddzy — trade prediction markets in Telegram or on the web. Sign up with my link 👇",
       /** Followed by the amount as its own span. */
