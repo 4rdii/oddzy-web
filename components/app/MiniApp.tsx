@@ -7,7 +7,7 @@ import type { Market } from "@/lib/api";
 import type { Topic } from "@/lib/taxonomy";
 import { useTelegram } from "@/lib/telegram";
 import { authedGet } from "@/lib/client-api";
-import { captureSource, track } from "@/lib/track";
+import { captureRef, captureSource, track } from "@/lib/track";
 import { MarketsFeed } from "./MarketsFeed";
 import { BrowseScreen } from "./BrowseScreen";
 import { ThemeToggle } from "../site/ThemeToggle";
@@ -153,6 +153,14 @@ export function MiniApp({
     // basket was linked, so "reached the app" is a countable funnel step.
     const params = new URLSearchParams(window.location.search);
     const src = captureSource();
+    // A web invite link (`/app?ref=<id>`): remember it for signup, then drop it
+    // from the address bar so it isn't re-shared by accident.
+    if (params.has("ref")) {
+      captureRef();
+      const clean = new URL(window.location.href);
+      clean.searchParams.delete("ref");
+      window.history.replaceState(null, "", `${clean.pathname}${clean.search}${clean.hash}`);
+    }
     const slug = params.get("basket");
     track("app_open", { basket: slug, src });
     if (!slug) return;

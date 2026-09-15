@@ -818,14 +818,17 @@ export const en = {
       /** {pct} = share of trading fees, e.g. "10". */
       refLead: "Earn {pct}% of the trading fees on every trade your friends make — for life, paid weekly to your balance.",
       refLink: "YOUR INVITE LINK",
+      /** Link switcher: the bot deep link vs the website link. Same referral either way. */
+      refTabTg: "Telegram",
+      refTabWeb: "Website",
       refShare: "Share link",
       refInvited: "Friends invited",
       refPending: "Pending earnings",
       refPaid: "Paid so far",
       /** Pending also includes group copy-trade rev-share, as the bot says. */
-      refNote: "Friends need to join through your link before their first sign-up. Pending includes group copy-trade earnings.",
+      refNote: "Friends must use your link before they first sign up — in the bot or on the website. Pending includes group copy-trade earnings.",
       /** Pre-filled text for the share dialog; the link is appended. */
-      refShareText: "Join me on Oddzy — trade prediction markets right inside Telegram. Sign up with my link 👇",
+      refShareText: "Join me on Oddzy — trade prediction markets in Telegram or on the web. Sign up with my link 👇",
       /** Followed by the amount as its own span. */
       sent: "Sent",
       /** Same shape, for a bridge that is still in flight. */

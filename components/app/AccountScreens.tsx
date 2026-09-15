@@ -1113,6 +1113,9 @@ function ReferralCard() {
   const { webApp, inTelegram } = useTelegram();
   const [info, setInfo] = useState<ReferralInfo | null>(null);
   const [copied, setCopied] = useState(false);
+  // Two links, one ref: the bot for Telegram users, the site for everyone else
+  // (Instagram, WhatsApp, anyone without Telegram). Both credit the same referrer.
+  const [target, setTarget] = useState<"tg" | "web">("tg");
   const w = t.app.wallet;
 
   useEffect(() => {
@@ -1129,7 +1132,11 @@ function ReferralCard() {
 
   if (!info) return null;
 
-  const link = botLink(`ref_${info.refId}`, brandFor(locale).tgBot);
+  const brand = brandFor(locale);
+  const link =
+    target === "tg"
+      ? botLink(`ref_${info.refId}`, brand.tgBot)
+      : `${brand.siteUrl}/app?ref=${encodeURIComponent(info.refId)}`;
 
   const share = () => {
     const tgShare = `https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent(w.refShareText)}`;
@@ -1154,7 +1161,32 @@ function ReferralCard() {
         {w.refLead.replace("{pct}", String(info.feeSharePct))}
       </p>
 
-      <div className="mt-4 flex items-center justify-between gap-2">
+      <div
+        role="tablist"
+        className="mt-4 grid grid-cols-2 gap-1 rounded-xl border border-[var(--line)] bg-[var(--btn)] p-1"
+      >
+        {(["tg", "web"] as const).map((k) => (
+          <button
+            key={k}
+            type="button"
+            role="tab"
+            aria-selected={target === k}
+            onClick={() => {
+              setTarget(k);
+              setCopied(false);
+            }}
+            className={`min-h-[36px] rounded-lg text-[13px] font-semibold ${
+              target === k
+                ? "bg-[var(--card)] text-[var(--ink)] shadow-sm"
+                : "text-[var(--mute)]"
+            }`}
+          >
+            {k === "tg" ? w.refTabTg : w.refTabWeb}
+          </button>
+        ))}
+      </div>
+
+      <div className="mt-3 flex items-center justify-between gap-2">
         <span className="font-mono text-[10px] tracking-[0.08em] text-[var(--faint)]">
           {w.refLink}
         </span>

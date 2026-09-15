@@ -105,9 +105,50 @@ export function getSource(): string | null {
   }
 }
 
+const REF_KEY = "oz_ref";
+const REF_TTL_MS = 30 * 24 * 3600 * 1000;
+/** A referrer's account id. Negative ids are web-only accounts. */
+const REF_RE = /^-?\d{1,19}$/;
+
+/**
+ * Read `?ref=` (a web invite link from the wallet page's Invite & Earn card)
+ * and remember it for 30 days, so it survives browsing and a later login. The
+ * register call sends it; the server applies it once, only on account creation.
+ */
+export function captureRef(): string | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = new URLSearchParams(window.location.search).get("ref");
+    if (raw && REF_RE.test(raw)) {
+      localStorage.setItem(REF_KEY, JSON.stringify({ ref: raw, at: Date.now() }));
+      return raw;
+    }
+  } catch {
+    // ignore
+  }
+  return getRef();
+}
+
+function getRef(): string | null {
+  try {
+    const raw = localStorage.getItem(REF_KEY);
+    if (!raw) return null;
+    const { ref, at } = JSON.parse(raw) as { ref?: string; at?: number };
+    if (typeof ref !== "string" || !REF_RE.test(ref)) return null;
+    if (typeof at !== "number" || Date.now() - at > REF_TTL_MS) return null;
+    return ref;
+  } catch {
+    return null;
+  }
+}
+
 /** The fields the server joins on; spread into any authenticated POST body. */
-export function attribution(): { src: string | null; visitorId: string | null } {
-  return { src: getSource(), visitorId: getVisitorId() };
+export function attribution(): {
+  src: string | null;
+  visitorId: string | null;
+  ref: string | null;
+} {
+  return { src: getSource(), visitorId: getVisitorId(), ref: getRef() };
 }
 
 export type WebEvent = "basket_view" | "basket_cta" | "app_open" | "login_start";
