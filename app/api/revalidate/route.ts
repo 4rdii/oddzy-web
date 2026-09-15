@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
+import { TOPICS_TAG } from "@/lib/api";
 import { LOCALES } from "@/lib/i18n";
 
 /**
@@ -43,7 +44,17 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 
-  const body = (await req.json().catch(() => ({}))) as { slug?: unknown };
+  const body = (await req.json().catch(() => ({}))) as { slug?: unknown; tag?: unknown };
+
+  // {"tag":"topics"}: a league/topic was added or re-enabled. The topics fetch
+  // is cached for a day (CATALOG_TTL), so without this a new league stays out of
+  // the nav for up to 24h. "max" = stale-while-revalidate: each page picks up
+  // the new tree on its next visit, not all ~1200 at once.
+  if (body.tag === "topics") {
+    revalidateTag(TOPICS_TAG, "max");
+    return NextResponse.json({ ok: true, revalidatedTag: TOPICS_TAG });
+  }
+
   const slug = typeof body.slug === "string" ? body.slug.trim() : "";
   if (!/^[a-z0-9][a-z0-9-]{0,79}$/.test(slug)) {
     return NextResponse.json({ error: "bad_slug" }, { status: 400 });

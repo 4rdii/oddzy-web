@@ -87,7 +87,15 @@ class ApiError extends Error {
   }
 }
 
-async function get<T>(path: string, revalidate: number): Promise<T> {
+/**
+ * Cache tag on the topics fetch. A day-long CATALOG_TTL means a newly added
+ * league stays invisible for up to 24h; POST /api/revalidate {"tag":"topics"}
+ * marks it stale instead (and, through Next's implicit tags, every page that
+ * read it) so an addition shows on the next visit.
+ */
+export const TOPICS_TAG = "catalog-topics";
+
+async function get<T>(path: string, revalidate: number, tags?: string[]): Promise<T> {
   if (!TOKEN) {
     throw new ApiError("ODDZY_API_TOKEN is not configured", 500);
   }
@@ -95,7 +103,7 @@ async function get<T>(path: string, revalidate: number): Promise<T> {
     headers: { Authorization: `Bearer ${TOKEN}` },
     // The upstream snapshot only moves every ~30 min; revalidate well inside
     // that so a page is never staler than the data it describes.
-    next: { revalidate },
+    next: tags ? { revalidate, tags } : { revalidate },
   });
   if (!res.ok) {
     throw new ApiError(`GET ${path} failed: ${res.status}`, res.status);
@@ -152,7 +160,7 @@ export const MARKET_TTL = 86400;
  * this is read on every page via SiteChrome, so its window caps the whole site.
  */
 export async function getTopics(): Promise<Topic[]> {
-  const data = await get<{ topics: Topic[] }>("/topics", CATALOG_TTL);
+  const data = await get<{ topics: Topic[] }>("/topics", CATALOG_TTL, [TOPICS_TAG]);
   return data.topics;
 }
 
