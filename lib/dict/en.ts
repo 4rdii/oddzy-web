@@ -697,7 +697,8 @@ export const en = {
       yourPositions: "Your positions in this window",
       close: "Close",
       claim: "Claim",
-      avgAt: "avg",
+      /** Positions pane: the average price the position was bought at. */
+      avgBuy: "Avg buy price",
       recent: "RECENT RESULTS",
     },
 

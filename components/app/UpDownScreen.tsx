@@ -498,12 +498,17 @@ export function UpDownScreen({
                         {usd(Math.abs(p.pnl))}
                       </span>
                     </div>
+                    {/* One fact per line, each labelled. "avg 17¢ → 16¢" read as a
+                        price move with no subject; buyers asked what the two
+                        numbers were. */}
                     <div className="mt-0.5 font-mono text-[11px] text-[var(--faint)]">
                       <span className="ltr-num">{p.shares.toFixed(1)}</span> {t.app.positions.shares}
-                      {" · "}
-                      {u.avgAt} <span className="ltr-num">{cents(p.avgPrice)}</span>
-                      {" → "}
-                      <span className="ltr-num">{cents(p.curPrice)}</span>
+                    </div>
+                    <div className="font-mono text-[11px] text-[var(--faint)]">
+                      {u.avgBuy}: <span className="ltr-num">{cents(p.avgPrice)}</span>
+                    </div>
+                    <div className="font-mono text-[11px] text-[var(--faint)]">
+                      {u.currentPrice}: <span className="ltr-num">{cents(p.curPrice)}</span>
                     </div>
                   </div>
                   <button

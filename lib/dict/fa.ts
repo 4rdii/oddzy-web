@@ -648,7 +648,7 @@ export const fa: Dict = {
       yourPositions: "موقعیت‌های شما در این بازه",
       close: "بستن",
       claim: "دریافت",
-      avgAt: "میانگین",
+      avgBuy: "میانگین خرید",
       recent: "نتایج اخیر",
     },
 
