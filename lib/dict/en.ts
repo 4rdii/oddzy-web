@@ -812,6 +812,19 @@ export const en = {
       stInTransit: "In transit",
       stReturned: "Returned",
       stFailed: "Failed",
+      /** Referral card — invite link, count and rev-share earnings. */
+      refTitle: "INVITE & EARN",
+      /** {pct} = share of trading fees, e.g. "10". */
+      refLead: "Earn {pct}% of the trading fees on every trade your friends make — for life, paid weekly to your balance.",
+      refLink: "YOUR INVITE LINK",
+      refShare: "Share link",
+      refInvited: "Friends invited",
+      refPending: "Pending earnings",
+      refPaid: "Paid so far",
+      /** Pending also includes group copy-trade rev-share, as the bot says. */
+      refNote: "Friends need to join through your link before their first sign-up. Pending includes group copy-trade earnings.",
+      /** Pre-filled text for the share dialog; the link is appended. */
+      refShareText: "Join me on Oddzy — trade prediction markets right inside Telegram. Sign up with my link 👇",
       /** Followed by the amount as its own span. */
       sent: "Sent",
       /** Same shape, for a bridge that is still in flight. */

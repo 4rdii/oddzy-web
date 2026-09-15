@@ -8,6 +8,7 @@ import { botLink, useTelegram } from "@/lib/telegram";
 import { SignInButton } from "./SignInButton";
 import { WithdrawSheet, type WithdrawSent } from "./WithdrawSheet";
 import { useLocale } from "./LocaleProvider";
+import { brandFor } from "@/lib/i18n";
 
 export type Position = {
   marketId: string;
@@ -668,6 +669,8 @@ export function WalletScreen() {
           and because both are reference, not actions. */}
       <WalletActivity />
 
+      <ReferralCard />
+
       {sheet === "deposit" && addr && (
         <DepositSheet address={addr} onClose={() => setSheet(null)} />
       )}
@@ -1085,6 +1088,106 @@ function WalletActivity() {
             ))}
           </ul>
         ))}
+    </div>
+  );
+}
+
+type ReferralInfo = {
+  refId: string;
+  count: number;
+  pendingUsdc: number;
+  paidUsdc: number;
+  feeSharePct: number;
+};
+
+/**
+ * Invite & Earn — the web counterpart of the bot's /refer pane.
+ *
+ * The link always deep-links the bot of the brand being viewed: attribution is
+ * applied at signup from the `ref_<id>` start payload, and a Persian visitor sent
+ * to the English bot would onboard in the wrong locale. Hidden entirely if the
+ * call fails — it is a growth prompt, not something a user needs to see broken.
+ */
+function ReferralCard() {
+  const { t, locale } = useLocale();
+  const { webApp, inTelegram } = useTelegram();
+  const [info, setInfo] = useState<ReferralInfo | null>(null);
+  const [copied, setCopied] = useState(false);
+  const w = t.app.wallet;
+
+  useEffect(() => {
+    let cancelled = false;
+    authedGet<ReferralInfo>("/webapp/v1/referral")
+      .then((d) => {
+        if (!cancelled) setInfo(d);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  if (!info) return null;
+
+  const link = botLink(`ref_${info.refId}`, brandFor(locale).tgBot);
+
+  const share = () => {
+    const tgShare = `https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent(w.refShareText)}`;
+    // Inside Telegram, the native share sheet picks a chat directly.
+    if (inTelegram && webApp?.openTelegramLink) {
+      webApp.openTelegramLink(tgShare);
+      return;
+    }
+    if (typeof navigator !== "undefined" && navigator.share) {
+      navigator.share({ text: w.refShareText, url: link }).catch(() => {});
+      return;
+    }
+    window.open(tgShare, "_blank", "noopener,noreferrer");
+  };
+
+  return (
+    <div className="mt-4 rounded-2xl border border-[var(--line)] bg-[var(--card)] p-5">
+      <div className="font-mono text-[10px] tracking-[0.08em] text-[var(--faint)] uppercase">
+        🎁 {w.refTitle}
+      </div>
+      <p className="mt-2 text-[13px] leading-relaxed text-[var(--text2)]">
+        {w.refLead.replace("{pct}", String(info.feeSharePct))}
+      </p>
+
+      <div className="mt-4 flex items-center justify-between gap-2">
+        <span className="font-mono text-[10px] tracking-[0.08em] text-[var(--faint)]">
+          {w.refLink}
+        </span>
+        <button
+          type="button"
+          onClick={() => {
+            navigator.clipboard?.writeText(link);
+            setCopied(true);
+            setTimeout(() => setCopied(false), 1600);
+          }}
+          className="min-h-[32px] shrink-0 rounded-lg border border-[var(--line)] bg-[var(--btn)] px-3 font-mono text-[11px] text-[var(--mute)]"
+        >
+          {copied ? w.copied : w.copy}
+        </button>
+      </div>
+      <code dir="ltr" className="mt-1 block font-mono text-[12px] break-all">
+        <span className="ltr-num">{link}</span>
+      </code>
+
+      <button
+        type="button"
+        onClick={share}
+        className="mt-4 min-h-[48px] w-full rounded-xl bg-[var(--ink)] font-semibold text-[var(--on-ink)]"
+      >
+        {w.refShare}
+      </button>
+
+      <div className="mt-4 grid grid-cols-3 gap-2">
+        <Tile label={w.refInvited} value={String(info.count)} />
+        <Tile label={w.refPending} value={usd(info.pendingUsdc)} color="var(--up)" />
+        <Tile label={w.refPaid} value={usd(info.paidUsdc)} />
+      </div>
+      <p className="mt-3 text-[11px] leading-relaxed text-[var(--faint)]">{w.refNote}</p>
     </div>
   );
 }

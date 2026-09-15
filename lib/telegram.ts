@@ -24,6 +24,8 @@ export type TelegramWebApp = {
   ready: () => void;
   expand: () => void;
   close: () => void;
+  /** Opens a t.me link inside Telegram (e.g. the share-to-chat sheet). */
+  openTelegramLink?: (url: string) => void;
   HapticFeedback?: {
     impactOccurred: (style: "light" | "medium" | "heavy") => void;
     notificationOccurred: (type: "error" | "success" | "warning") => void;
