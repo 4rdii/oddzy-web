@@ -26,12 +26,28 @@ import { brandFor, localeForHost } from "@/lib/i18n";
  * changed just now, always" is precisely that pattern, and it discards the one
  * signal we have for telling it which pages are worth re-crawling.
  *
- * Truncating to the UTC day is both honest and useful: a market page's odds do
- * move every day, and the value now only changes when the content plausibly did.
+ * Truncating to the UTC day is both honest and useful for the few pages whose
+ * CONTENT really does turn over daily (the home feed, /updown).
+ *
+ * It is NOT right for market, question and topic pages, and that was the bug
+ * this file shipped with: ~420 of 453 URLs claimed "changed today", every day,
+ * because their prices had moved. A price is not content — the question, the
+ * rules and the Persian title are written once and never touched again. Google
+ * distrusts a lastmod that is always now, and it distrusts it site-wide, so the
+ * /learn articles (the pages that genuinely gain new content) lost the only
+ * freshness signal they had while the market pages soaked up the crawl budget.
+ * Those pages now date themselves from when we first listed them.
  */
 function dayStamp(): Date {
   const d = new Date();
   return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
+}
+
+/** A listing timestamp from the API, or today's date when it is missing. */
+function stamp(iso: string | null | undefined): Date {
+  if (!iso) return dayStamp();
+  const d = new Date(iso);
+  return Number.isNaN(d.getTime()) ? dayStamp() : d;
 }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
@@ -58,6 +74,19 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       ...series.map((s) => s.category_id),
     ].filter(Boolean)),
   ] as string[];
+  // A topic page's content changes when a market joins it, so the newest
+  // listing under a topic dates the page.
+  const topicLastSeen = new Map<string, number>();
+  for (const m of markets) {
+    if (!m.category_id) continue;
+    const at = stamp(m.first_seen).getTime();
+    if (at > (topicLastSeen.get(m.category_id) ?? 0)) topicLastSeen.set(m.category_id, at);
+  }
+  for (const f of series) {
+    if (!f.category_id) continue;
+    const at = stamp(f.newest_first_seen).getTime();
+    if (at > (topicLastSeen.get(f.category_id) ?? 0)) topicLastSeen.set(f.category_id, at);
+  }
 
   // /app is deliberately absent — it's noindex, and listing it would invite
   // crawl budget to be spent on a surface with no search value.
@@ -82,13 +111,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...staticRoutes,
     ...topicSlugs.map((slug) => ({
       url: `${siteUrl}/topic/${slug}`,
-      lastModified: dayStamp(),
-      changeFrequency: "daily" as const,
+      lastModified: new Date(topicLastSeen.get(slug) ?? dayStamp().getTime()),
+      changeFrequency: "weekly" as const,
       priority: 0.8,
     })),
-    // Daily: the price genuinely changes every day, and lastModified is the
-    // signal that earns a re-crawl. Claiming it for a static page would be
-    // noise; here it is true.
+    // Dated from when we LISTED the market, not from today. See `stamp` above:
+    // the odds move daily, the page's content does not, and a sitemap that
+    // claims otherwise costs the whole domain its lastmod credibility.
     //
     // ACTIVE ONLY. Settled markets were 70 of the 228 URLs here and every one
     // of them was orphaned: topic pages list what is trading, so nothing links
@@ -104,23 +133,26 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       .filter((m) => m.status === "active")
       .map((m) => ({
         url: `${siteUrl}/market/${m.slug}`,
-        lastModified: dayStamp(),
-        changeFrequency: "daily" as const,
+        lastModified: stamp(m.first_seen),
+        changeFrequency: "weekly" as const,
         priority: 0.7,
       })),
     // Ranked above single markets: a family page carries the whole question's
     // history and outlives every individual deadline in it.
+    // A family page gains content when a new deadline joins it — that date, not
+    // today's.
     ...series.map((s) => ({
       url: `${siteUrl}/question/${s.key}`,
-      lastModified: dayStamp(),
-      changeFrequency: (s.status === "active" ? "daily" : "yearly") as "daily" | "yearly",
+      lastModified: stamp(s.newest_first_seen),
+      changeFrequency: (s.status === "active" ? "weekly" : "yearly") as "weekly" | "yearly",
       priority: s.status === "active" ? 0.8 : 0.5,
     })),
     // A basket page's prices move with its legs, so daily while any leg trades.
+    // Editorial: a basket is written once and its legs are fixed at publish.
     ...baskets.map((b) => ({
       url: `${siteUrl}/baskets/${b.slug}`,
-      lastModified: dayStamp(),
-      changeFrequency: (b.status === "active" ? "daily" : "yearly") as "daily" | "yearly",
+      lastModified: stamp(b.published_at),
+      changeFrequency: (b.status === "active" ? "weekly" : "yearly") as "weekly" | "yearly",
       priority: b.status === "active" ? 0.8 : 0.4,
     })),
     ...posts.map((p) => ({

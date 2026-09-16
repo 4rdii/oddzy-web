@@ -228,6 +228,11 @@ export type IndexableMarket = {
   volume_24h: number | null;
   volume_total: number | null;
   close_time: string | null;
+  /**
+   * When we first listed this market — the only content-change timestamp it
+   * has. Its price moves constantly; its question and rules are written once.
+   */
+  first_seen: string | null;
   status: string;
   outcome: string | null;
 };
@@ -282,6 +287,8 @@ export type SeriesSummary = {
   key: string;
   current: Omit<SeriesMember, "current">;
   category_id: string | null;
+  /** Newest member's listing date — when the family last gained a deadline. */
+  newest_first_seen: string | null;
   member_slugs: string[];
   member_count: number;
   status: string;
@@ -358,6 +365,8 @@ export type BasketSummary = {
   leg_count: number;
   /** "active" while any leg still trades; "settled" once they all have. */
   status: string;
+  /** Publication date — a basket's legs are fixed at publish, so this dates the page. */
+  published_at: string | null;
   first_close_time: string | null;
   volume: { legs_total: number | null };
   stats: { buys: number; volume_usdc: number | null };
