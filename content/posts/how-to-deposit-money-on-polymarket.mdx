@@ -1,0 +1,81 @@
+---
+title: "How do I deposit money into Polymarket?"
+description: "Funding is a crypto transfer to an address that is already yours. Which networks credit, why Polygon has two tokens called USDC, and what a lost deposit looks like."
+tag: GUIDE
+topics: ["crypto"]
+readingMinutes: 4
+publishedAt: "2026-09-16"
+lead: "Funding a prediction market account is not a card payment that clears overnight. It is a crypto transfer into a wallet that is already yours — which makes it fast, and makes the network selector the box that decides whether the money arrives at all."
+keywords:
+  - "deposit money into Polymarket"
+  - "how to fund a Polymarket account"
+  - "Polymarket deposit networks"
+  - "USDC.e on Polygon"
+  - "USDT Tron deposit"
+takeaways:
+  - "Depositing is an on-chain transfer into your own self-custodial wallet, so there is no card payment, no bank rail and no approval step between you and a funded balance."
+  - "Send only on the network the Deposit button selected. A transfer on any other network reaches an address nobody controls on that chain and cannot be recovered by anyone."
+  - "Polygon carries two different tokens both named USDC, and only the bridged one, USDC.e at 0x2791Bca1…, credits your balance directly."
+  - "USDT on Tron, BTC, and USDC on Solana or any major EVM chain are all accepted — they are converted and bridged for you rather than rejected."
+  - "The minimum stake on Oddzy is $1, so a first deposit small enough to be a rounding error is still enough to hold a real position."
+faq:
+  - q: "Can I deposit with a debit card or a bank transfer?"
+    a: "Not on Oddzy. Funding is a crypto transfer, which is why there is no card form, no billing address and no payment that can be charged back. If you do not hold crypto yet, the usual first step is to buy USDT or USDC at an exchange or a local broker and withdraw it to your deposit address on one of the supported networks. That exchange step is where identity checks and payment limits live, not here."
+  - q: "Do I need to already own crypto before I can fund an account?"
+    a: "In practice yes, because every funding route is an on-chain transfer of something. The most common path is to buy a stablecoin somewhere that accepts your local payment method, then withdraw it to the deposit address. USDT on Tron is the cheapest and most widely available version of that step in most countries, and it is accepted directly — the conversion into your trading balance is handled for you."
+  - q: "Can I send a deposit straight from a centralised exchange?"
+    a: "Yes, and most deposits arrive that way. The one thing to check is the exchange's withdrawal screen rather than ours: it must offer the same network you selected, and the same token. Many exchanges default to sending native USDC on Polygon, which is a different token from the USDC.e the Polygon rail expects, so either switch the token or pick a network where the conversion is done for you."
+  - q: "Is there a minimum deposit amount?"
+    a: "The figure that matters is the minimum stake, which is $1 on Oddzy, so a deposit of a few dollars is genuinely usable rather than stranded. What makes very small deposits uneconomic is not a rule but arithmetic: a network transfer and any conversion cost roughly the same in dollars whatever you send, so a $5 deposit gives up a far larger share of itself than a $200 one."
+  - q: "Does Oddzy hold my deposit?"
+    a: "No. The wallet is generated through Privy when you first open the app and the keys stay with you, so a deposit lands in an address you control rather than on a company ledger. Oddzy signs orders you approve and cannot move your balance on its own. You can revoke that signing permission or export the private key at any time, which also means nobody else can reverse a transfer you sent by mistake."
+---
+
+You deposit money into Polymarket by sending crypto to an address that already belongs to you. On Oddzy the **Deposit** button asks which network you are sending from, then shows the address for that network. The transfer is detected automatically and your balance updates on its own. There is no card payment, no bank rail and no approval step.
+
+## What can you send, and on which network?
+
+More than most people expect. A few rails take the token straight through, and the rest convert or bridge what you send into the token your balance is held in. What you must not do is guess: send on a network other than the one you selected and the funds land at an address nobody controls on that chain, which no one can undo.
+
+| What you are sending | Rail to pick | What happens to it |
+| --- | --- | --- |
+| USDC.e on Polygon | Polygon | Nothing — it already is the token your balance holds |
+| USDC on Ethereum, Arbitrum, Base or Optimism | Ethereum & EVM | Bridged to Polygon for you |
+| USDC on Solana | Solana | Bridged for you |
+| USDT on Tron (TRC20) | Tron | Converted and bridged for you |
+| BTC | Bitcoin | Converted and bridged for you |
+| Any major token on BNB Chain, Base or Arbitrum | That chain | Swapped and bridged for you |
+
+The convert-anything rails exist because the alternative is worse. A user who has USDT on Tron and is offered only a USDC-on-Polygon address will send the USDT anyway, and lose it.
+
+## What is the cheapest way to deposit money into Polymarket?
+
+Sending USDC.e on Polygon, because it is the only route with no conversion in it. Your balance is already USDC.e on Polygon, so a transfer on that rail is one Polygon transaction — confirmed in seconds, for a network fee measured in fractions of a cent — and what you send is what you get.
+
+Every other rail runs a swap, a bridge, or both, and their cost comes out of what arrives rather than being billed separately. That cost is close to fixed in dollars, so it barely registers on a few hundred dollars and takes a visible bite out of ten. If you are funding from an exchange that supports Polygon withdrawals in USDC.e, that is the route to use. If it does not, one of the converted rails is cheaper than converting by hand at both ends.
+
+## Why does Polygon have two different tokens called USDC?
+
+Because the network got a bridged version first and a native one later, and both kept the name. The bridged token is USDC.e, contract 0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174, and that is the one the Polygon deposit address credits. The native token, at 0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359, is a different contract and will not appear in your balance.
+
+This matters more than it should, because native USDC is what several large exchanges send by default. Check the contract address on the withdrawal screen before you confirm — or sidestep it entirely by using a network where the conversion is done for you.
+
+## How long does a deposit take to show up?
+
+A Polygon transfer credits the moment it confirms, which is a couple of seconds. The bridged and converted rails take longer, usually a couple of minutes, because each one is a swap and a transfer rather than a single transaction. Deposits move through *Confirming* and then *Credited* in the activity list, so you can watch where yours is rather than guessing.
+
+What is not part of that clock is the exchange you sent from. An exchange withdrawal can sit in review for far longer than any of this, and that delay is theirs, not the network's.
+
+## How much should your first deposit be?
+
+Less than you think you need. The minimum stake is $1, so a small balance is a working account rather than a demo. As of 16 September 2026 on Oddzy, [Bitcoin dipping to $45,000 by 31 December 2026](/market/will-bitcoin-dip-to-45000-by-december-31-2026-674-923-755-971-998-525-926-245-316-517-544-589-965-923-986-841-815-224-586-231-289-533-573) trades at 8.5¢ on about $340,000 of 24-hour volume — a dollar buys roughly eleven shares of an outcome the market puts at about one chance in twelve.
+
+The honest reason to start small is not caution for its own sake. It is that the first thing you learn is how your own orders fill, and [an order can fill at a worse price than the one you clicked](/learn/why-did-my-order-fill-at-a-worse-price) on a thin market. Learn that on $20. What you should not do is deposit in a dozen small instalments to spread the risk — the fixed cost per transfer makes that the most expensive way to arrive at the same balance.
+
+## What goes wrong when a deposit disappears?
+
+Three things, and two of them are permanent. Sending on the wrong network is the most common: the address may look valid on the other chain and the funds will sit there, visible and unreachable. Sending the wrong token on the right network is the second — native USDC to the Polygon rail is the case that catches people.
+
+The third is sending to the wrong address entirely. The wallet screen shows two fixed addresses so you can look your account up on a block explorer; they are for reading, not for funding. Always use the address the Deposit button just gave you.
+
+None of this is reversible, and that is the same property that makes the balance genuinely yours — the subject of [where your money actually sits](/learn/is-it-safe-where-your-money-sits). [How it works](/how-it-works) walks the same path forward into a first position, and [how to withdraw money](/learn/how-to-withdraw-money-from-polymarket) covers the journey back out, where the network selector matters exactly as much.
