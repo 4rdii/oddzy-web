@@ -132,6 +132,7 @@ export async function SiteChrome({
               <NavLink href="/updown">{t.nav.updown}</NavLink>
               <NavLink href="/baskets">{t.nav.baskets}</NavLink>
               <NavLink href="/faq">{t.nav.faq}</NavLink>
+              <NavLink href="/privacy">{t.nav.privacy}</NavLink>
             </nav>
 
             {topics.length > 0 && (

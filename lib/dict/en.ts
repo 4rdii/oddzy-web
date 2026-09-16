@@ -11,6 +11,7 @@ export const en = {
     howItWorks: "How it works",
     learn: "Learn",
     faq: "FAQ",
+    privacy: "Privacy",
     signIn: "Sign in",
     primary: "Primary",
     browseTopics: "Browse markets by topic",
@@ -60,6 +61,55 @@ export const en = {
       d: "At resolution the market settles on Polygon and proceeds land in your wallet — every step verifiable.",
     },
   ],
+  privacy: {
+    metaTitle: "Privacy policy",
+    metaDescription:
+      "What Oddzy collects, what the Market Finder extension sends, how long it is kept and who it is shared with.",
+    h1: "Privacy policy",
+    updated: "Last updated 16 September 2026",
+    lead:
+      "This policy covers the Oddzy website, the Telegram bot and the Market Finder browser extension. It says what we collect, why, and what we do not do with it.",
+    sections: [
+      {
+        t: "What the website collects",
+        d: "Pages are served without an account. We record anonymous usage — pages viewed, and a random visitor id kept in your browser so a visit can be told apart from the next one — and, where you arrived from one of our shared links, the code in that link. We do not buy or receive personal profiles about you from anyone.",
+      },
+      {
+        t: "What the Telegram bot and wallet collect",
+        d: "If you trade, we store your Telegram account id and username, the self-custodial wallet address created for you, and a record of your deposits, orders, positions and withdrawals. We need these to show your balance, execute what you ask for and settle it. Your wallet keys are generated through Privy and stay yours: we never hold your funds and cannot move them without an order you approve.",
+      },
+      {
+        t: "What the Market Finder extension sends",
+        d: "When you press Scan or Find markets, the extension sends up to 4,000 characters of the article's text to our API so it can find related markets and send them back. That is the only thing it sends. Finding the topics on a page happens inside your browser; nothing leaves it until you ask. Your scan history, settings and never-scan list are stored in your browser and never reach us. The extension reads a page only when you open it and ask, unless you switch on auto-scan, which asks for your permission first and can be limited to individual sites.",
+      },
+      {
+        t: "Article text and the model",
+        d: "To match markets, the article text you send is passed to a language model provider that returns keywords and a ranking. It is used for that request, cached briefly so the same article is not re-processed, and not used to train anything or build a profile of you.",
+      },
+      {
+        t: "How long we keep things",
+        d: "Trading records are kept for as long as your account exists, because they are the record of your own money. Anonymous usage data is kept in aggregate. Article text sent by the extension is kept only in a short-lived cache measured in minutes.",
+      },
+      {
+        t: "Who we share with",
+        d: "We do not sell your data and we do not share it for advertising. We pass on only what a service needs to do its job: Polymarket and the Polygon blockchain to place and settle your orders, Privy for wallet creation and signing, our hosting and analytics providers, and the language model provider described above. Anything written to a public blockchain is public by nature.",
+      },
+      {
+        t: "Your choices",
+        d: "You can clear the extension's history from its History tab, remove any site permission you granted it from Chrome, and uninstall it at any time. You can export your wallet key or revoke signing permission in the bot. To ask what we hold about you, or to have it deleted, message us — deleting trading records ends the account they belong to.",
+      },
+      {
+        t: "Children",
+        d: "Trading prediction markets is for adults. The bot and the website are not intended for anyone under 18.",
+      },
+      {
+        t: "Changes",
+        d: "If this policy changes in a way that matters, we will update the date at the top of this page.",
+      },
+    ],
+    contactTitle: "Contact",
+    contactBody: "Questions about this policy, or about your data, go to our Telegram bot:",
+  },
   faq: {
     metaTitle: "FAQ",
     metaDescription:
@@ -69,6 +119,10 @@ export const en = {
       {
         q: "Is Oddzy custodial?",
         a: "No. Your wallet is generated through Privy and the keys stay with you. Oddzy never holds or moves your balance — it signs orders you approve, and you can revoke that permission or export your private key at any time.",
+      },
+      {
+        q: "What is the Market Finder extension?",
+        a: "A Chrome extension that connects the news you are reading to the markets that answer it. Click it on any article and it shows the related Oddzy markets with their current odds. It reads a page only when you ask it to, it does not place trades or hold funds, and your scan history stays in your browser.",
       },
       {
         q: "How is this different from a sportsbook?",
@@ -130,6 +184,10 @@ export const en = {
         d: "When the market resolves, winning shares pay $1 each directly to your wallet. Resolution happens on-chain via Polymarket's oracle; disputed outcomes go to the UMA optimistic oracle.",
       },
     ],
+    extensionTitle: "Find markets while you read the news",
+    extensionLead:
+      "Market Finder is our Chrome extension. Open any article, click it, and it reads the page and shows the Oddzy markets that story relates to — with live odds and one line on why each one matches. It can also list the topics on a page and look up whichever you choose, and it keeps a history of your scans in your browser. It never trades: it finds markets and links to them.",
+    extensionCta: "Get the Chrome extension",
   },
   market: {
     metaDescription:

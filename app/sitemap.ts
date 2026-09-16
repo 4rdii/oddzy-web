@@ -95,6 +95,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${siteUrl}/how-it-works`, priority: 0.8 },
     { url: `${siteUrl}/learn`, priority: 0.9 },
     { url: `${siteUrl}/faq`, priority: 0.7 },
+    { url: `${siteUrl}/privacy`, priority: 0.3 },
     // Listed even though its contents expire every 15 minutes: the PAGE is
     // permanent and describes a standing product, the way a topic hub outlives
     // the markets under it. The windows themselves are never listed.

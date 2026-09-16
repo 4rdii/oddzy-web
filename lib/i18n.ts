@@ -46,6 +46,14 @@ export type Brand = {
   siteUrl: string;
   /** Telegram bot deep-linked from every "open in Telegram" affordance. */
   tgBot: string;
+  /**
+   * Chrome Web Store listing for this brand's Market Finder extension.
+   *
+   * Empty until the listing is published — the how-it-works section describes
+   * the extension either way, and only renders a button once there is a real
+   * URL to point at. A dead store link is worse than no link.
+   */
+  extensionUrl: string;
   dir: "ltr" | "rtl";
   /** BCP-47 tag for <html lang> and Intl formatting. */
   htmlLang: string;
@@ -57,6 +65,7 @@ export const BRANDS: Record<Locale, Brand> = {
     logo: "/logo-en.jpg",
     siteUrl: process.env.NEXT_PUBLIC_SITE_URL ?? "https://oddzy.xyz",
     tgBot: process.env.NEXT_PUBLIC_TG_BOT ?? "poly_sport_bet_bot",
+    extensionUrl: process.env.NEXT_PUBLIC_EXTENSION_URL ?? "",
     dir: "ltr",
     htmlLang: "en",
   },
@@ -65,6 +74,7 @@ export const BRANDS: Record<Locale, Brand> = {
     logo: "/logo-fa.jpg",
     siteUrl: process.env.NEXT_PUBLIC_SITE_URL_FA ?? "https://polybaaz.com",
     tgBot: process.env.NEXT_PUBLIC_TG_BOT_FA ?? "PolyBaaz_Bot",
+    extensionUrl: process.env.NEXT_PUBLIC_EXTENSION_URL_FA ?? "",
     dir: "rtl",
     htmlLang: "fa",
   },

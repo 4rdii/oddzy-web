@@ -52,7 +52,24 @@ export default async function HowItWorksPage({
           ))}
         </ol>
 
-        <div className="mt-10 rounded-2xl border border-[var(--line)] bg-[var(--btn)] p-6">
+        <div className="mt-10 rounded-2xl border border-[var(--line)] bg-[var(--card)] p-6">
+          <h2 className="text-[19px] font-bold tracking-[-0.01em]">{t.how.extensionTitle}</h2>
+          <p className="mt-2.5 text-[15px] leading-relaxed text-[var(--text2)]">
+            {t.how.extensionLead}
+          </p>
+          {/* Only once the listing exists — a button onto a dead store page is worse
+              than describing the extension and saying nothing about where to get it. */}
+          {brand.extensionUrl ? (
+            <a
+              href={brand.extensionUrl}
+              className="mt-4 inline-flex min-h-[44px] items-center rounded-xl border border-[var(--line)] bg-[var(--btn)] px-5 py-3 font-semibold text-[var(--ink)]"
+            >
+              {t.how.extensionCta}
+            </a>
+          ) : null}
+        </div>
+
+        <div className="mt-8 rounded-2xl border border-[var(--line)] bg-[var(--btn)] p-6">
           <h2 className="text-[17px] font-bold">{t.how.beforeYouStart}</h2>
           <p className="mt-2 text-[14px] leading-relaxed text-[var(--text2)]">
             {t.how.risk}
