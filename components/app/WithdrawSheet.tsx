@@ -399,7 +399,15 @@ export function WithdrawSheet({
               </div>
 
               <p className="mt-3 text-[11px] leading-relaxed text-[var(--faint)]">
-                {t.app.withdraw.note}
+                {(() => {
+                  const chain = DEST_CHAINS.find((c) => c.id === destChainId);
+                  const symbol =
+                    chain?.tokens.find((tk) => tk.address.toLowerCase() === destToken.toLowerCase())
+                      ?.symbol ?? "";
+                  return t.app.withdraw.note
+                    .replaceAll("{symbol}", symbol)
+                    .replaceAll("{chain}", chain?.label ?? String(destChainId));
+                })()}
               </p>
 
               {error && (

@@ -1000,7 +1000,12 @@ export const en = {
        * along; the web sheet claimed USDC and left them holding a token they had
        * no stated way to use.
        */
-      note: "Your balance is unwrapped to USDC.e and sent on Polygon — the token exchanges and wallets recognise. On-chain transfers cannot be reversed — check the address.",
+      /**
+       * Last step of the withdraw sheet. {symbol} and {chain} are the route the
+       * user picked: this used to say "USDC.e on Polygon" for every route,
+       * including USDT on BNB Chain.
+       */
+      note: "Your balance is sent as {symbol} on {chain}. On-chain transfers can't be reversed, so check the address.",
       failed: "The withdrawal failed. Nothing was sent.",
       sending: "Sending…",
       /** Followed by the amount as its own span. */
