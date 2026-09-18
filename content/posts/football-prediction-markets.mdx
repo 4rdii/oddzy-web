@@ -1,0 +1,93 @@
+---
+title: "How do football prediction markets work?"
+description: "A Premier League fixture is not one bet but two dozen separate markets. How the prices are built, what settles them, and where the money actually sits."
+tag: GUIDE
+topics: ["football", "epl"]
+readingMinutes: 5
+publishedAt: "2026-09-18"
+lead: "A football prediction market turns a match into a set of tradeable questions. Each one has its own price, its own order book and its own settlement rule — and the rules are not the same across them."
+keywords:
+  - "football prediction markets"
+  - "soccer prediction market"
+  - "Premier League prediction market"
+  - "Polymarket football"
+  - "prediction market odds"
+takeaways:
+  - "Each leg of a football match is a separate market that pays $1 if it happens and $0 if it does not, so the price in cents is the probability the market assigns."
+  - "The home, draw and away prices on one fixture sum to roughly 100¢, against a sportsbook's 104–108%, because nobody is adding a margin to the line."
+  - "Football markets settle on the first 90 minutes plus stoppage time only, so extra time and penalties never count towards a match-winner market."
+  - "A postponed match does not refund you — the market stays open until the game is played, and your money stays in the position."
+  - "Markets close at the scheduled kick-off, so the window to sell out of a position ends before the first whistle, not during the match."
+faq:
+  - q: "Is trading a football match on a prediction market the same as betting on it?"
+    a: "Not structurally. At a bookmaker the house is your counterparty, sets the price and profits when you lose. On a prediction market another trader takes the other side, the venue matches you and holds no position in the result, and you can sell your side back to the market at the going price instead of waiting for the final whistle. The economics you face are a spread between buyers and sellers rather than a margin built into the odds."
+  - q: "Do extra time and penalties count in a football prediction market?"
+    a: "No. The resolution rules on Oddzy football markets say the market refers only to the outcome within the first 90 minutes of regular play plus stoppage time. In a knockout tie that is decided in extra time or on penalties, a market asking whether a team wins on that date resolves No, and the draw market for the same fixture resolves Yes. This is the single most common way a football position surprises someone who read the title and not the rules."
+  - q: "How far in advance do football markets open?"
+    a: "Roughly two weeks for a Premier League fixture, though almost nothing trades until the last few days. Brighton against Arsenal on 19 September 2026 was already priced at 54¢ for an Arsenal win on 6 September, on $11.72 of volume that day. By 18 September the same market had traded $37,463 in 24 hours and sat at 57.5¢ — twelve days of waiting moved the price three and a half cents."
+  - q: "Why is the draw usually the least-traded leg of a match?"
+    a: "Because most people arrive with a view about a team rather than about a scoreline, and the draw is nobody's favourite. On Brighton against Arsenal, as of 18 September 2026 on Oddzy, the Arsenal leg had traded $37,634 in 24 hours while the draw had traded $580. The practical consequence is that the thin leg is where a larger order moves the price against you, so size it against the volume on that specific leg and not on the fixture as a whole."
+  - q: "Can I trade football outside the Premier League?"
+    a: "Yes, and the Premier League is a small part of it. As of 18 September 2026 Oddzy listed 11,062 active football markets, across MLS, Liga MX, Serie A, Ligue 1, the Bundesliga, the Eredivisie, the Scottish Premiership, the Argentine Liga Profesional and about a dozen others. Depth varies enormously between them: a top-flight fixture in a major league trades in the tens of thousands of dollars, a mid-table game in a smaller league may trade in the hundreds."
+---
+
+A football prediction market is a question about a match that you trade rather than bet on. Will Arsenal win on Saturday. Will the two teams combine for three or more goals. Each answer is a share that pays $1 if it happens and $0 if it does not, so the price in cents is the probability the market puts on it.
+
+What makes football different from the rest of the board is the sheer number of questions one fixture generates, and how differently they behave.
+
+## What is a football prediction market?
+
+It is a single yes-or-no question about a single match, with its own order book. "Will Chelsea FC win on 2026-09-18?" is one market. "Will Brentford FC vs. Chelsea FC end in a draw?" is a different market, priced separately by different people. There is no combined 1X2 line being managed by anyone — the three legs are three independent books that happen to describe the same afternoon.
+
+That is why the price is a forecast and not an offer. Nobody set it; it is the last price at which two traders disagreed enough to trade, which is the subject of [what a prediction market is and how the odds get set](/learn/what-is-a-prediction-market).
+
+## Why do the three prices on one match add up to about 100¢?
+
+Because no margin is being added to them. A sportsbook shifts its three prices so the implied probabilities sum to 104–108%, and that excess is the house edge. Three independent order books have no such mechanism, so they land near 100¢ and wander a little either side of it.
+
+As of 18 September 2026, 07:14 UTC, on Oddzy:
+
+| Fixture | Home | Draw | Away | Sum |
+|---|---|---|---|---|
+| Brentford v Chelsea, 18 Sep | 34.5¢ | 25.5¢ | 39.5¢ | 99.5¢ |
+| Brighton v Arsenal, 19 Sep | 19.5¢ | 23.5¢ | 57.5¢ | 100.5¢ |
+| Man City v Sunderland, 20 Sep | 75.5¢ | 15.5¢ | 8.5¢ | 99.5¢ |
+
+The two fixtures summing to 99.5¢ are not free money. Those are the prices on the cards, not the offers you would have to lift to buy all three at once, and on a thin leg the offer sits well above the card — which is [why an order fills at a worse price than the one you clicked](/learn/why-did-my-order-fill-at-a-worse-price). The honest reading of the table is narrower and more useful: what you pay above fair value here is a spread you can see, not a margin baked into a line you cannot.
+
+## Which markets does one fixture actually have?
+
+More than you would expect. Brentford against Chelsea on 18 September 2026 had at least 24 separate active markets on Oddzy: each side to win, the draw, over/under on total goals at 0.5, 1.5, 2.5, 3.5 and 4.5, the same ladder for the first half alone, both teams to score, both teams to score in each half separately, goal totals for each team individually, and handicap spreads at 1.5 and 2.5 goals in both directions.
+
+They do not all behave alike. The match-winner legs carry almost all of the volume, the totals ladder carries some, and the first-half and team-total markets are usually a few hundred dollars deep at most.
+
+## What decides how a football market resolves?
+
+The official statistics of the match as recognised by the governing body — for the Premier League, the final score published by the league itself. If those statistics are not published within two hours of the final whistle, Oddzy football markets fall back to Flashscore, then to Sofascore, then to a consensus of credible reporting. If nothing acceptable exists 24 hours after the match, the market resolves 50-50.
+
+Two details matter more than people expect. The market covers the first 90 minutes plus stoppage time and nothing else, so extra time and penalties are invisible to it. And revisions to an officially declared final score made after the market has resolved do not reopen it. Both of these are written into the rules on the market page, which is the argument for [reading the resolution rules before you look at the price](/learn/read-the-resolution-rules-first).
+
+## What happens if the match is postponed or called off?
+
+A postponement does not pay you out and does not refund you. The market stays open until the game has actually been completed, whenever that is, and your money stays in the position for as long as it takes.
+
+A full cancellation with no make-up fixture is handled differently depending on which market you hold, and this is the part worth knowing before you build anything clever:
+
+| Market type | If the match is cancelled outright |
+|---|---|
+| Will team X win | Resolves No |
+| Will it end in a draw | Resolves Yes |
+| Over/under on goals | Resolves 50-50 |
+| Handicap spread | Resolves 50-50 |
+
+So the three match-winner legs still pay exactly $1 between them in a cancellation, while a totals position on the same fixture gives you back half. If you hold both, the two halves of your book settle on different logic.
+
+## Can you still trade after kick-off?
+
+No. Each market closes at the scheduled kick-off time — Brighton against Arsenal closed at 14:00 UTC on 19 September 2026, the moment the match started. Everything before that whistle is tradeable and everything after it is a wait.
+
+That makes the exit window narrower than it looks, and it interacts badly with where the liquidity actually sits. On Brighton against Arsenal as of 18 September 2026, the Arsenal leg had traded $37,634 in 24 hours, the Brighton leg $1,712, and the draw $580. The fixture is liquid; two of its three legs are not. [Selling before a market resolves](/learn/can-you-sell-before-a-market-resolves) works on the leg with the volume and can be expensive on the ones without it.
+
+## Before you take a position
+
+Check the volume on the exact market you are buying rather than on the fixture, and pick a stake you can lose entirely, because a football market pays nothing at all when it goes the other way — [how to size a position](/learn/how-to-size-a-position) is the piece to read before the first one, not after. The current board is on [the Premier League topic page](/topic/epl).
