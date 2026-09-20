@@ -24,6 +24,8 @@ export type CommunityBasket = {
   legCount: number;
   creatorTgUserId: string | null;
   creatorName: string | null;
+  /** The same byline in Persian. Null → fall back to creatorName. */
+  creatorNameFa: string | null;
   creatorVerified: boolean;
   followers: number;
   accuracy: number | null;
@@ -121,7 +123,10 @@ export function BasketCard({
 
   const title = localized(locale, b.titleEn, b.titleFa);
   const desc = localized(locale, b.descriptionEn ?? "", b.descriptionFa);
-  const initial = (b.creatorName ?? "?").replace(/^@/, "").charAt(0).toUpperCase();
+  // One basket is shown on both brands, so the byline is localised like the
+  // title is. A creator who has set only a Latin name keeps it on both.
+  const creatorName = localized(locale, b.creatorName ?? "", b.creatorNameFa) || null;
+  const initial = (creatorName ?? "?").replace(/^@/, "").charAt(0).toUpperCase();
 
   return (
     /* `relative` is the positioning context for the stretched View link below,
@@ -144,7 +149,7 @@ export function BasketCard({
               href={creatorHref}
               className="flex items-center gap-1 truncate text-[13px] font-bold text-[var(--ink)]"
             >
-              {isHouse ? houseName : (b.creatorName ?? c.anonymous)}
+              {isHouse ? houseName : (creatorName ?? c.anonymous)}
               {(isHouse || b.creatorVerified) && (
                 <span
                   aria-label={isHouse ? c.editorial : c.verified}

@@ -32,6 +32,8 @@ import {
 type Creator = {
   id: string | null;
   name: string | null;
+  /** The same byline in Persian. Null → fall back to name. */
+  nameFa?: string | null;
   verified: boolean;
   followers: number;
   accuracy: number | null;
@@ -164,10 +166,12 @@ export function CreatorProfile({ creatorId }: { creatorId: string }) {
     creatorId === "house-daily" ? ("daily" as const)
     : creatorId === "house-world" ? ("world" as const)
     : null;
+  // Localised like a basket title: one profile is served to both brands.
+  const chosenName = localized(locale, creator.name ?? "", creator.nameFa) || null;
   const name = isHouse
     ? housePersona ? c.personas[housePersona] : brand.name
-    : (creator.name ?? c.anonymous);
-  const initial = (creator.name ?? "?").replace(/^@/, "").charAt(0).toUpperCase();
+    : (chosenName ?? c.anonymous);
+  const initial = (chosenName ?? "?").replace(/^@/, "").charAt(0).toUpperCase();
 
   const active = baskets.filter((b) => b.status !== "archived");
   const past = baskets.filter((b) => b.status === "archived");

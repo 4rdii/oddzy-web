@@ -46,7 +46,10 @@ export function CommunityFeed({
   const c = t.communityBaskets;
 
   const [tab, setTab] = useState<Tab>("all");
-  const [cat, setCat] = useState<Category>("all");
+  // Sports is the default view, not "all": it is the overwhelming majority of
+  // what gets published here and what people arrive looking for. "All" stays one
+  // tap away for anyone who wants the rest.
+  const [cat, setCat] = useState<Category>("sports");
   const [rows, setRows] = useState<CommunityBasket[]>(initial);
   const [loading, setLoading] = useState(false);
   const [signedIn, setSignedIn] = useState(false);

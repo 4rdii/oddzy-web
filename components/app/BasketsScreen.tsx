@@ -203,7 +203,9 @@ export function BasketsScreen({
   const { locale, t } = useLocale();
   const [list, setList] = useState<CommunityBasket[] | null>(null);
   const [tab, setTab] = useState<FeedTab>("all");
-  const [cat, setCat] = useState<FeedCat>("all");
+  // Sports by default — same reasoning as the /baskets feed: it is what most
+  // baskets are and what people open this tab for.
+  const [cat, setCat] = useState<FeedCat>("sports");
   /**
    * `query` is what the field shows; `search` is what has actually been sent.
    * Separating them is what makes the debounce work without the input feeling
