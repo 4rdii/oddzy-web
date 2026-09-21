@@ -1,0 +1,81 @@
+---
+title: "What is a Bitcoin prediction market, and how does it settle?"
+description: "A Bitcoin prediction market pays $1 if a stated price condition is true. What the ladder of strikes means, and which feed decides the outcome."
+tag: GUIDE
+topics: ["crypto-btc", "crypto-btc-daily", "crypto-btc-monthly"]
+readingMinutes: 4
+publishedAt: "2026-09-21"
+lead: "A Bitcoin prediction market is not a leveraged position on Bitcoin. It is a yes-or-no contract on one precisely worded price condition, settled against one named feed — and the wording is where the money is."
+keywords:
+  - "bitcoin prediction markets"
+  - "bitcoin price prediction market"
+  - "polymarket bitcoin"
+  - "bitcoin up or down 15 minute"
+  - "binance BTC/USDT resolution"
+takeaways:
+  - "A Bitcoin prediction market pays $1 if the stated price condition is true and $0 if it is not, so the price in cents is the market's own probability."
+  - "The ladder of strikes for one settlement moment is a probability distribution: the gap between two rungs is the chance Bitcoin finishes between them."
+  - "“Reach $85,000 in September” resolves Yes the instant any one-minute high touches it; “above $84,000 on 21 September” looks only at one candle close at noon ET."
+  - "Bitcoin markets settle on a named feed — Binance BTC/USDT one-minute candles for the daily and monthly questions, a Chainlink 60-second TWAP for the 15-minute windows."
+  - "Your worst case is the money you paid, because there is no leverage and no liquidation, which also means a 2.5¢ rung is unlikely rather than cheap."
+faq:
+  - q: "Is trading a Bitcoin prediction market the same as buying Bitcoin?"
+    a: "No. You are buying a contract that pays a fixed $1 if a stated price condition turns out true, not the asset itself. If Bitcoin rises 20% and your condition still fails, the contract pays nothing, and if Bitcoin falls while your condition holds, it still pays the full dollar. You also never hold Bitcoin, so there is nothing to withdraw to a Bitcoin wallet at the end."
+  - q: "Can you lose more than you put in?"
+    a: "No. There is no leverage and no liquidation in a prediction market, so the most you can lose on a position is exactly what you paid for it. That is the honest half of the trade-off: the other half is that a losing contract pays nothing at all, rather than leaving you with a devalued asset you can still sell later."
+  - q: "Why did a Bitcoin market move when the Bitcoin price barely did?"
+    a: "Because time is one of the inputs. A strike sitting $4,000 above spot is reachable with two weeks left and almost unreachable with two hours left, so the same distance is worth steadily less as the settlement moment approaches. Prices on short-dated rungs drift toward 0 or 100 on their own, without any move in the underlying price at all."
+  - q: "Can you sell a Bitcoin position before it settles?"
+    a: "Yes, while the market is still open and someone is bidding. You sell into the best bid on the order book rather than at the price shown on the card, which on a thin market can be several cents lower. Short-dated Bitcoin rungs are usually the most liquid markets on the board, so exiting them is normally easy — the 15-minute windows are the exception."
+  - q: "What is the smallest amount you can put on one of these markets?"
+    a: "The minimum stake on Oddzy is $1, and network fees on Polygon are fractions of a cent, so a small first position is economical rather than symbolic. The practical floor is set by the spread instead: on a thin market, the gap between the buy price and the sell price costs more than any fee, so small trades belong on markets with real volume."
+---
+
+A Bitcoin prediction market is a contract that pays $1 if a stated price condition is true at a stated moment, and nothing if it is not. You buy YES at a price in cents, and that price is the market's probability — 22.7¢ means the crowd puts the odds near 22.7%. The difficulty is never the concept. It is that the condition is specific, and the specifics decide who gets paid.
+
+## What is a Bitcoin prediction market?
+
+It is a yes-or-no contract on one named price condition — “above $80,000 at noon ET on 21 September,” “reaches $85,000 at any point in September” — that settles at $1 or $0 against a named price feed. You are not buying Bitcoin and you are not borrowing against it. There is no leverage and no liquidation price, so the worst outcome is losing the amount you paid.
+
+These come in families of different horizons. As of 21 September 2026 there were 81 active Bitcoin markets on Oddzy: 28 daily questions, 50 monthly and long-term ones, and 3 rolling 15-minute windows.
+
+## Why are there eight Bitcoin markets for the same day?
+
+Because each one is a different strike on the same settlement moment, and read together they form a probability distribution rather than eight separate opinions. The gap between two neighbouring rungs is the market's probability that Bitcoin finishes between them.
+
+Here is the ladder for the noon-ET print on 21 September 2026, priced on Oddzy at 07:13 UTC that morning:
+
+| Settles above | YES | Implied chance of finishing in this band |
+| --- | --- | --- |
+| $76,000 | 99.4¢ | 2.2% ($76k–$78k) |
+| $78,000 | 97.2¢ | 37.5% ($78k–$80k) |
+| $80,000 | 59.7¢ | 37.0% ($80k–$82k) |
+| $82,000 | 22.7¢ | 20.2% ($82k–$84k) |
+| $84,000 | 2.5¢ | 1.7% ($84k–$86k) |
+| $86,000 | 0.8¢ | 0.7% ($86k–$88k) |
+
+Read down the column and you get the shape of the market's view: about three-quarters of the probability packed into the $78,000–$82,000 band, and a right tail that thins out fast. That is more information than any single market on the list gives you, and it is free to read before you trade.
+
+## What is the difference between “reach $85,000” and “above $85,000”?
+
+One is a touch and the other is a snapshot, and the touch is always at least as likely. A market asking whether Bitcoin will *reach* $85,000 in September resolves Yes the instant any one-minute candle prints a high at or above that number, and then it is over. A market asking whether Bitcoin is *above* $84,000 on 21 September ignores everything except the close of a single one-minute candle at noon ET — Bitcoin can trade $90,000 at breakfast and the market still settles No.
+
+You can see what that does to a price. “Will Bitcoin reach $85,000 in September?” traded at 66¢ on 3 September 2026, fell to 22.5¢ by 13 September as the month ran down, and was back at 50.5¢ on 21 September on about $43,700 of 24-hour volume. Nothing about the question changed. The amount of month left to touch it did.
+
+## Which price feed decides the outcome?
+
+A named one, written into the market's own rules, and it is not an average of exchanges. The daily and monthly Bitcoin markets on Oddzy resolve on Binance BTC/USDT one-minute candles: the daily questions on the Close of the 12:00 ET candle, the monthly “reach” questions on the High of any one-minute candle inside the month. The 15-minute windows use a different source entirely — the Chainlink BTC/USD 60-second TWAP data stream.
+
+This matters more than it sounds, because exchanges disagree by tens of dollars constantly, and near a strike that gap is the whole trade. The number on your own chart is not the number that settles the contract, which is the general case for [reading the resolution rules before the price](/learn/read-the-resolution-rules-first).
+
+## How do the 15-minute up-or-down markets work?
+
+Each window asks whether the time-weighted average price of Bitcoin over a 15-minute block is at or above the price at the start of that block — Up if it is, Down if it is not. They roll continuously, and the live board sits at [Up or Down](/updown).
+
+Be careful with what liquidity looks like here. As of 07:13 UTC on 21 September 2026 the 07:30–07:45 window had traded $20 in 24 hours, against $69,800 on that day's $84,000 daily rung. On a book that thin, the spread between the buy price and the sell price is larger than any edge you think you have, and [an order can fill several cents worse than the price on the card](/learn/why-did-my-order-fill-at-a-worse-price).
+
+## Before you take a position
+
+Pick the horizon before you pick the strike. A cheap-looking rung on a market settling in four hours is cheap because it is nearly impossible, not because it is good value — the same 2.5¢ price on a question with three months to run means something completely different. Low-priced outcomes are the ones people systematically overpay for, which is the whole argument in [how to size a position](/learn/how-to-size-a-position).
+
+Then read the rule, not the headline. Touch or close, which exchange, which minute, which timezone. Every Bitcoin market on [the Bitcoin topic page](/topic/crypto-btc) carries its own resolution text, and it is the shortest high-value thing you can read before you press the button.
