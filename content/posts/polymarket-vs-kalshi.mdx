@@ -1,0 +1,81 @@
+---
+title: "Polymarket vs. Kalshi — what's actually different?"
+description: "Kalshi takes dollars through a bank. Polymarket's global exchange settles in USDC on-chain. What that changes about fees, access and who can sign up at all."
+tag: COMPARE
+topics: ["politics", "crypto"]
+readingMinutes: 4
+publishedAt: "2026-09-23"
+lead: "Both are CFTC-designated contract markets and both sell the same instrument — a contract that pays $1 if something happens. The difference is the rail underneath, and it decides your fee, your custody, and whether you can open an account at all."
+keywords:
+  - "polymarket vs kalshi"
+  - "kalshi vs polymarket"
+  - "prediction market fees"
+  - "Kalshi"
+  - "Polymarket"
+  - "CFTC"
+takeaways:
+  - "Kalshi holds US dollars in regulated custody and pays out by bank transfer; Polymarket's global exchange settles in USDC on Polygon, in a wallet whose keys you hold."
+  - "Both charge the taker and both peak at a 50¢ price: 100 contracts cost $1.75 on Kalshi, $1.75 on Polymarket crypto, $1.00 on Polymarket politics, and nothing on Polymarket geopolitics."
+  - "Polymarket never charges a maker fee. Kalshi charges resting orders 0.0175 × price × (1 − price) per contract, a quarter of its taker rate."
+  - "Kalshi's member agreement names dozens of restricted jurisdictions — the UK, Canada, Australia, France, India and Iran among them — so for much of the world the choice is already made."
+  - "On a thin market the gap between the bid and the ask costs more than either fee schedule, so compare depth before you compare fees."
+faq:
+  - q: "Do I need cryptocurrency to use Polymarket?"
+    a: "You need USDC, a dollar-pegged stablecoin, on the Polygon network — but you never need to hold a volatile asset like Bitcoin. Prices, balances and payouts are all denominated in dollars, so a share bought at 62¢ costs 62 cents and pays one dollar. The crypto part is the settlement rail, not the thing you are taking a position on."
+  - q: "Can I use both Kalshi and Polymarket at the same time?"
+    a: "Yes, and traders who can access both often do, because the same event is sometimes priced differently on each. Nothing links the two accounts and there is no transfer between them, so you fund each separately — dollars through a bank on Kalshi, USDC to a wallet on Polymarket. The practical limit is your country, since Kalshi restricts far more jurisdictions than Polymarket does."
+  - q: "Which one has better prices on the same event?"
+    a: "Neither consistently. Where both list an event, traders arbitrage the gap and the prices stay within a cent or two of each other. What differs is depth by category: Kalshi's books are deeper on US sports and economic indicators, Polymarket's on politics and world events, and the shallower book is where a large order costs you real money regardless of the headline price."
+  - q: "Who decides the outcome on each platform?"
+    a: "Kalshi determines outcomes itself, as the exchange, against the source named in each contract's rules. Polymarket hands that job to the UMA optimistic oracle, where anyone can propose the result with a bond behind it and anyone else can dispute it inside a two-hour window. One is faster and simpler, the other is independently challengeable, and both resolve the question exactly as written rather than as reported."
+  - q: "Is one of them safer than the other?"
+    a: "They fail in different directions. Kalshi puts your dollars in regulated custody under CFTC oversight, which also means a company holds your balance and can freeze or close an account. Polymarket's global exchange puts the money in a wallet no company controls, which also means a lost key or a deposit sent on the wrong network is gone for good. Neither protects you from losing the stake itself."
+---
+
+Polymarket and Kalshi sell the same instrument: a contract that pays $1 if a stated thing happens and $0 if it doesn't. Both are CFTC-designated contract markets. The difference is what sits underneath — dollars in a bank on one side, USDC on a public blockchain on the other — and that single choice drives the fee you pay, where your money sits, and whether you can sign up at all.
+
+## What is the actual difference between Polymarket and Kalshi?
+
+Kalshi is one exchange: a CFTC-designated contract market since November 2020, funded with US dollars by debit card, ACH or wire, with balances held in regulated custody. Polymarket is two things. Polymarket US is a CFTC-designated contract market it acquired by buying QCX LLC, cleared to onboard US users from December 2025. The original global exchange settles in USDC on Polygon and is the one [Oddzy connects to](/how-it-works).
+
+That is the whole fork in the road. Everything below is a consequence of it.
+
+## Which one costs less to trade?
+
+Both charge the taker, both leave the maker cheaper, and both peak at a 50¢ price — a contract at 50¢ is maximally uncertain, so it carries the most fee. Kalshi charges `0.07 × price × (1 − price)` per contract, rounded up to the next cent on the order. Polymarket charges `shares × rate × price × (1 − price)`, where the rate depends on the category and makers pay nothing at all.
+
+| 100 contracts | Kalshi | Polymarket crypto | Polymarket politics | Polymarket geopolitics |
+| --- | --- | --- | --- | --- |
+| Taker, at 50¢ | $1.75 | $1.75 | $1.00 | $0 |
+| Taker, at 90¢ | $0.63 | $0.63 | $0.36 | $0 |
+| Maker, at 50¢ | $0.44 | $0 | $0 | $0 |
+
+On crypto the two are identical to the cent. On politics Polymarket is about 43% cheaper, and geopolitics — wars, sanctions, treaties — carries no taker fee on Polymarket at all. The rounding matters at small size: a single Kalshi contract at 50¢ costs 2¢ in fees rather than 1.75¢, because the charge rounds up per order.
+
+Be careful about reading too much into any of this. On a market trading a few hundred dollars a day the bid-ask spread is five or ten cents wide, which is several times either platform's fee, and [that gap is the cost that actually decides your trade](/learn/why-did-my-order-fill-at-a-worse-price).
+
+## Where does your money sit on each?
+
+On Kalshi, in dollars, in regulated custody, reachable by the same bank rails you funded it with. On Polymarket's global exchange, in USDC in a wallet whose private key is yours — no company holds the balance and no company can freeze it.
+
+Each side of that is a trade-off rather than a win. Regulated custody means recourse and a named counterparty; it also means an account that can be closed. Self-custody means nobody can stop a withdrawal; it also means [nobody can reverse your mistake either](/learn/is-it-safe-where-your-money-sits).
+
+## Who can actually open an account?
+
+This is usually the deciding question, and it is not close. Kalshi verifies your identity and country of residence at signup, and its member agreement names dozens of restricted jurisdictions — the United Kingdom, Canada, Australia, France, Italy, Singapore, India and Iran among them. Sanctioned countries are excluded outright, and a VPN does not help, because the block is on verified identity rather than on the IP address.
+
+Polymarket's global exchange needs a wallet and USDC rather than a bank account, which is why it reaches places Kalshi cannot. It is not unrestricted either — it geoblocks some jurisdictions, and the US entity limits what US users can trade. [Where Polymarket does and does not stand legally](/learn/is-polymarket-legal) is worth reading before you assume either answer applies to you.
+
+## Which markets does each one carry?
+
+Kalshi leans towards US sports and economic indicators; Polymarket leads on politics, geopolitics and world events, and carries far more of them. The concentration is visible in the order flow: as of 23 September 2026 on Oddzy, the busiest market on the board was [whether the US invades Iran before 2027](/market/will-the-us-invade-iran-before-2027), trading at 14.5¢ on roughly $568,000 of 24-hour volume — a question sitting in the one category Polymarket charges nothing to take.
+
+Fed policy is the counterexample, heavily traded on both. The same day, [the market on a 25bp Fed hike after the October 2026 meeting](/market/will-the-fed-increase-interest-rates-by-25-bps-after-the-october-2026-meeting-20260617190324032) was at 53.5¢ on about $297,000 of 24-hour volume — close enough to a coin flip that the fee is at its maximum on either venue.
+
+## So which one should you use?
+
+If you are in the US, want dollars in a bank, and mostly trade sports or CPI prints, Kalshi is the more natural fit and its fees are competitive. If you are outside the US, want politics and world events, or want the money in your own custody, Polymarket's global exchange is often the only one of the two that will take you.
+
+The cost difference is real but small next to the two things that actually decide a trade: whether the market is liquid enough to enter and exit at a sensible price, and whether the resolution criteria say what you think they say. Neither platform has an edge there — that work is yours, and [the comparison with a sportsbook](/learn/prediction-markets-vs-sportsbooks) is where the economics of this instrument are set out from scratch.
+
+Sources: [Polymarket fee documentation](https://docs.polymarket.com/trading/fees), [Kalshi fee schedule](https://kalshi.com/docs/kalshi-fee-schedule.pdf), [CFTC order of designation for QCX LLC](https://www.cftc.gov/media/12806/Polymarket%20US%20Amended%20Order%20of%20Designation/download)
