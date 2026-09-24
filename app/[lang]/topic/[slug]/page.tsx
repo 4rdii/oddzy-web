@@ -1,21 +1,29 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 import { SiteChrome } from "@/components/site/Chrome";
 import {
-  getIndexableEvents,
+  getEvents,
   getIndexableMarkets,
   getMarkets,
   getQuestionSeriesIndex,
+  getSportsHubs,
   getTopics,
 } from "@/lib/api";
 import { findPath } from "@/lib/taxonomy";
 import { publishedTopicSlugs } from "@/lib/topic-slugs";
 import { BRANDS, isLocale, LOCALES } from "@/lib/i18n";
 import { getDict } from "@/lib/dict";
-import { compactUsd, kickoffLabel, localized, pct } from "@/lib/format";
+import { compactUsd, localized, pct } from "@/lib/format";
 import { RelatedGuides } from "@/components/site/RelatedGuides";
 import { ladderName } from "@/components/site/LadderView";
+import {
+  LeagueHubView,
+  SportHubView,
+  fixtureUnit,
+  leagueSummary,
+  upcomingOnly,
+} from "@/components/site/SportsHub";
 
 /**
  * A topic hub — the permanent anchor for a subject.
@@ -48,11 +56,19 @@ export async function generateStaticParams() {
 type Params = { params: Promise<{ lang: string; slug: string }> };
 
 /**
- * Played-out fixtures stay "active" until they settle; three hours past
- * kick-off covers extra time without listing yesterday's games.
+ * A league hub's fixtures: upcoming matches only, result odds only, at the
+ * page's own ISR window (a shorter fetch window would cap the route).
  */
-function notPlayedOut(startsAt: string | null): boolean {
-  return !startsAt || new Date(startsAt).getTime() > Date.now() - 3 * 3600_000;
+async function hubFixtures(slug: string) {
+  const res = await getEvents({
+    category: slug,
+    limit: 150,
+    mainOnly: true,
+    matchesOnly: true,
+    includeClosing: true,
+    revalidate: 3600,
+  });
+  return { fixtures: upcomingOnly(res.events), asOf: res.as_of ?? null };
 }
 
 export async function generateMetadata(props: Params): Promise<Metadata> {
@@ -64,13 +80,75 @@ export async function generateMetadata(props: Params): Promise<Metadata> {
   if (!topic) return {};
   const t = getDict(lang);
   const name = localized(lang, topic.name, topic.name_fa);
+  const alternates = {
+    canonical: `/topic/${slug}`,
+    languages: Object.fromEntries(
+      LOCALES.map((l) => [
+        BRANDS[l].htmlLang,
+        `${BRANDS[l].siteUrl}/topic/${slug}`,
+      ]),
+    ),
+  };
+  const hubs = await getSportsHubs();
+  const league = hubs.leagues.find((l) => l.slug === slug);
+  if (league) {
+    const { fixtures } = await hubFixtures(slug);
+    const { league: leagueName, next } = leagueSummary(
+      lang,
+      t,
+      league,
+      fixtures,
+    );
+    const nextText = next?.starts_at
+      ? t.hub.leagueNext
+          .replace(
+            "{match}",
+            lang === "fa"
+              ? (next.title_fa ?? next.title).replace(/\s+vs\.?\s+/g, " و ")
+              : next.title,
+          )
+          .replace(
+            "{date}",
+            new Date(next.starts_at).toLocaleDateString(
+              lang === "fa" ? "fa-IR-u-ca-gregory" : "en-US",
+              { day: "numeric", month: "long", timeZone: "UTC" },
+            ),
+          )
+      : "";
+    return {
+      title: t.hub.leagueMetaTitle
+        .replace("{league}", leagueName)
+        .replace("{heading}", league.sport?.slug === "mma" ? t.hub.fixturesHeadingFights : t.hub.fixturesHeading),
+      description: t.hub.leagueMetaDescription
+        .replace("{count}", String(fixtures.length))
+        .replace("{league}", leagueName)
+        .replace("{unit}", fixtureUnit(t, league))
+        .replace("{next}", nextText),
+      alternates,
+    };
+  }
+  const sport = hubs.sports.find((x) => x.slug === slug);
+  if (sport) {
+    const sportName = localized(lang, sport.name, sport.name_fa);
+    return {
+      title: t.hub.sportMetaTitle.replace("{sport}", sportName),
+      description: t.hub.sportMetaDescription
+        .replace("{count}", String(sport.upcoming))
+        .replace("{sport}", sportName)
+        .replace("{leagues}", String(sport.leagues.length)),
+      alternates,
+    };
+  }
   return {
     title: t.topic.metaTitle.replace("{topic}", name),
     description: t.topic.metaDescription.replace("{topic}", name),
     alternates: {
       canonical: `/topic/${slug}`,
       languages: Object.fromEntries(
-        LOCALES.map((l) => [BRANDS[l].htmlLang, `${BRANDS[l].siteUrl}/topic/${slug}`]),
+        LOCALES.map((l) => [
+          BRANDS[l].htmlLang,
+          `${BRANDS[l].siteUrl}/topic/${slug}`,
+        ]),
       ),
     },
   };
@@ -85,17 +163,28 @@ export default async function TopicPage(props: Params) {
 
   const t = getDict(lang);
   const name = localized(lang, topic.name, topic.name_fa);
-  const [{ markets }, indexable, allSeries, allMatches] = await Promise.all([
+  const hubs = await getSportsHubs();
+  // A generic fixture topic ("Matches" under La Liga) has no page of its own:
+  // its league hub is the one indexed page for those fixtures.
+  const parentHub = hubs.leagues.find(
+    (l) => l.slug !== slug && l.fixture_topics.includes(slug),
+  );
+  if (parentHub) permanentRedirect(`/topic/${parentHub.slug}`);
+  const league = hubs.leagues.find((l) => l.slug === slug);
+  const sportHub = hubs.sports.find((x) => x.slug === slug);
+
+  const [{ markets }, indexable, allSeries] = await Promise.all([
     getMarkets({ category: slug, limit: 40, revalidate: 3600 }),
     getIndexableMarkets(),
     getQuestionSeriesIndex(),
-    getIndexableEvents(),
   ]);
   // Link only to pages that exist as indexed pages; the rest live in the app.
   // A market that belongs to a question page (a rolling deadline or a price
   // ladder) is listed through that page above, and its own URL redirects or
   // canonicalises there — listing it again is a duplicate link.
-  const publishable = new Set(indexable.filter((m) => !m.series_key).map((m) => m.slug));
+  const publishable = new Set(
+    indexable.filter((m) => !m.series_key).map((m) => m.slug),
+  );
   const rows = markets.filter((m) => publishable.has(m.slug));
 
   /**
@@ -109,28 +198,31 @@ export default async function TopicPage(props: Params) {
    */
   const series = allSeries.filter((s) => s.category_id === slug);
 
-  /**
-   * Live matches in this competition, soonest first. A match's markets are
-   * never indexed on their own, so on a sports hub these links ARE the
-   * content — without them every league hub would empty out and 404.
-   */
-  const matches = allMatches
-    .filter((e) => e.topic_id === slug && e.status === "active" && notPlayedOut(e.starts_at))
-    .sort((a, b) => String(a.starts_at ?? "").localeCompare(String(b.starts_at ?? "")));
+  if (sportHub) {
+    const leagues = await Promise.all(
+      hubs.leagues
+        .filter((l) => l.sport?.slug === slug)
+        .map(async (hub) => ({
+          hub,
+          next: (await hubFixtures(hub.slug)).fixtures.slice(0, 3),
+        })),
+    );
+    return (
+      <SiteChrome lang={lang}>
+        <SportHubView
+          lang={lang}
+          t={t}
+          sport={sportHub}
+          leagues={leagues.filter((l) => l.next.length > 0)}
+        />
+      </SiteChrome>
+    );
+  }
 
-  if (rows.length === 0 && series.length === 0 && matches.length === 0) notFound();
-
-  return (
-    <SiteChrome lang={lang}>
-      <div className="mx-auto max-w-3xl px-5 pt-12 pb-4">
-        <h1 className="text-[clamp(26px,4.5vw,38px)] font-bold tracking-[-0.03em]">
-          {t.topic.h1.replace("{topic}", name)}
-        </h1>
-        <p className="mt-3 max-w-xl text-[15px] leading-relaxed text-[var(--text2)]">
-          {t.topic.lead}
-        </p>
-      </div>
-
+  // Season questions, standalone markets and guides: the tail of every topic
+  // hub, league hubs included.
+  const extras = (
+    <>
       {series.length > 0 && (
         <section className="mx-auto max-w-3xl px-5 pb-2">
           <h2 className="font-mono text-[11px] tracking-[0.06em] text-[var(--faint)]">
@@ -149,53 +241,34 @@ export default async function TopicPage(props: Params) {
                         ? ladderName(lang, t, s.ladder)
                         : s.kind === "outcomes" && s.title
                           ? localized(lang, s.title, s.title_fa ?? null)
-                          : localized(lang, s.current.title, s.current.title_fa)}
+                          : localized(
+                              lang,
+                              s.current.title,
+                              s.current.title_fa,
+                            )}
                     </span>
                     {/* A ladder's member count is every level of every period —
                         not a number a reader can use, so it is left off. */}
                     {!s.ladder && s.kind !== "outcomes" && (
                       <span className="mt-1 block font-mono text-[11px] text-[var(--faint)]">
                         <span className="ltr-num">
-                          {t.topic.deadlines.replace("{count}", String(s.member_count))}
+                          {t.topic.deadlines.replace(
+                            "{count}",
+                            String(s.member_count),
+                          )}
                         </span>
                       </span>
                     )}
                   </span>
-                  {!s.ladder && s.kind !== "outcomes" && s.current.probability && (
-                    <span className="shrink-0 text-[20px] font-bold text-[var(--up)]">
-                      <span className="ltr-num">{pct(s.current.probability.yes)}%</span>
-                    </span>
-                  )}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
-
-      {matches.length > 0 && (
-        <section className="mx-auto max-w-3xl px-5 pb-4">
-          <h2 className="font-mono text-[11px] tracking-[0.06em] text-[var(--faint)]">{t.topic.matches}</h2>
-          <ul className="mt-3 flex flex-col gap-2">
-            {matches.map((e) => (
-              <li key={e.slug}>
-                <Link
-                  href={`/match/${e.slug}`}
-                  className="flex items-center justify-between gap-4 rounded-xl border border-[var(--line)] bg-[var(--card)] p-4 text-[var(--ink)]"
-                >
-                  <span className="flex-1">
-                    <span className="block text-[15px] leading-snug font-semibold">
-                      {lang === "fa" && e.title_fa ? e.title_fa.replace(/\s+vs\.?\s+/g, " و ") : e.title}
-                    </span>
-                    {e.starts_at && (
-                      <span className="mt-1 block font-mono text-[11px] text-[var(--faint)]">
-                        {t.topic.matchStarts.replace("{date}", kickoffLabel(e.starts_at, lang))}
+                  {!s.ladder &&
+                    s.kind !== "outcomes" &&
+                    s.current.probability && (
+                      <span className="shrink-0 text-[20px] font-bold text-[var(--up)]">
+                        <span className="ltr-num">
+                          {pct(s.current.probability.yes)}%
+                        </span>
                       </span>
                     )}
-                  </span>
-                  <span className="shrink-0 font-mono text-[11px] text-[var(--faint)]">
-                    <span className="ltr-num">{compactUsd(e.volume_24h ?? 0)}</span>
-                  </span>
                 </Link>
               </li>
             ))}
@@ -215,7 +288,8 @@ export default async function TopicPage(props: Params) {
                   {localized(lang, m.title, m.title_fa)}
                 </span>
                 <span className="mt-1 block font-mono text-[11px] text-[var(--faint)]">
-                  {t.topic.vol} <span className="ltr-num">{compactUsd(m.volume.h24)}</span>
+                  {t.topic.vol}{" "}
+                  <span className="ltr-num">{compactUsd(m.volume.h24)}</span>
                 </span>
               </span>
               <span className="shrink-0 text-[20px] font-bold text-[var(--up)]">
@@ -227,8 +301,49 @@ export default async function TopicPage(props: Params) {
       </ul>
 
       <div className="mx-auto max-w-3xl px-5 pb-12">
-        <RelatedGuides categoryId={slug} lang={lang} heading={t.guides.heading} lead={t.guides.topicLead} />
+        <RelatedGuides
+          categoryId={slug}
+          lang={lang}
+          heading={t.guides.heading}
+          lead={t.guides.topicLead}
+        />
       </div>
+    </>
+  );
+
+  const hub = league ? await hubFixtures(slug) : null;
+  if (!hub?.fixtures.length && rows.length === 0 && series.length === 0)
+    notFound();
+
+  if (league && hub) {
+    // The league's fixtures lead; its season questions (winner, top scorer…)
+    // and any standalone markets follow, as on every topic hub.
+    return (
+      <SiteChrome lang={lang}>
+        <LeagueHubView
+          lang={lang}
+          t={t}
+          hub={league}
+          fixtures={hub.fixtures}
+          asOf={hub.asOf}
+        />
+        {extras}
+      </SiteChrome>
+    );
+  }
+
+  return (
+    <SiteChrome lang={lang}>
+      <div className="mx-auto max-w-3xl px-5 pt-12 pb-4">
+        <h1 className="text-[clamp(26px,4.5vw,38px)] font-bold tracking-[-0.03em]">
+          {t.topic.h1.replace("{topic}", name)}
+        </h1>
+        <p className="mt-3 max-w-xl text-[15px] leading-relaxed text-[var(--text2)]">
+          {t.topic.lead}
+        </p>
+      </div>
+
+      {extras}
     </SiteChrome>
   );
 }

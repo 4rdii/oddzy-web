@@ -1,7 +1,7 @@
 import type { MetadataRoute } from "next";
 import { headers } from "next/headers";
 import { getAllPosts } from "@/lib/posts";
-import { getBaskets, getIndexableEvents, getIndexableMarkets, getQuestionSeriesIndex } from "@/lib/api";
+import { getBaskets, getIndexableMarkets, getQuestionSeriesIndex, getSportsHubs } from "@/lib/api";
 import { brandFor, localeForHost } from "@/lib/i18n";
 
 /**
@@ -69,15 +69,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Editorial pages, unlike everything else here — they exist because someone
   // published them, so they are listed whether or not their legs are indexable.
   const baskets = await getBaskets();
-  // A sports match is one page; its markets never appear above. Live ones
-  // only, for the same orphaning reason as settled markets (see below).
-  const matches = (await getIndexableEvents()).filter((e) => e.status === "active");
+  // Sports are advertised as hubs (league + sport), never as match pages:
+  // a hub outlives every fixture on it (product rule 2026-09-24).
+  const hubs = await getSportsHubs();
   const standalone = markets.filter((m) => !m.series_key);
   const topicSlugs = [
     ...new Set([
       ...markets.map((m) => m.category_id),
       ...series.map((s) => s.category_id),
-      ...matches.map((e) => e.topic_id),
+      ...hubs.leagues.map((l) => l.slug),
+      ...hubs.sports.map((x) => x.slug),
     ].filter(Boolean)),
   ] as string[];
   // A topic page's content changes when a market joins it, so the newest
@@ -87,6 +88,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     if (!m.category_id) continue;
     const at = stamp(m.first_seen).getTime();
     if (at > (topicLastSeen.get(m.category_id) ?? 0)) topicLastSeen.set(m.category_id, at);
+  }
+  // A hub's content changes when a fixture is added to it.
+  for (const h of [...hubs.leagues, ...hubs.sports]) {
+    const at = stamp(h.newest_listed).getTime();
+    if (at > (topicLastSeen.get(h.slug) ?? 0)) topicLastSeen.set(h.slug, at);
   }
   for (const f of series) {
     if (!f.category_id) continue;
@@ -144,13 +150,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         changeFrequency: "weekly" as const,
         priority: 0.7,
       })),
-    // No lastModified: a match page has no honest content date (its prices
-    // move, its fixture does not), and a made-up one costs lastmod credibility.
-    ...matches.map((e) => ({
-      url: `${siteUrl}/match/${e.slug}`,
-      changeFrequency: "daily" as const,
-      priority: 0.8,
-    })),
     // Ranked above single markets: a family page carries the whole question's
     // history and outlives every individual deadline in it.
     // A family page gains content when a new deadline joins it — that date, not

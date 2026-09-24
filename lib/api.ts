@@ -26,7 +26,7 @@ const BASE = process.env.ODDZY_API_BASE ?? "https://app.oddzy.xyz/api";
  * the API, which is cheap. Bump it when a deploy needs fresh upstream data.
  * The API ignores the parameter.
  */
-const CACHE_EPOCH = "2026-09-24d";
+const CACHE_EPOCH = "2026-09-24e";
 const TOKEN = process.env.ODDZY_API_TOKEN ?? "";
 
 export type Market = {
@@ -59,7 +59,12 @@ export type Market = {
 };
 
 /** A market as it appears inside an event group (carries its kind). */
-export type EventMarket = Market & { kind: string | null };
+export type EventMarket = Market & {
+  kind: string | null;
+  /** On /events result markets: the side ("Norway", "Draw", "A vs. B" for a fight). */
+  label?: string | null;
+  label_fa?: string | null;
+};
 
 /**
  * Markets grouped by their event, the way the bot renders a fixture:
@@ -205,11 +210,63 @@ export async function getMarkets(opts: {
  * Event-grouped feed. Matches sort by kick-off, everything else by volume.
  * `category` accepts any topic slug and includes its descendants.
  */
-export async function getEvents(opts: { category?: string; limit?: number } = {}) {
+export async function getEvents(
+  opts: {
+    category?: string;
+    limit?: number;
+    /** Result markets only, no rules text — a fixture list (up to 150). */
+    mainOnly?: boolean;
+    /** Fixtures only (a sport topic also holds futures and props). */
+    matchesOnly?: boolean;
+    /** Keep today's already-started fixtures. */
+    includeClosing?: boolean;
+    /** Cache window; the app feed uses 300s, a hub page must match its own ISR window. */
+    revalidate?: number;
+  } = {},
+) {
   const params = new URLSearchParams();
   if (opts.category) params.set("category", opts.category);
   params.set("limit", String(opts.limit ?? 20));
-  return get<{ events: MarketEvent[]; count: number }>(`/events?${params}`, 300);
+  if (opts.mainOnly) params.set("main_only", "true");
+  if (opts.matchesOnly) params.set("kind", "match");
+  if (opts.includeClosing) params.set("include_closing", "true");
+  return get<{ events: MarketEvent[]; count: number; as_of?: string }>(`/events?${params}`, opts.revalidate ?? 300);
+}
+
+/** A league hub: the one indexed page for a league's fixtures. */
+export type LeagueHub = {
+  slug: string;
+  name: string;
+  name_fa: string | null;
+  sport: { slug: string; name: string; name_fa: string | null } | null;
+  /** The topics its fixtures are filed under (a generic "Matches" leaf rolls up here). */
+  fixture_topics: string[];
+  upcoming: number;
+  next_starts_at: string | null;
+  /** Newest fixture listed — when the hub's content last changed. */
+  newest_listed: string | null;
+};
+
+export type SportHub = {
+  slug: string;
+  name: string;
+  name_fa: string | null;
+  leagues: string[];
+  upcoming: number;
+  newest_listed: string | null;
+};
+
+/**
+ * Sports hubs: one page per league and per sport with upcoming fixtures.
+ * Search gets these, not individual matches. CATALOG_TTL: read by
+ * publishedTopicSlugs, so by SiteChrome on every page.
+ */
+export async function getSportsHubs(): Promise<{ leagues: LeagueHub[]; sports: SportHub[] }> {
+  try {
+    return await get<{ leagues: LeagueHub[]; sports: SportHub[] }>("/events/hubs", CATALOG_TTL);
+  } catch {
+    return { leagues: [], sports: [] };
+  }
 }
 
 

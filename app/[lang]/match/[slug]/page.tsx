@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { SiteChrome } from "@/components/site/Chrome";
 import { MatchBoard, type BoardGroup } from "@/components/site/MatchBoard";
-import { getEventBoard, getIndexableEvents, type EventBoard, type EventMarket } from "@/lib/api";
+import { getEventBoard, getSportsHubs, type EventBoard, type EventMarket } from "@/lib/api";
 import { publishedTopicSlugs } from "@/lib/topic-slugs";
 import { BRANDS, brandFor, isLocale, LOCALES, type Locale } from "@/lib/i18n";
 import { getDict, type Dict } from "@/lib/dict";
@@ -33,8 +33,9 @@ export const revalidate = 86400;
  * dynamic segment on the cached path (see the Next caching note).
  */
 export async function generateStaticParams() {
-  const events = (await getIndexableEvents()).filter((e) => e.status === "active");
-  return LOCALES.flatMap((lang) => events.map((e) => ({ lang, slug: e.slug })));
+  // Nothing prebuilt (match pages are noindex); the list existing at all keeps
+  // this dynamic segment on the cached path — see the Next caching note.
+  return [];
 }
 
 type Params = { params: Promise<{ lang: string; slug: string }> };
@@ -110,7 +111,6 @@ export async function generateMetadata(props: Params): Promise<Metadata> {
   if (!board) return {};
   const t = getDict(lang);
   const title = matchTitle(lang, board);
-  const indexable = (await getIndexableEvents()).some((e) => e.slug === board.event.id);
   const opts = board.result?.options ?? [];
   const settled = board.event.status !== "active" || opts.some((o) => o.won !== null);
   const leader = [...opts].sort((a, b) => (b.p ?? 0) - (a.p ?? 0))[0];
@@ -129,7 +129,10 @@ export async function generateMetadata(props: Params): Promise<Metadata> {
       canonical: `/match/${board.event.id}`,
       languages: Object.fromEntries(LOCALES.map((l) => [BRANDS[l].htmlLang, `${BRANDS[l].siteUrl}/match/${board.event.id}`])),
     },
-    robots: indexable ? { index: true, follow: true } : { index: false, follow: true },
+    // Sports are indexed as league hubs, never match by match (product rule
+    // 2026-09-24): the page serves people and redirects; follow keeps the
+    // hub → match → hub links counting.
+    robots: { index: false, follow: true },
   };
 }
 
@@ -144,6 +147,12 @@ export default async function MatchPage(props: Params) {
   const { event, result } = board;
   const title = matchTitle(lang, board);
   const topics = await publishedTopicSlugs();
+  // The breadcrumb names the league hub, not the generic "Matches" topic the
+  // fixture is filed under.
+  const leagueHub = (await getSportsHubs()).leagues.find((l) => event.topic && l.fixture_topics.includes(event.topic.id));
+  const crumb = leagueHub
+    ? { id: leagueHub.slug, name: leagueHub.name, name_fa: leagueHub.name_fa }
+    : event.topic;
   const all = board.groups.flatMap((g) => g.markets);
   const resultGroup = board.groups.find((g) => g.key === "moneyline")?.markets ?? [];
   const options = result?.options ?? [];
@@ -168,14 +177,14 @@ export default async function MatchPage(props: Params) {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
 
       <article className="mx-auto max-w-3xl px-5 pt-10 pb-10">
-        {event.topic &&
-          (topics.has(event.topic.id) ? (
-            <Link href={`/topic/${event.topic.id}`} className="font-mono text-[11px] tracking-[0.06em] text-[var(--mute)]">
-              {localized(lang, event.topic.name, event.topic.name_fa)}
+        {crumb &&
+          (topics.has(crumb.id) ? (
+            <Link href={`/topic/${crumb.id}`} className="font-mono text-[11px] tracking-[0.06em] text-[var(--mute)]">
+              {localized(lang, crumb.name, crumb.name_fa)}
             </Link>
           ) : (
             <p className="font-mono text-[11px] tracking-[0.06em] text-[var(--mute)]">
-              {localized(lang, event.topic.name, event.topic.name_fa)}
+              {localized(lang, crumb.name, crumb.name_fa)}
             </p>
           ))}
 

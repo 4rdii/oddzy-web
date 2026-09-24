@@ -559,6 +559,49 @@ export const en = {
     openApp: "Open this match in the app",
     asOf: "Prices as of",
   },
+  hub: {
+    leagueMetaTitle: "{league} odds and predictions — {heading}",
+    leagueMetaDescription:
+      "Live market odds for all {count} upcoming {league} {unit}{next}. The result and every other market, refreshed through the day.",
+    leagueNext: ", starting with {match} on {date}",
+    leagueH1: "{league} odds and predictions",
+    leagueSummary: "{count} upcoming {league} {unit} have live prediction markets.",
+    unit: { matches: "matches", fights: "fights" } as Record<string, string>,
+    fixturesHeadingFights: "Upcoming fights",
+    leagueNextSummary: "Next up: {match}, {date}. The market has it at {odds}.",
+    leagueFavourite: "Strongest favourite on the list: {team}, {pct}% to win against {opp}.",
+    updated: "Odds as of {date} UTC",
+    fixturesHeading: "Upcoming matches",
+    markets: "{count} markets",
+    sportMetaTitle: "{sport} odds and predictions — every league",
+    sportMetaDescription:
+      "Live market odds for {count} upcoming {sport} matches across {leagues} leagues, refreshed through the day.",
+    sportH1: "{sport} odds and predictions",
+    sportSummary: "{count} upcoming matches with live prediction markets across {leagues} leagues.",
+    leaguesHeading: "Leagues",
+    upcomingCount: "{count} upcoming",
+    seeAll: "All {count} matches →",
+    home: "Home",
+    faqHeading: "Questions about these odds",
+    faq: [
+      {
+        q: "How are the {league} odds on this page set?",
+        a: "They are prices from Polymarket prediction markets, where people buy and sell shares in each outcome with real money. A price of 62¢ means the market puts that outcome at about 62%.",
+      },
+      {
+        q: "How often are these odds updated?",
+        a: "This page is refreshed through the day. Second-by-second prices are in the app.",
+      },
+      {
+        q: "When is a {league} market settled?",
+        a: "After the official result is published. Each market's rules, on its match page, say exactly what counts — for example whether extra time is included.",
+      },
+      {
+        q: "Can I trade these markets?",
+        a: "Yes. Open any match to take a position on the web or in Telegram.",
+      },
+    ],
+  },
   topic: {
     metaTitle: "{topic} — what the market says",
     metaDescription:
