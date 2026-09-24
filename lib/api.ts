@@ -26,7 +26,7 @@ const BASE = process.env.ODDZY_API_BASE ?? "https://app.oddzy.xyz/api";
  * the API, which is cheap. Bump it when a deploy needs fresh upstream data.
  * The API ignores the parameter.
  */
-const CACHE_EPOCH = "2026-09-24c";
+const CACHE_EPOCH = "2026-09-24d";
 const TOKEN = process.env.ODDZY_API_TOKEN ?? "";
 
 export type Market = {
