@@ -122,6 +122,8 @@ export default async function MarketPage(props: Params) {
   if (detail.match) permanentRedirect(`/match/${detail.match.slug}?m=${encodeURIComponent(slug)}`);
   // Same for one price level of an asset: its ladder page lists every level.
   if (detail.ladder) permanentRedirect(`/question/${detail.ladder.key}?m=${encodeURIComponent(slug)}`);
+  // And one outcome of a multi-outcome question: its page lists them all.
+  if (detail.outcomes) permanentRedirect(`/question/${detail.outcomes.key}?m=${encodeURIComponent(slug)}`);
 
   const { market, history, as_of } = detail;
   const t = getDict(lang);

@@ -75,7 +75,9 @@ export function MatchBoard({
 
   useEffect(() => {
     if (!target.current) return;
-    document.getElementById(`m-${target.current}`)?.scrollIntoView({ block: "center" });
+    document
+      .getElementById(`m-${target.current}`)
+      ?.scrollIntoView({ block: "center" });
     target.current = null;
   }, [open]);
 
@@ -85,35 +87,39 @@ export function MatchBoard({
 
   return (
     <div className="mt-4 flex flex-col gap-3">
-      <div
-        role="tablist"
-        aria-label={labels.tablist}
-        className="flex gap-1 overflow-x-auto rounded-[11px] border border-[var(--segline)] bg-[var(--seg)] p-[3px]"
-      >
-        {groups.map((g) => {
-          const selected = g.key === current.key;
-          return (
-            <button
-              key={g.key}
-              role="tab"
-              aria-selected={selected}
-              onClick={() => {
-                setTab(g.key);
-                setAll(false);
-                setOpen(null);
-              }}
-              className={`flex min-h-[40px] shrink-0 grow items-center justify-center gap-1.5 rounded-[9px] border px-3 text-[13px] font-semibold ${
-                selected
-                  ? "border-[var(--segline)] bg-[var(--card)] text-[var(--ink)] shadow-sm"
-                  : "border-transparent text-[var(--text2)]"
-              }`}
-            >
-              {g.label}
-              <span className="ltr-num font-mono text-[11px] text-[var(--faint)]">{g.markets.length}</span>
-            </button>
-          );
-        })}
-      </div>
+      {groups.length > 1 && (
+        <div
+          role="tablist"
+          aria-label={labels.tablist}
+          className="flex gap-1 overflow-x-auto rounded-[11px] border border-[var(--segline)] bg-[var(--seg)] p-[3px]"
+        >
+          {groups.map((g) => {
+            const selected = g.key === current.key;
+            return (
+              <button
+                key={g.key}
+                role="tab"
+                aria-selected={selected}
+                onClick={() => {
+                  setTab(g.key);
+                  setAll(false);
+                  setOpen(null);
+                }}
+                className={`flex min-h-[40px] shrink-0 grow items-center justify-center gap-1.5 rounded-[9px] border px-3 text-[13px] font-semibold ${
+                  selected
+                    ? "border-[var(--segline)] bg-[var(--card)] text-[var(--ink)] shadow-sm"
+                    : "border-transparent text-[var(--text2)]"
+                }`}
+              >
+                {g.label}
+                <span className="ltr-num font-mono text-[11px] text-[var(--faint)]">
+                  {g.markets.length}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      )}
 
       <ul className="overflow-hidden rounded-2xl border border-[var(--line)] bg-[var(--card)]">
         {rows.map((m, i) => (
@@ -133,7 +139,12 @@ export function MatchBoard({
               onClick={() => setAll(!all)}
               className="min-h-[48px] w-full bg-[var(--paper)] px-4 text-[14px] font-semibold text-[var(--accent)]"
             >
-              {all ? labels.showFewer : labels.showAll.replace("{count}", String(current.markets.length))}
+              {all
+                ? labels.showFewer
+                : labels.showAll.replace(
+                    "{count}",
+                    String(current.markets.length),
+                  )}
             </button>
           </li>
         )}
@@ -165,12 +176,19 @@ function Row({
     let live = true;
     fetch(`/api/markets/by-slug/${encodeURIComponent(m.slug)}`)
       .then((r) => (r.ok ? r.json() : null))
-      .then((d: { description?: string | null; description_fa?: string | null } | null) => {
-        if (!live) return;
-        const fa = lang === "fa" ? d?.description_fa ?? null : null;
-        setRulesEnglish(lang === "fa" && !fa);
-        setRules(fa ?? d?.description ?? null);
-      })
+      .then(
+        (
+          d: {
+            description?: string | null;
+            description_fa?: string | null;
+          } | null,
+        ) => {
+          if (!live) return;
+          const fa = lang === "fa" ? (d?.description_fa ?? null) : null;
+          setRulesEnglish(lang === "fa" && !fa);
+          setRules(fa ?? d?.description ?? null);
+        },
+      )
       .catch(() => live && setRules(null));
     return () => {
       live = false;
@@ -182,7 +200,10 @@ function Row({
   const yesPct = m.p === null ? null : pct(m.p);
 
   return (
-    <li id={`m-${m.slug}`} className={first ? "" : "border-t border-[var(--line)]"}>
+    <li
+      id={`m-${m.slug}`}
+      className={first ? "" : "border-t border-[var(--line)]"}
+    >
       <button
         onClick={onToggle}
         aria-expanded={open}
@@ -191,12 +212,16 @@ function Row({
         <span className="flex min-w-0 flex-1 flex-col gap-0.5">
           <span className="text-[15px] leading-snug font-medium">{title}</span>
           <span className="font-mono text-[11px] text-[var(--faint)]">
-            <span className="ltr-num">{compactUsd(m.h24)}</span> · {labels.vol24}
+            <span className="ltr-num">{compactUsd(m.h24)}</span> ·{" "}
+            {labels.vol24}
           </span>
         </span>
         {settled ? (
           <span className="shrink-0 rounded-[9px] border border-[var(--line)] px-2.5 py-1.5 text-[13px] font-semibold text-[var(--text2)]">
-            {labels.resolved.replace("{outcome}", m.outcome === "YES" ? m.yes : m.outcome === "NO" ? m.no : "—")}
+            {labels.resolved.replace(
+              "{outcome}",
+              m.outcome === "YES" ? m.yes : m.outcome === "NO" ? m.no : "—",
+            )}
           </span>
         ) : (
           yesPct !== null && (
@@ -205,7 +230,8 @@ function Row({
                 {m.yes} <span className="ltr-num font-mono">{yesPct}%</span>
               </span>
               <span className="rounded-[9px] border border-[var(--line)] px-2.5 py-1.5 text-[13px] font-semibold whitespace-nowrap text-[var(--text2)]">
-                {m.no} <span className="ltr-num font-mono">{100 - yesPct}%</span>
+                {m.no}{" "}
+                <span className="ltr-num font-mono">{100 - yesPct}%</span>
               </span>
             </span>
           )
@@ -217,7 +243,9 @@ function Row({
             className="max-w-full text-[14px] leading-relaxed whitespace-pre-line text-[var(--text2)]"
             {...(rulesEnglish ? { lang: "en", dir: "ltr" as const } : {})}
           >
-            {rules === undefined ? labels.rulesLoading : rules ?? labels.rulesUnavailable}
+            {rules === undefined
+              ? labels.rulesLoading
+              : (rules ?? labels.rulesUnavailable)}
           </p>
           {!settled && (
             <Link

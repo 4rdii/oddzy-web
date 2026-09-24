@@ -26,7 +26,7 @@ const BASE = process.env.ODDZY_API_BASE ?? "https://app.oddzy.xyz/api";
  * the API, which is cheap. Bump it when a deploy needs fresh upstream data.
  * The API ignores the parameter.
  */
-const CACHE_EPOCH = "2026-09-24b";
+const CACHE_EPOCH = "2026-09-24c";
 const TOKEN = process.env.ODDZY_API_TOKEN ?? "";
 
 export type Market = {
@@ -225,6 +225,8 @@ export type MarketDetail = {
   match?: { slug: string } | null;
   /** Set when this market is one price level of a ladder page: it redirects there. */
   ladder?: { key: string } | null;
+  /** Set when this market is one outcome of a multi-outcome question: it redirects there. */
+  outcomes?: { key: string } | null;
   /**
    * Daily closing probability, oldest first. Empty or one-length for markets
    * first seen after the recorder started — a page must degrade to "no history
@@ -395,10 +397,21 @@ export type Ladder = {
   periods: { key: string; label: string; close_time: string | null; open: boolean; rungs: LadderRung[] }[];
 };
 
+/** A multi-outcome question: every candidate / number / range on one page. */
+export type QuestionOutcomes = {
+  title: string;
+  title_fa: string | null;
+  /** Live outcomes by probability, then settled ones. */
+  options: (Omit<SeriesMember, "current"> & { label: string; label_fa: string | null })[];
+};
+
 export type SeriesSummary = {
   key: string;
   /** "ladder" = one asset's price levels over a time frame; "rolling" = one question re-listed at new deadlines. */
-  kind?: "ladder" | "rolling";
+  kind?: "ladder" | "rolling" | "outcomes";
+  /** A multi-outcome question's own title ("Brazil Presidential Election"). */
+  title?: string;
+  title_fa?: string | null;
   ladder?: { asset: Ladder["asset"]; timeframe: Ladder["timeframe"] } | null;
   current: Omit<SeriesMember, "current">;
   category_id: string | null;
@@ -414,6 +427,8 @@ export type QuestionSeries = {
   moved_to?: string;
   /** Present on a ladder page; `members` is then empty. */
   ladder?: Ladder | null;
+  /** Present on a multi-outcome question page; `members` is then empty. */
+  outcomes?: QuestionOutcomes | null;
   key: string;
   /** The market that answers the question today, in full detail. */
   market: Market;

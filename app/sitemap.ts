@@ -63,7 +63,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Rolling-deadline questions are advertised once, as the family page. Their
   // individual legs carry a canonical pointing there, so listing them here too
   // would ask Google to crawl five URLs in order to be told four are duplicates.
-  const series = await getQuestionSeriesIndex();
+  // Multi-outcome questions: live ones only, like markets and matches — a
+  // finished F1 race or transfer saga is a record nobody links to.
+  const series = (await getQuestionSeriesIndex()).filter((s) => s.kind !== "outcomes" || s.status === "active");
   // Editorial pages, unlike everything else here — they exist because someone
   // published them, so they are listed whether or not their legs are indexable.
   const baskets = await getBaskets();

@@ -231,6 +231,10 @@ export const fa: Dict = {
     seeCurrent: "مشاهدهٔ بازار فعلی ←",
   },
   series: {
+    outcomesMetaTitle: "{title} — احتمال همهٔ گزینه‌ها",
+    outcomesMetaDescription: "{title}: بازار {leader} را با {chance}٪ پیشتاز می‌داند. احتمال زندهٔ هر {count} گزینه.",
+    outcomesLead: "همهٔ گزینه‌هایی که در بازار معامله می‌شوند، از محتمل‌ترین. هر درصد را کسانی قیمت زده‌اند که رویش پول گذاشته‌اند.",
+    outcomesBoardHeading: "گزینه‌ها",
     ladderTitle: "قیمت {asset}: {timeframe}",
     ladderMetaTitle: "قیمت {asset} {timeframe} — احتمال هر سطح قیمت",
     ladderMetaDescription:

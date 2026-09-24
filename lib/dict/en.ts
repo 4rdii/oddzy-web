@@ -221,6 +221,10 @@ export const en = {
     seeCurrent: "See the current market →",
   },
   series: {
+    outcomesMetaTitle: "{title} — odds for every outcome",
+    outcomesMetaDescription: "{title}: the market favours {leader} at {chance}%. Live odds for all {count} outcomes.",
+    outcomesLead: "Every outcome the market is trading, most likely first. Each percentage is priced by people staking money on it.",
+    outcomesBoardHeading: "Outcomes",
     ladderTitle: "{asset} price: {timeframe}",
     ladderMetaTitle: "{asset} price {timeframe} — odds for every level",
     ladderMetaDescription:

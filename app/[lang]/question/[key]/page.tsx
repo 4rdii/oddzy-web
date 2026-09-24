@@ -10,6 +10,7 @@ import { PriceHistory } from "@/components/site/PriceHistory";
 import { RelatedGuides } from "@/components/site/RelatedGuides";
 import { SeriesTimeline } from "@/components/site/SeriesTimeline";
 import { LadderView } from "@/components/site/LadderView";
+import { OutcomesView } from "@/components/site/OutcomesView";
 
 /**
  * One rolling question, as a permanent page.
@@ -54,6 +55,27 @@ export async function generateMetadata(props: Params): Promise<Metadata> {
     canonical: `/question/${key}`,
     languages: Object.fromEntries(LOCALES.map((l) => [BRANDS[l].htmlLang, `${BRANDS[l].siteUrl}/question/${key}`])),
   };
+  // Ladders and multi-outcome questions are indexed only when they cleared
+  // the publishing gate (/markets/series); the rest render as noindex.
+  const published = (await getQuestionSeriesIndex()).some((s) => s.key === key);
+  const robots = published ? { index: true, follow: true } : { index: false, follow: true };
+  if (series.outcomes) {
+    const o = series.outcomes;
+    const title = localized(lang, o.title, o.title_fa);
+    const leader = o.options.find((x) => x.status === "active" && x.probability);
+    return {
+      title: t.series.outcomesMetaTitle.replace("{title}", title),
+      description: leader?.probability
+        ? t.series.outcomesMetaDescription
+            .replace("{title}", title)
+            .replace("{leader}", lang === "fa" ? leader.label_fa ?? leader.label : leader.label)
+            .replace("{chance}", String(pct(leader.probability.yes)))
+            .replace("{count}", String(o.options.length))
+        : title,
+      alternates,
+      robots,
+    };
+  }
   if (series.ladder) {
     const l = series.ladder;
     const asset = lang === "fa" ? l.asset.name_fa ?? l.asset.name : l.asset.name;
@@ -62,7 +84,7 @@ export async function generateMetadata(props: Params): Promise<Metadata> {
       title: t.series.ladderMetaTitle.replace("{asset}", asset).replace("{timeframe}", tf),
       description: t.series.ladderMetaDescription.replace("{asset}", asset).replace("{timeframe}", tf),
       alternates,
-      robots: { index: true, follow: true },
+      robots,
     };
   }
   const { market } = series;
@@ -100,6 +122,13 @@ export default async function QuestionPage(props: Params) {
 
   const { market, history, members, as_of } = series;
   const t = getDict(lang);
+  if (series.outcomes) {
+    return (
+      <SiteChrome lang={lang}>
+        <OutcomesView lang={lang} t={t} outcomes={series.outcomes} category={market.category} asOf={as_of} />
+      </SiteChrome>
+    );
+  }
   if (series.ladder) {
     return (
       <SiteChrome lang={lang}>
