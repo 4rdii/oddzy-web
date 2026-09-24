@@ -50,6 +50,9 @@ function stamp(iso: string | null | undefined): Date {
   return Number.isNaN(d.getTime()) ? dayStamp() : d;
 }
 
+/** A basket slug ending in a date is a one-day auto basket. */
+const DATED_BASKET = /-\d{4}-\d{2}-\d{2}$/;
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const host = (await headers()).get("host");
   const locale = localeForHost(host);
@@ -162,7 +165,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     })),
     // A basket page's prices move with its legs, so daily while any leg trades.
     // Editorial: a basket is written once and its legs are fixed at publish.
-    ...baskets.map((b) => ({
+    // Dated auto-generated baskets ("auto-risky-2026-09-24") are one-day
+    // pages: listing each would add a short-lived URL to the sitemap daily.
+    ...baskets.filter((b) => !DATED_BASKET.test(b.slug)).map((b) => ({
       url: `${siteUrl}/baskets/${b.slug}`,
       lastModified: stamp(b.published_at),
       changeFrequency: (b.status === "active" ? "weekly" : "yearly") as "weekly" | "yearly",

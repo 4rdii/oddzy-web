@@ -73,7 +73,9 @@ export async function generateMetadata(props: Params): Promise<Metadata> {
         LOCALES.map((l) => [BRANDS[l].htmlLang, `${BRANDS[l].siteUrl}/baskets/${slug}`]),
       ),
     },
-    robots: { index: true, follow: true },
+    // A dated auto basket ("auto-risky-2026-09-24") lives a day; it stays
+    // shareable but is not offered to search (and is not in the sitemap).
+    robots: /-\d{4}-\d{2}-\d{2}$/.test(slug) ? { index: false, follow: true } : { index: true, follow: true },
   };
 }
 
