@@ -15,6 +15,18 @@ import type { Topic } from "./taxonomy";
  */
 
 const BASE = process.env.ODDZY_API_BASE ?? "https://app.oddzy.xyz/api";
+
+/**
+ * Part of every upstream URL, so bumping it gives every fetch a new cache key.
+ *
+ * Vercel's data cache SURVIVES deploys and these fetches live up to a day, so
+ * a deploy that depends on a new API field (match/ladder redirects, a changed
+ * /markets/series) otherwise serves the old JSON for up to 24h. Purging is
+ * project-wide and rebuilds every page (ISR writes); a new key only refetches
+ * the API, which is cheap. Bump it when a deploy needs fresh upstream data.
+ * The API ignores the parameter.
+ */
+const CACHE_EPOCH = "2026-09-24b";
 const TOKEN = process.env.ODDZY_API_TOKEN ?? "";
 
 export type Market = {
@@ -99,7 +111,7 @@ async function get<T>(path: string, revalidate: number, tags?: string[]): Promis
   if (!TOKEN) {
     throw new ApiError("ODDZY_API_TOKEN is not configured", 500);
   }
-  const res = await fetch(`${BASE}${path}`, {
+  const res = await fetch(`${BASE}${path}${path.includes("?") ? "&" : "?"}v=${CACHE_EPOCH}`, {
     headers: { Authorization: `Bearer ${TOKEN}` },
     // The upstream snapshot only moves every ~30 min; revalidate well inside
     // that so a page is never staler than the data it describes.
