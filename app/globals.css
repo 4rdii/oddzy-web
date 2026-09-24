@@ -28,6 +28,7 @@
   --handle: #dad7ce;
   --dots: #c9c6bc;
   --up: #1f9d6b;
+  --uptint: rgba(31, 157, 107, 0.1);
   --down: #d2544a;
   --accent: #2d5bff;
   --accent-hover: #1b41cc;
@@ -117,6 +118,7 @@
   --handle: #3c414a;
   --dots: #3c414a;
   --up: #4cc38a;
+  --uptint: rgba(76, 195, 138, 0.12);
   --down: #f07a6a;
 }
 
@@ -143,6 +145,7 @@
     --handle: #3c414a;
     --dots: #3c414a;
     --up: #4cc38a;
+    --uptint: rgba(76, 195, 138, 0.12);
     --down: #f07a6a;
   }
 }

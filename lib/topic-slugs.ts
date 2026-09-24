@@ -1,5 +1,5 @@
 import "server-only";
-import { getIndexableMarkets, getQuestionSeriesIndex } from "./api";
+import { getIndexableEvents, getIndexableMarkets, getQuestionSeriesIndex } from "./api";
 
 /**
  * Topic slugs that have a real /topic/<slug> page.
@@ -15,9 +15,10 @@ import { getIndexableMarkets, getQuestionSeriesIndex } from "./api";
  * question's family page.
  */
 export async function publishedTopicSlugs(): Promise<Set<string>> {
-  const [markets, series] = await Promise.all([
+  const [markets, series, matches] = await Promise.all([
     getIndexableMarkets(),
     getQuestionSeriesIndex(),
+    getIndexableEvents(),
   ]);
   // ACTIVE markets only, matching what a topic page actually renders: it lists
   // what is trading and 404s when that list is empty. Counting settled markets
@@ -27,6 +28,9 @@ export async function publishedTopicSlugs(): Promise<Set<string>> {
     [
       ...markets.filter((m) => m.status === "active").map((m) => m.category_id),
       ...series.map((s) => s.category_id),
+      // Sports hubs list match pages, not markets (a match's markets are never
+      // indexed on their own), so a live indexable match keeps its hub alive.
+      ...matches.filter((e) => e.status === "active").map((e) => e.topic_id),
     ].filter((s): s is string => Boolean(s)),
   );
 }

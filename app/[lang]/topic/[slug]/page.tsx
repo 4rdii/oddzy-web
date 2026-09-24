@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { SiteChrome } from "@/components/site/Chrome";
 import {
+  getIndexableEvents,
   getIndexableMarkets,
   getMarkets,
   getQuestionSeriesIndex,
@@ -12,7 +13,7 @@ import { findPath } from "@/lib/taxonomy";
 import { publishedTopicSlugs } from "@/lib/topic-slugs";
 import { BRANDS, isLocale, LOCALES } from "@/lib/i18n";
 import { getDict } from "@/lib/dict";
-import { compactUsd, localized, pct } from "@/lib/format";
+import { compactUsd, kickoffLabel, localized, pct } from "@/lib/format";
 import { RelatedGuides } from "@/components/site/RelatedGuides";
 
 /**
@@ -45,6 +46,14 @@ export async function generateStaticParams() {
 
 type Params = { params: Promise<{ lang: string; slug: string }> };
 
+/**
+ * Played-out fixtures stay "active" until they settle; three hours past
+ * kick-off covers extra time without listing yesterday's games.
+ */
+function notPlayedOut(startsAt: string | null): boolean {
+  return !startsAt || new Date(startsAt).getTime() > Date.now() - 3 * 3600_000;
+}
+
 export async function generateMetadata(props: Params): Promise<Metadata> {
   const { lang, slug } = await props.params;
   if (!isLocale(lang)) return {};
@@ -75,10 +84,11 @@ export default async function TopicPage(props: Params) {
 
   const t = getDict(lang);
   const name = localized(lang, topic.name, topic.name_fa);
-  const [{ markets }, indexable, allSeries] = await Promise.all([
+  const [{ markets }, indexable, allSeries, allMatches] = await Promise.all([
     getMarkets({ category: slug, limit: 40, revalidate: 3600 }),
     getIndexableMarkets(),
     getQuestionSeriesIndex(),
+    getIndexableEvents(),
   ]);
   // Link only to pages that exist as indexed pages; the rest live in the app.
   const publishable = new Set(indexable.map((m) => m.slug));
@@ -95,7 +105,16 @@ export default async function TopicPage(props: Params) {
    */
   const series = allSeries.filter((s) => s.category_id === slug);
 
-  if (rows.length === 0 && series.length === 0) notFound();
+  /**
+   * Live matches in this competition, soonest first. A match's markets are
+   * never indexed on their own, so on a sports hub these links ARE the
+   * content — without them every league hub would empty out and 404.
+   */
+  const matches = allMatches
+    .filter((e) => e.topic_id === slug && e.status === "active" && notPlayedOut(e.starts_at))
+    .sort((a, b) => String(a.starts_at ?? "").localeCompare(String(b.starts_at ?? "")));
+
+  if (rows.length === 0 && series.length === 0 && matches.length === 0) notFound();
 
   return (
     <SiteChrome lang={lang}>
@@ -135,6 +154,36 @@ export default async function TopicPage(props: Params) {
                       <span className="ltr-num">{pct(s.current.probability.yes)}%</span>
                     </span>
                   )}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {matches.length > 0 && (
+        <section className="mx-auto max-w-3xl px-5 pb-4">
+          <h2 className="font-mono text-[11px] tracking-[0.06em] text-[var(--faint)]">{t.topic.matches}</h2>
+          <ul className="mt-3 flex flex-col gap-2">
+            {matches.map((e) => (
+              <li key={e.slug}>
+                <Link
+                  href={`/match/${e.slug}`}
+                  className="flex items-center justify-between gap-4 rounded-xl border border-[var(--line)] bg-[var(--card)] p-4 text-[var(--ink)]"
+                >
+                  <span className="flex-1">
+                    <span className="block text-[15px] leading-snug font-semibold">
+                      {lang === "fa" && e.title_fa ? e.title_fa.replace(/\s+vs\.?\s+/g, " و ") : e.title}
+                    </span>
+                    {e.starts_at && (
+                      <span className="mt-1 block font-mono text-[11px] text-[var(--faint)]">
+                        {t.topic.matchStarts.replace("{date}", kickoffLabel(e.starts_at, lang))}
+                      </span>
+                    )}
+                  </span>
+                  <span className="shrink-0 font-mono text-[11px] text-[var(--faint)]">
+                    <span className="ltr-num">{compactUsd(e.volume_24h ?? 0)}</span>
+                  </span>
                 </Link>
               </li>
             ))}

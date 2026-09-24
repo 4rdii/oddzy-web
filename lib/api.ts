@@ -206,6 +206,12 @@ export type PricePoint = { day: string; yes: number | null; volume_24h: number |
 export type MarketDetail = {
   market: Market;
   /**
+   * Set when this market is part of a sports match with 2+ markets. Such a
+   * market has no page of its own: the market page redirects to
+   * /match/<slug>, which carries the result and every sub-market.
+   */
+  match?: { slug: string } | null;
+  /**
    * Daily closing probability, oldest first. Empty or one-length for markets
    * first seen after the recorder started — a page must degrade to "no history
    * yet" rather than assume it can draw a line.
@@ -236,6 +242,79 @@ export type IndexableMarket = {
   status: string;
   outcome: string | null;
 };
+
+/** One side of a match's headline result, as /events/{slug} summarises it. */
+export type MatchResultOption = {
+  label: string;
+  label_fa: string | null;
+  /** The market to trade this side on. Both sides of a fight share one. */
+  slug: string;
+  p: number | null;
+  /** true/false once settled, null while live. */
+  won: boolean | null;
+};
+
+/** One fixture's whole board: headline result plus every market, grouped. */
+export type EventBoard = {
+  event: {
+    id: string;
+    short_id: string;
+    title: string;
+    title_fa: string | null;
+    kind: string;
+    starts_at: string | null;
+    status: string;
+    topic: { id: string; name: string; name_fa: string | null } | null;
+  };
+  market_count: number;
+  /**
+   * three_way (football: win / draw / win), two_way (two win markets, no
+   * draw) or head_to_head (a fight: ONE market, YES = the first-named side).
+   */
+  result: { type: "three_way" | "two_way" | "head_to_head"; options: MatchResultOption[] } | null;
+  groups: { key: string; label: string; count: number; markets: EventMarket[] }[];
+  as_of: string;
+};
+
+export type IndexableEvent = {
+  slug: string;
+  title: string;
+  title_fa: string | null;
+  starts_at: string | null;
+  status: string;
+  topic_id: string | null;
+  market_count: number;
+  volume_24h: number | null;
+  volume: number | null;
+};
+
+/**
+ * A match page's data. include_settled so a finished match keeps its board
+ * and shows how each market resolved, instead of rendering empty.
+ */
+export async function getEventBoard(slug: string): Promise<EventBoard | null> {
+  try {
+    return await get<EventBoard>(`/events/${encodeURIComponent(slug)}?include_settled=true`, MARKET_TTL);
+  } catch (e) {
+    if (e instanceof ApiError && e.status === 404) return null;
+    throw e;
+  }
+}
+
+/**
+ * The match pages that qualify for indexing. A sports match is ONE page; none
+ * of its markets is indexed on its own (they are absent from
+ * getIndexableMarkets). Same fallback rule: an API blink yields [] rather than
+ * failing the build.
+ */
+export async function getIndexableEvents(): Promise<IndexableEvent[]> {
+  try {
+    const data = await get<{ events: IndexableEvent[] }>("/events/indexable", CATALOG_TTL);
+    return data.events;
+  } catch {
+    return [];
+  }
+}
 
 /** One market plus its price history — the market page's only data source. */
 export async function getMarketDetail(slug: string): Promise<MarketDetail | null> {

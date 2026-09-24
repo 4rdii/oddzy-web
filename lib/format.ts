@@ -127,3 +127,24 @@ export function payoutFor(stake: number, price: number): number {
 export function localized(locale: string, en: string, fa: string | null | undefined): string {
   return locale === "fa" && fa ? fa : en;
 }
+
+/**
+ * A kick-off, as a match page's header shows it:
+ *   en → "Thu, Sep 24 · 18:45 UTC"
+ *   fa → «پنجشنبه ۲۴ سپتامبر · ۲۲:۱۵» (Tehran time; the caller appends
+ *        «به وقت تهران»). Gregorian, for the same reason as deadlineDate.
+ */
+export function kickoffLabel(iso: string | null | undefined, locale: string): string {
+  if (!iso) return "—";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "—";
+  if (locale === "fa") {
+    const zone = "Asia/Tehran";
+    const day = d.toLocaleDateString("fa-IR-u-ca-gregory", { weekday: "long", day: "numeric", month: "long", timeZone: zone });
+    const time = d.toLocaleTimeString("fa-IR", { hour: "2-digit", minute: "2-digit", hour12: false, timeZone: zone });
+    return `${day} · ${time}`;
+  }
+  const day = d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", timeZone: "UTC" });
+  const time = d.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", hour12: false, timeZone: "UTC" });
+  return `${day} · ${time} UTC`;
+}

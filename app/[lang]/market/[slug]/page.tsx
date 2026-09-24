@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 import { SiteChrome } from "@/components/site/Chrome";
 import { getIndexableMarkets, getMarketDetail, getQuestionSeries, MARKET_TTL } from "@/lib/api";
 import { BRANDS, brandFor, isLocale, LOCALES, type Locale } from "@/lib/i18n";
@@ -115,6 +115,11 @@ export default async function MarketPage(props: Params) {
   if (!isLocale(lang)) notFound();
   const detail = await getMarketDetail(slug);
   if (!detail) notFound();
+  // A market of a sports match has no page of its own: the match page holds
+  // the result and every sub-market, and ?m= opens this one's row there.
+  // Permanent, so search engines move whatever these URLs had earned onto the
+  // match page, and old links (bot posts, extension history) keep working.
+  if (detail.match) permanentRedirect(`/match/${detail.match.slug}?m=${encodeURIComponent(slug)}`);
 
   const { market, history, as_of } = detail;
   const t = getDict(lang);
