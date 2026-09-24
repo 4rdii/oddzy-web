@@ -231,6 +231,23 @@ export const fa: Dict = {
     seeCurrent: "مشاهدهٔ بازار فعلی ←",
   },
   series: {
+    ladderTitle: "قیمت {asset}: {timeframe}",
+    ladderMetaTitle: "قیمت {asset} {timeframe} — احتمال هر سطح قیمت",
+    ladderMetaDescription:
+      "احتمال زندهٔ بازار برای هر سطح قیمت {asset}، {timeframe}: احتمال این‌که بالاتر از هر سطح بماند، به آن برسد یا تا آن افت کند.",
+    ladderLead:
+      "همهٔ سطح‌های قیمتی {asset} که در بازار معامله می‌شوند. هر درصد، احتمال رسیدن به آن سطح است؛ قیمتی که مردم رویش پول گذاشته‌اند.",
+    ladderBoardHeading: "سطح‌های قیمت",
+    ladderTimeframes: { daily: "روزانه", weekly: "هفتگی", monthly: "ماهانه", long: "تا پایان سال" } as Record<string, string>,
+    ladderDirs: {
+      above: "بالای {a}",
+      below: "زیر {a}",
+      range: "{a} تا {b}",
+      high: "رسیدن به {a}",
+      low: "افت تا {a}",
+    } as Record<string, string>,
+    ladderPeriodWeek: "هفتهٔ منتهی به {date}",
+    ladderPeriodBy: "تا {date}",
     metaDescription:
       "{title} — قیمت زندهٔ بازار، همهٔ مهلت‌های گذشته و نتیجهٔ هرکدام. با پیش‌رفتن پرسش به‌روز می‌شود.",
     metaDescriptionResolved:

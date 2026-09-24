@@ -15,6 +15,7 @@ import { BRANDS, isLocale, LOCALES } from "@/lib/i18n";
 import { getDict } from "@/lib/dict";
 import { compactUsd, kickoffLabel, localized, pct } from "@/lib/format";
 import { RelatedGuides } from "@/components/site/RelatedGuides";
+import { ladderName } from "@/components/site/LadderView";
 
 /**
  * A topic hub — the permanent anchor for a subject.
@@ -91,7 +92,10 @@ export default async function TopicPage(props: Params) {
     getIndexableEvents(),
   ]);
   // Link only to pages that exist as indexed pages; the rest live in the app.
-  const publishable = new Set(indexable.map((m) => m.slug));
+  // A market that belongs to a question page (a rolling deadline or a price
+  // ladder) is listed through that page above, and its own URL redirects or
+  // canonicalises there — listing it again is a duplicate link.
+  const publishable = new Set(indexable.filter((m) => !m.series_key).map((m) => m.slug));
   const rows = markets.filter((m) => publishable.has(m.slug));
 
   /**
@@ -141,15 +145,19 @@ export default async function TopicPage(props: Params) {
                 >
                   <span className="flex-1">
                     <span className="block text-[15px] leading-snug font-semibold">
-                      {localized(lang, s.current.title, s.current.title_fa)}
+                      {s.ladder ? ladderName(lang, t, s.ladder) : localized(lang, s.current.title, s.current.title_fa)}
                     </span>
-                    <span className="mt-1 block font-mono text-[11px] text-[var(--faint)]">
-                      <span className="ltr-num">
-                        {t.topic.deadlines.replace("{count}", String(s.member_count))}
+                    {/* A ladder's member count is every level of every period —
+                        not a number a reader can use, so it is left off. */}
+                    {!s.ladder && (
+                      <span className="mt-1 block font-mono text-[11px] text-[var(--faint)]">
+                        <span className="ltr-num">
+                          {t.topic.deadlines.replace("{count}", String(s.member_count))}
+                        </span>
                       </span>
-                    </span>
+                    )}
                   </span>
-                  {s.current.probability && (
+                  {!s.ladder && s.current.probability && (
                     <span className="shrink-0 text-[20px] font-bold text-[var(--up)]">
                       <span className="ltr-num">{pct(s.current.probability.yes)}%</span>
                     </span>

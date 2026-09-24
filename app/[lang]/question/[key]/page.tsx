@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 import { SiteChrome } from "@/components/site/Chrome";
 import { getQuestionSeries, getQuestionSeriesIndex } from "@/lib/api";
 import { BRANDS, brandFor, isLocale, LOCALES } from "@/lib/i18n";
@@ -9,6 +9,7 @@ import { compactUsd, deadlineDate, localized, pct } from "@/lib/format";
 import { PriceHistory } from "@/components/site/PriceHistory";
 import { RelatedGuides } from "@/components/site/RelatedGuides";
 import { SeriesTimeline } from "@/components/site/SeriesTimeline";
+import { LadderView } from "@/components/site/LadderView";
 
 /**
  * One rolling question, as a permanent page.
@@ -47,8 +48,23 @@ export async function generateMetadata(props: Params): Promise<Metadata> {
   const { lang, key } = await props.params;
   if (!isLocale(lang)) return {};
   const series = await getQuestionSeries(key);
-  if (!series) return {};
+  if (!series || series.moved_to) return {};
   const t = getDict(lang);
+  const alternates = {
+    canonical: `/question/${key}`,
+    languages: Object.fromEntries(LOCALES.map((l) => [BRANDS[l].htmlLang, `${BRANDS[l].siteUrl}/question/${key}`])),
+  };
+  if (series.ladder) {
+    const l = series.ladder;
+    const asset = lang === "fa" ? l.asset.name_fa ?? l.asset.name : l.asset.name;
+    const tf = t.series.ladderTimeframes[l.timeframe] ?? l.timeframe;
+    return {
+      title: t.series.ladderMetaTitle.replace("{asset}", asset).replace("{timeframe}", tf),
+      description: t.series.ladderMetaDescription.replace("{asset}", asset).replace("{timeframe}", tf),
+      alternates,
+      robots: { index: true, follow: true },
+    };
+  }
   const { market } = series;
   const title = localized(lang, market.title, market.title_fa);
   const resolved = market.status !== "active";
@@ -78,9 +94,19 @@ export default async function QuestionPage(props: Params) {
   if (!isLocale(lang)) notFound();
   const series = await getQuestionSeries(key);
   if (!series) notFound();
+  // Old one-price-level pages ("will-bitcoin-reach-70-000") now live on their
+  // asset/time-frame ladder page.
+  if (series.moved_to) permanentRedirect(`/question/${series.moved_to}`);
 
   const { market, history, members, as_of } = series;
   const t = getDict(lang);
+  if (series.ladder) {
+    return (
+      <SiteChrome lang={lang}>
+        <LadderView lang={lang} t={t} ladder={series.ladder} category={market.category} asOf={as_of} />
+      </SiteChrome>
+    );
+  }
   const brand = brandFor(lang);
   const title = localized(lang, market.title, market.title_fa);
   const rules = lang === "fa" ? (market.description_fa ?? market.description) : market.description;

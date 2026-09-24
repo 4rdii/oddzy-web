@@ -120,6 +120,8 @@ export default async function MarketPage(props: Params) {
   // Permanent, so search engines move whatever these URLs had earned onto the
   // match page, and old links (bot posts, extension history) keep working.
   if (detail.match) permanentRedirect(`/match/${detail.match.slug}?m=${encodeURIComponent(slug)}`);
+  // Same for one price level of an asset: its ladder page lists every level.
+  if (detail.ladder) permanentRedirect(`/question/${detail.ladder.key}?m=${encodeURIComponent(slug)}`);
 
   const { market, history, as_of } = detail;
   const t = getDict(lang);

@@ -211,6 +211,8 @@ export type MarketDetail = {
    * /match/<slug>, which carries the result and every sub-market.
    */
   match?: { slug: string } | null;
+  /** Set when this market is one price level of a ladder page: it redirects there. */
+  ladder?: { key: string } | null;
   /**
    * Daily closing probability, oldest first. Empty or one-length for markets
    * first seen after the recorder started — a page must degrade to "no history
@@ -362,8 +364,30 @@ export type SeriesMember = {
   current: boolean;
 };
 
+/** One price level of a ladder (asset × time frame) page. */
+export type LadderRung = Omit<SeriesMember, "current"> & {
+  /** "Above $80,000", "Dip to $2,600", "$80,000 – $82,000" (English). */
+  label: string;
+  dir: "above" | "below" | "range" | "high" | "low";
+  amounts: number[];
+};
+
+/**
+ * Every price level of one asset over one time frame, grouped by period (a
+ * day, week, month or deadline): open periods soonest first, then the most
+ * recent closed ones.
+ */
+export type Ladder = {
+  asset: { key: string; name: string; name_fa: string | null };
+  timeframe: "daily" | "weekly" | "monthly" | "long";
+  periods: { key: string; label: string; close_time: string | null; open: boolean; rungs: LadderRung[] }[];
+};
+
 export type SeriesSummary = {
   key: string;
+  /** "ladder" = one asset's price levels over a time frame; "rolling" = one question re-listed at new deadlines. */
+  kind?: "ladder" | "rolling";
+  ladder?: { asset: Ladder["asset"]; timeframe: Ladder["timeframe"] } | null;
   current: Omit<SeriesMember, "current">;
   category_id: string | null;
   /** Newest member's listing date — when the family last gained a deadline. */
@@ -374,6 +398,10 @@ export type SeriesSummary = {
 };
 
 export type QuestionSeries = {
+  /** Set instead of everything else when an old key now lives on a ladder page. */
+  moved_to?: string;
+  /** Present on a ladder page; `members` is then empty. */
+  ladder?: Ladder | null;
   key: string;
   /** The market that answers the question today, in full detail. */
   market: Market;

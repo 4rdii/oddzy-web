@@ -221,6 +221,23 @@ export const en = {
     seeCurrent: "See the current market →",
   },
   series: {
+    ladderTitle: "{asset} price: {timeframe}",
+    ladderMetaTitle: "{asset} price {timeframe} — odds for every level",
+    ladderMetaDescription:
+      "Live market odds for every {asset} price level, {timeframe}: the chance it ends above, reaches or dips to each one.",
+    ladderLead:
+      "Every {asset} price level the market is trading. Each percentage is the chance that level is hit, priced by people staking money on it.",
+    ladderBoardHeading: "Price levels",
+    ladderTimeframes: { daily: "daily", weekly: "weekly", monthly: "monthly", long: "by year end" } as Record<string, string>,
+    ladderDirs: {
+      above: "Above {a}",
+      below: "Below {a}",
+      range: "{a} – {b}",
+      high: "Reach {a}",
+      low: "Dip to {a}",
+    } as Record<string, string>,
+    ladderPeriodWeek: "Week to {date}",
+    ladderPeriodBy: "By {date}",
     metaDescription:
       "{title} — the live market price, every past deadline and how each resolved. Updated as the question rolls forward.",
     metaDescriptionResolved:
