@@ -5,7 +5,7 @@ import { SiteChrome } from "@/components/site/Chrome";
 import { MatchBoard, type BoardGroup } from "@/components/site/MatchBoard";
 import { getEventBoard, getSportsHubs, type EventBoard, type EventMarket } from "@/lib/api";
 import { publishedTopicSlugs } from "@/lib/topic-slugs";
-import { BRANDS, brandFor, isLocale, LOCALES, type Locale } from "@/lib/i18n";
+import { brandFor, isLocale, type Locale } from "@/lib/i18n";
 import { getDict, type Dict } from "@/lib/dict";
 import { compactUsd, kickoffLabel, localized, pct } from "@/lib/format";
 
@@ -127,7 +127,6 @@ export async function generateMetadata(props: Params): Promise<Metadata> {
     description,
     alternates: {
       canonical: `/match/${board.event.id}`,
-      languages: Object.fromEntries(LOCALES.map((l) => [BRANDS[l].htmlLang, `${BRANDS[l].siteUrl}/match/${board.event.id}`])),
     },
     // Sports are indexed as league hubs, never match by match (product rule
     // 2026-09-24): the page serves people and redirects; follow keeps the

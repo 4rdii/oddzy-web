@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { notFound, permanentRedirect } from "next/navigation";
 import { SiteChrome } from "@/components/site/Chrome";
 import { getIndexableMarkets, getMarketDetail, getQuestionSeries, MARKET_TTL } from "@/lib/api";
-import { BRANDS, brandFor, isLocale, LOCALES, type Locale } from "@/lib/i18n";
+import { brandFor, isLocale, LOCALES, type Locale } from "@/lib/i18n";
 import { getDict } from "@/lib/dict";
 import { compactUsd, deadlineDate, localized, pct } from "@/lib/format";
 import { PriceHistory } from "@/components/site/PriceHistory";
@@ -97,14 +97,6 @@ export async function generateMetadata(props: Params): Promise<Metadata> {
     // the noindex gets applied to the consolidated target too.
     alternates: {
       canonical: seriesKey ? `/question/${seriesKey}` : `/market/${slug}`,
-      languages: Object.fromEntries(
-        LOCALES.map((l) => [
-          BRANDS[l].htmlLang,
-          seriesKey
-            ? `${BRANDS[l].siteUrl}/question/${seriesKey}`
-            : `${BRANDS[l].siteUrl}/market/${slug}`,
-        ]),
-      ),
     },
     robots: indexable || seriesKey ? { index: true, follow: true } : { index: false, follow: true },
   };

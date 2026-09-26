@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { SiteChrome } from "@/components/site/Chrome";
 import { UpDownBoard } from "@/components/updown/UpDownBoard";
 import { getUpDownWindows } from "@/lib/api";
-import { brandFor, BRANDS, isLocale, LOCALES } from "@/lib/i18n";
+import { brandFor, isLocale, LOCALES } from "@/lib/i18n";
 import { getDict } from "@/lib/dict";
 
 /**
@@ -43,9 +43,6 @@ export async function generateMetadata(props: Params): Promise<Metadata> {
     description: t.updown.metaDescription,
     alternates: {
       canonical: "/updown",
-      languages: Object.fromEntries(
-        LOCALES.map((l) => [BRANDS[l].htmlLang, `${BRANDS[l].siteUrl}/updown`]),
-      ),
     },
     robots: { index: true, follow: true },
   };

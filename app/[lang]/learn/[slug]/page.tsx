@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { SiteChrome } from "@/components/site/Chrome";
 import { getAllPosts, getPost } from "@/lib/posts";
-import { BRANDS, brandFor, isLocale, LOCALES } from "@/lib/i18n";
+import { brandFor, isLocale, LOCALES } from "@/lib/i18n";
 import { getDict } from "@/lib/dict";
 
 /** Pre-render every article, per locale — this is the SEO surface. */
@@ -25,15 +25,6 @@ export async function generateMetadata(props: ArticleParams): Promise<Metadata> 
     description: post.description,
     alternates: {
       canonical: `/learn/${post.slug}`,
-      // The same slug is the same article in both languages on two different
-      // hostnames. Without hreflang, Google can read the pair as duplicates and
-      // pick one host for both audiences — tell it they're translations.
-      languages: Object.fromEntries(
-        LOCALES.map((l) => [
-          BRANDS[l].htmlLang,
-          `${BRANDS[l].siteUrl}/learn/${post.slug}`,
-        ]),
-      ),
     },
     openGraph: {
       type: "article",

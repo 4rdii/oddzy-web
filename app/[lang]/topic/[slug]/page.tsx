@@ -12,7 +12,7 @@ import {
 } from "@/lib/api";
 import { findPath } from "@/lib/taxonomy";
 import { publishedTopicSlugs } from "@/lib/topic-slugs";
-import { BRANDS, isLocale, LOCALES } from "@/lib/i18n";
+import { isLocale, LOCALES } from "@/lib/i18n";
 import { getDict } from "@/lib/dict";
 import { compactUsd, localized, pct } from "@/lib/format";
 import { RelatedGuides } from "@/components/site/RelatedGuides";
@@ -82,12 +82,6 @@ export async function generateMetadata(props: Params): Promise<Metadata> {
   const name = localized(lang, topic.name, topic.name_fa);
   const alternates = {
     canonical: `/topic/${slug}`,
-    languages: Object.fromEntries(
-      LOCALES.map((l) => [
-        BRANDS[l].htmlLang,
-        `${BRANDS[l].siteUrl}/topic/${slug}`,
-      ]),
-    ),
   };
   const hubs = await getSportsHubs();
   const league = hubs.leagues.find((l) => l.slug === slug);
@@ -144,12 +138,6 @@ export async function generateMetadata(props: Params): Promise<Metadata> {
     description: t.topic.metaDescription.replace("{topic}", name),
     alternates: {
       canonical: `/topic/${slug}`,
-      languages: Object.fromEntries(
-        LOCALES.map((l) => [
-          BRANDS[l].htmlLang,
-          `${BRANDS[l].siteUrl}/topic/${slug}`,
-        ]),
-      ),
     },
   };
 }

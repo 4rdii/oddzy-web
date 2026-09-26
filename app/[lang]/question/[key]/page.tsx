@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { notFound, permanentRedirect } from "next/navigation";
 import { SiteChrome } from "@/components/site/Chrome";
 import { getQuestionSeries, getQuestionSeriesIndex } from "@/lib/api";
-import { BRANDS, brandFor, isLocale, LOCALES } from "@/lib/i18n";
+import { brandFor, isLocale, LOCALES } from "@/lib/i18n";
 import { getDict } from "@/lib/dict";
 import { compactUsd, deadlineDate, localized, pct } from "@/lib/format";
 import { PriceHistory } from "@/components/site/PriceHistory";
@@ -53,7 +53,6 @@ export async function generateMetadata(props: Params): Promise<Metadata> {
   const t = getDict(lang);
   const alternates = {
     canonical: `/question/${key}`,
-    languages: Object.fromEntries(LOCALES.map((l) => [BRANDS[l].htmlLang, `${BRANDS[l].siteUrl}/question/${key}`])),
   };
   // Ladders and multi-outcome questions are indexed only when they cleared
   // the publishing gate (/markets/series); the rest render as noindex.
@@ -103,9 +102,6 @@ export async function generateMetadata(props: Params): Promise<Metadata> {
     ),
     alternates: {
       canonical: `/question/${key}`,
-      languages: Object.fromEntries(
-        LOCALES.map((l) => [BRANDS[l].htmlLang, `${BRANDS[l].siteUrl}/question/${key}`]),
-      ),
     },
     robots: { index: true, follow: true },
   };
