@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState, type CSSProperties } from "react";
-import type { SideKey, WhaleBet, WhaleGame } from "@/lib/api";
+import type { MatchLive, SideKey, WhaleBet, WhaleGame } from "@/lib/api";
 import { Crest } from "@/components/pb/Crest";
 import { useNow } from "@/components/pb/useNow";
 import { Avatar, ScoreRing } from "@/components/pb/ScoreRing";
@@ -36,8 +36,8 @@ function passes(f: Filter, b: WhaleBet): boolean {
 type Sel = { bet: WhaleBet; game: WhaleGame; names: Record<SideKey, string> };
 
 export function WhalesPb({
-  games,
-  finished = [],
+  games: initialGames,
+  finished: initialFinished = [],
   generatedAt,
   dateLabel,
 }: {
@@ -52,6 +52,12 @@ export function WhalesPb({
   const [how, setHow] = useState(false);
   const [sel, setSel] = useState<Sel | null>(null);
   const now = useNow(60_000);
+  const ended = useEndedWatch(initialGames);
+
+  // A game the live feed reports as ended leaves the ranking at once and joins
+  // the finished list with its score — no page rebuild needed.
+  const games = initialGames.filter((g) => !ended[g.slug]);
+  const finished = [...initialGames.filter((g) => ended[g.slug]).map((g) => ({ ...g, live: ended[g.slug] })), ...initialFinished];
 
   const allBets = games.reduce((a, g) => a + g.whale_bet_count, 0);
   const allMoney = games.reduce((a, g) => a + (g.whale_total_usdc ?? 0), 0);
@@ -739,4 +745,44 @@ function WhaleSheet({ sel, onClose }: { sel: Sel; onClose: () => void }) {
       </div>
     </div>
   );
+}
+
+/**
+ * Watch the ranked games that should be finishing, and report the ones that
+ * have: from kickoff + 110 minutes (a football match runs ~1h55 with
+ * half-time and stoppage time), each such game's live state is polled every
+ * 30s through /api/match — the CDN-cached feed the match page uses — until it
+ * says "ended". Nothing is polled before that point, so a page of games that
+ * are hours away costs no requests at all.
+ */
+const EXPECTED_END_MS = 110 * 60_000;
+
+function useEndedWatch(games: WhaleGame[]): Record<string, MatchLive> {
+  const [ended, setEnded] = useState<Record<string, MatchLive>>({});
+  const now = useNow(30_000);
+  useEffect(() => {
+    if (now === null) return;
+    const due = games.filter(
+      (g) => !ended[g.slug] && g.starts_at && now - new Date(g.starts_at).getTime() >= EXPECTED_END_MS,
+    );
+    if (!due.length) return;
+    let alive = true;
+    Promise.all(
+      due.map((g) =>
+        fetch(`/api/match/${encodeURIComponent(g.slug)}`)
+          .then((r) => (r.ok ? r.json() : null))
+          .then((d) => (d?.live?.status === "ended" ? ([g.slug, d.live as MatchLive] as const) : null))
+          .catch(() => null),
+      ),
+    ).then((res) => {
+      const hits = res.filter((x): x is readonly [string, MatchLive] => x !== null);
+      if (alive && hits.length) setEnded((cur) => ({ ...cur, ...Object.fromEntries(hits) }));
+    });
+    return () => {
+      alive = false;
+    };
+    // Re-evaluated on every 30s tick; `ended` is read, not a trigger.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [now, games]);
+  return ended;
 }

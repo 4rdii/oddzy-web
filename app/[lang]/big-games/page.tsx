@@ -9,12 +9,13 @@ import { faDay } from "@/lib/pb";
 /**
  * «بازی‌های بزرگ امروز» — PolyBaaz only (design: PB Big Games Whales).
  *
- * ISR window: 10 minutes, matched by the whales fetch (a route regenerates at
- * the LOWEST revalidate of any fetch it makes). Upstream refreshes every 5
- * minutes and every regeneration is a billed ISR write; one page at 10 minutes
- * is ~144 writes a day.
+ * ISR window: 30 minutes, matched by the whales fetch (a route regenerates at
+ * the LOWEST revalidate of any fetch it makes) — ~48 billed writes a day.
+ * Finished games do not wait for it: the page watches each game from its
+ * expected end (kickoff + 110 min) and moves it to the finished list as soon
+ * as the live feed says it ended (see useEndedWatch in WhalesPb).
  */
-export const revalidate = 600;
+export const revalidate = 1800;
 
 export async function generateStaticParams() {
   return [{ lang: "fa" }];
