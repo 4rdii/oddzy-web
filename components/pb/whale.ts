@@ -20,6 +20,11 @@ export function tierOf(s: WhaleStats | null): { label: string; c: string } {
 
 /** Handoff tags: sharp (70+) on an outsider, big money with a weak record, a fresh account. */
 export function tagOf(b: WhaleBet): { label: string; c: string; bg: string } | null {
+  // A curated football sharp outranks every other tag: it is the strongest
+  // signal we have, from a sport-specific record rather than all-market PnL.
+  if (b.sharp) {
+    return { label: `تیزبین فوتبال · بازده ${fa(Math.round(b.sharp.roi * 100))}٪ در ${fa(b.sharp.events)} بازی`, c: "var(--up)", bg: "var(--upbg)" };
+  }
   const s = b.stats;
   if (!s || s.score === null) return null;
   const isNew = s.tier === "new";

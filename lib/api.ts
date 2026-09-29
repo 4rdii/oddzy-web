@@ -889,6 +889,8 @@ export type WhaleBet = {
   fills: number;
   first_at: string;
   last_at: string;
+  /** Set for a curated sharp (oddzy-api data/sharps.json): their record in this sport. */
+  sharp?: { sport: string; roi: number; pnl_usdc: number | null; events: number; wins: number | null; losses: number | null } | null;
   stats: WhaleStats | null;
 };
 
@@ -917,6 +919,8 @@ export type WhaleGame = {
   market_count: number;
   result: { sides: WhaleSide[]; result_whale_usdc: number | null; verdict: "with_market" | "against_market" | null } | null;
   whale_bet_count: number;
+  /** Bets from curated sharps (shown even when small). */
+  sharp_bet_count?: number;
   whale_total_usdc: number | null;
   whales: WhaleBet[];
   error?: string;

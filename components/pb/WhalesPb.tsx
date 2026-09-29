@@ -27,7 +27,7 @@ const FILTERS: [Filter, string][] = [
 function passes(f: Filter, b: WhaleBet): boolean {
   const s = b.stats;
   const isNew = s?.tier === "new";
-  if (f === "sharp") return !!s && !isNew && (s.score ?? 0) >= 80;
+  if (f === "sharp") return !!b.sharp || (!!s && !isNew && (s.score ?? 0) >= 80);
   if (f === "contra") return Math.round(b.avg_price * 100) <= 30;
   if (f === "weak") return !!s && !isNew && s.score !== null && s.score < 40;
   return true;
@@ -124,7 +124,7 @@ export function WhalesPb({ games, generatedAt, dateLabel }: { games: WhaleGame[]
         )}
 
         <div style={{ fontSize: 11.5, color: "var(--faint)", lineHeight: 1.9 }}>
-          نهنگ یعنی حسابی با پیش‌بینی بزرگ (دست‌کم ۵۰۰ دلار) پیش از شروع بازی. امتیاز فقط سابقهٔ گذشته را نشان می‌دهد و تضمینی برای نتیجهٔ این بازی نیست. منبع: Polymarket.
+          نهنگ یعنی حسابی با پیش‌بینی بزرگ (دست‌کم ۵۰۰ دلار) پیش از شروع بازی؛ پیش‌بینی «تیزبین‌های فوتبال» از ۱۰۰ دلار نشان داده می‌شود. ربات‌های آربیتراژ و حساب‌هایی که روی دو طرف یک بازار خرید کرده‌اند حذف شده‌اند. امتیاز فقط سابقهٔ گذشته را نشان می‌دهد و تضمینی برای نتیجهٔ این بازی نیست. منبع: Polymarket.
         </div>
       </main>
       {sel && <WhaleSheet sel={sel} onClose={() => setSel(null)} />}
@@ -614,6 +614,16 @@ function WhaleSheet({ sel, onClose }: { sel: Sel; onClose: () => void }) {
             </div>
           ))}
         </div>
+        {b.sharp && (
+          <div style={{ border: "1px solid var(--up)", background: "var(--upbg)", borderRadius: 14, padding: "12px 14px", display: "flex", flexDirection: "column", gap: 4 }}>
+            <span style={{ fontSize: 12, color: "var(--up)", fontWeight: 800 }}>تیزبین فوتبال</span>
+            <span style={{ fontSize: 14, fontWeight: 700, lineHeight: 1.8 }}>
+              بازده {fa(Math.round(b.sharp.roi * 100))}٪ در {fa(b.sharp.events)} بازی فوتبال
+              {b.sharp.wins !== null && b.sharp.losses !== null ? ` · ${fa(b.sharp.wins)} برد، ${fa(b.sharp.losses)} باخت` : ""}
+              {b.sharp.pnl_usdc !== null ? ` · سود ${faMoney(b.sharp.pnl_usdc)}` : ""}
+            </span>
+          </div>
+        )}
         <div style={{ border: "1px solid var(--goldline)", background: "var(--goldbg)", borderRadius: 14, padding: "12px 14px", display: "flex", flexDirection: "column", gap: 4 }}>
           <span style={{ fontSize: 12, color: "var(--muted)" }}>
             در این بازی · {names.home} و {names.away}
