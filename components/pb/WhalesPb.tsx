@@ -124,7 +124,7 @@ export function WhalesPb({ games, generatedAt, dateLabel }: { games: WhaleGame[]
         )}
 
         <div style={{ fontSize: 11.5, color: "var(--faint)", lineHeight: 1.9 }}>
-          نهنگ یعنی حسابی با پیش‌بینی بزرگ (دست‌کم ۵۰۰ دلار) پیش از شروع بازی؛ پیش‌بینی «تیزبین‌های فوتبال» از ۱۰۰ دلار نشان داده می‌شود. ربات‌های آربیتراژ و حساب‌هایی که روی دو طرف یک بازار خرید کرده‌اند حذف شده‌اند. امتیاز فقط سابقهٔ گذشته را نشان می‌دهد و تضمینی برای نتیجهٔ این بازی نیست. منبع: Polymarket.
+          نهنگ یعنی حسابی در Polymarket با پیش‌بینی‌های بزرگ.
         </div>
       </main>
       {sel && <WhaleSheet sel={sel} onClose={() => setSel(null)} />}
