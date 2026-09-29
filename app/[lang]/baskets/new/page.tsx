@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { BasketBuilder } from "@/components/baskets/BasketBuilder";
 import { LocaleProvider } from "@/components/app/LocaleProvider";
+import { SiteChrome } from "@/components/site/Chrome";
 import { PrivyRoot } from "@/components/app/PrivyRoot";
 import { getTopics } from "@/lib/api";
 import { brandFor, isLocale } from "@/lib/i18n";
@@ -64,6 +65,9 @@ export default async function NewBasketPage({
   const topics = await getTopics().catch(() => []);
 
   return (
+    // The site header and footer, like every other page (these trading pages
+    // were rendering bare). SiteChrome is server-only and loads no auth SDK.
+    <SiteChrome lang={lang}>
     <LocaleProvider
       value={{ locale: lang, brand, t, rtl: brand.dir === "rtl" }}
     >
@@ -84,5 +88,6 @@ export default async function NewBasketPage({
         </main>
       </PrivyRoot>
     </LocaleProvider>
+    </SiteChrome>
   );
 }

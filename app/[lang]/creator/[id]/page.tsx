@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { CreatorProfile } from "@/components/baskets/CreatorProfile";
 import { LocaleProvider } from "@/components/app/LocaleProvider";
+import { SiteChrome } from "@/components/site/Chrome";
 import { PrivyRoot } from "@/components/app/PrivyRoot";
 import { brandFor, isLocale } from "@/lib/i18n";
 import { getDict } from "@/lib/dict";
@@ -83,6 +84,9 @@ export default async function CreatorPage({
   const brand = brandFor(lang);
 
   return (
+    // The site header and footer, like every other page (these trading pages
+    // were rendering bare). SiteChrome is server-only and loads no auth SDK.
+    <SiteChrome lang={lang}>
     <LocaleProvider value={{ locale: lang, brand, t, rtl: brand.dir === "rtl" }}>
       <PrivyRoot>
         <main className="mx-auto max-w-[1100px] px-4 py-8">
@@ -97,5 +101,6 @@ export default async function CreatorPage({
         </main>
       </PrivyRoot>
     </LocaleProvider>
+    </SiteChrome>
   );
 }
