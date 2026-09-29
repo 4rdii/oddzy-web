@@ -32,11 +32,19 @@ function Crumbs({ items }: { items: Crumb[] }) {
 
 const grid: CSSProperties = { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 10 };
 
-export function Faq({ items }: { items: { q: string; a: string }[] }) {
-  const [open, setOpen] = useState(0);
+export function Faq({
+  items,
+  heading = "پرسش‌های رایج دربارهٔ این احتمال‌ها",
+  centered,
+}: {
+  items: { q: string; a: string }[];
+  heading?: string;
+  centered?: boolean;
+}) {
+  const [open, setOpen] = useState(centered ? -1 : 0);
   return (
     <section style={{ display: "flex", flexDirection: "column", gap: 10, maxWidth: 760 }}>
-      <h2 style={{ margin: "0 0 4px", fontSize: 18, fontWeight: 800 }}>پرسش‌های رایج دربارهٔ این احتمال‌ها</h2>
+      <h2 style={{ margin: "0 0 4px", fontSize: centered ? 22 : 18, fontWeight: centered ? 900 : 800, textAlign: centered ? "center" : undefined }}>{heading}</h2>
       {items.map((f, i) => (
         <div key={f.q} style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: 14, overflow: "hidden" }}>
           <button
