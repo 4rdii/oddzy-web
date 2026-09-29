@@ -4,6 +4,8 @@ import { notFound } from "next/navigation";
 import { SiteChrome } from "@/components/site/Chrome";
 import { MatchBoard, type BoardGroup } from "@/components/site/MatchBoard";
 import { getEventBoard, getSportsHubs, type EventBoard, type EventMarket } from "@/lib/api";
+import { MatchView } from "@/components/pb/MatchView";
+import { faDay, faTime } from "@/lib/pb";
 import { publishedTopicSlugs } from "@/lib/topic-slugs";
 import { brandFor, isLocale, type Locale } from "@/lib/i18n";
 import { getDict, type Dict } from "@/lib/dict";
@@ -168,6 +170,59 @@ export default async function MatchPage(props: Params) {
     url: `${brand.siteUrl}/match/${event.id}`,
     inLanguage: brand.htmlLang,
   };
+
+  if (lang === "fa") {
+    // PolyBaaz redesign (design/polybaaz_pages_redesign, PB Match). EN keeps the page below.
+    const opts = options;
+    const sideOf = (i: number) => {
+      const o = opts.filter((x) => x.label !== "Draw")[i];
+      const team = i === 0 ? board.teams?.home : board.teams?.away;
+      const name = o?.label_fa ?? team?.name_fa ?? o?.label ?? team?.name ?? null;
+      return name ? { name, logo: team?.logo ?? null } : null;
+    };
+    const sport = leagueHub?.sport ?? null;
+    const crumbs = [
+      ...(sport ? [{ name: localized(lang, sport.name, sport.name_fa), href: topics.has(sport.slug) ? `/topic/${sport.slug}` : undefined }] : []),
+      ...(crumb ? [{ name: localized(lang, crumb.name, crumb.name_fa), href: topics.has(crumb.id) ? `/topic/${crumb.id}` : undefined }] : []),
+    ];
+    return (
+      <SiteChrome lang={lang}>
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+        <MatchView
+          slug={event.id}
+          title={title}
+          crumbs={crumbs}
+          league={crumb ? { name: localized(lang, crumb.name, crumb.name_fa), logo: board.teams?.league_image ?? null } : null}
+          kickoff={event.starts_at}
+          kickoffLabel={event.starts_at ? `${faDay(event.starts_at)} · ${faTime(event.starts_at)} تهران` : null}
+          settled={settled}
+          resultType={result?.type ?? null}
+          options={options}
+          home={sideOf(0)}
+          away={sideOf(1)}
+          marketCount={board.market_count}
+          vol24={sumH24(all)}
+          resultVol24={sumH24(resultGroup)}
+          groups={boardGroups(lang, t, board).map((g) => ({
+            key: g.key,
+            label: g.label,
+            rows: g.markets.map((m) => ({
+              slug: m.slug,
+              q: m.title_fa ?? m.title,
+              p: m.p,
+              yes: m.yes,
+              no: m.no,
+              h24: m.h24,
+              status: m.status,
+              outcome: m.outcome,
+            })),
+          }))}
+          rulesNote={t.match.rulesNote}
+          asOf={board.as_of}
+        />
+      </SiteChrome>
+    );
+  }
 
   const chip = "rounded-full border border-[var(--line)] px-2.5 py-1.5 font-mono text-[11px] tracking-[0.04em] text-[var(--text2)]";
 

@@ -66,6 +66,18 @@ export type EventMarket = Market & {
   label_fa?: string | null;
 };
 
+/** One side of a fixture, from Polymarket's team data (logos are Polymarket URLs, served via next/image). */
+export type Team = {
+  name: string;
+  name_fa: string | null;
+  logo: string | null;
+  color: string | null;
+  abbr: string | null;
+};
+
+/** Both sides plus the league badge; null when Polymarket has no team block for the event. */
+export type Teams = { home: Team | null; away: Team | null; league_image: string | null };
+
 /**
  * Markets grouped by their event, the way the bot renders a fixture:
  * name + kick-off, the moneyline, then the derivative markets beneath.
@@ -85,6 +97,8 @@ export type MarketEvent = {
   main: EventMarket[];
   /** Totals, spreads, BTTS, h2h — the "extra markets" tier. */
   extra: EventMarket[];
+  /** Matches only; absent on older API builds. */
+  teams?: Teams | null;
 };
 
 export type Snapshot = {
@@ -346,6 +360,7 @@ export type EventBoard = {
    */
   result: { type: "three_way" | "two_way" | "head_to_head"; options: MatchResultOption[] } | null;
   groups: { key: string; label: string; count: number; markets: EventMarket[] }[];
+  teams?: Teams | null;
   as_of: string;
 };
 
@@ -368,6 +383,20 @@ export type IndexableEvent = {
 export async function getEventBoard(slug: string): Promise<EventBoard | null> {
   try {
     return await get<EventBoard>(`/events/${encodeURIComponent(slug)}?include_settled=true`, MARKET_TTL);
+  } catch (e) {
+    if (e instanceof ApiError && e.status === 404) return null;
+    throw e;
+  }
+}
+
+/**
+ * The same board on a short cache, for the match page's client refresh
+ * (/api/match/[slug]). The page itself stays on MARKET_TTL; this keeps the
+ * headline odds honest without regenerating the page.
+ */
+export async function getEventBoardFresh(slug: string): Promise<EventBoard | null> {
+  try {
+    return await get<EventBoard>(`/events/${encodeURIComponent(slug)}?include_settled=true`, 60);
   } catch (e) {
     if (e instanceof ApiError && e.status === 404) return null;
     throw e;
@@ -814,6 +843,102 @@ export async function getUpDownPrices(slug: string): Promise<UpDownPrices | null
       0,
     );
   } catch {
+    return null;
+  }
+}
+
+
+// ---------------------------------------------------------------- whales
+
+export type WhaleTier = "sharp" | "above_average" | "average" | "below_average" | "new";
+
+export type WhaleStats = {
+  rank: number | null;
+  pnl_usdc: number | null;
+  volume_usdc: number | null;
+  all_time_roi: number | null;
+  month_pnl_usdc: number | null;
+  month_volume_usdc: number | null;
+  month_roi: number | null;
+  markets_traded: number | null;
+  portfolio_usdc: number | null;
+  score: number | null;
+  tier: WhaleTier | null;
+  verified: boolean;
+  x_username: string | null;
+};
+
+export type SideKey = "home" | "draw" | "away";
+
+export type WhaleBet = {
+  wallet: string;
+  profile_url: string;
+  name: string | null;
+  pseudonym: string | null;
+  profile_image: string | null;
+  market: { id: string; slug: string | null; title: string | null; title_fa: string | null; kind: string | null };
+  outcome: string;
+  outcome_index: number;
+  outcome_label: string;
+  /** The result side this bet backs; against_key for a NO on "Will X win". */
+  side_key: SideKey | null;
+  against_key: SideKey | null;
+  amount_usdc: number;
+  avg_price: number;
+  shares: number;
+  fills: number;
+  first_at: string;
+  last_at: string;
+  stats: WhaleStats | null;
+};
+
+export type WhaleSide = {
+  key: SideKey;
+  label: string;
+  label_fa: string | null;
+  market_slug: string;
+  p: number | null;
+  whale_usdc: number;
+  whale_bets: number;
+  whale_share: number | null;
+  diff_vs_market: number | null;
+};
+
+export type WhaleGame = {
+  slug: string;
+  title: string;
+  title_fa: string | null;
+  starts_at: string | null;
+  status: string;
+  league: { slug: string; name: string; name_fa: string | null; image: string | null };
+  teams: { home: Team | null; away: Team | null } | null;
+  volume_24h: number | null;
+  volume: number | null;
+  market_count: number;
+  result: { sides: WhaleSide[]; result_whale_usdc: number | null; verdict: "with_market" | "against_market" | null } | null;
+  whale_bet_count: number;
+  whale_total_usdc: number | null;
+  whales: WhaleBet[];
+  error?: string;
+};
+
+/** The whales page, cached like any page fetch; `revalidate` must match the page's own. */
+export async function getWhalesToday(revalidate: number): Promise<{ games: WhaleGame[]; generated_at: string } | null> {
+  try {
+    return await get<{ games: WhaleGame[]; generated_at: string }>("/whales/today?tz=Asia/Tehran", revalidate);
+  } catch (e) {
+    console.error("getWhalesToday", e);
+    return null;
+  }
+}
+
+/** One match's whales, for the match page's client-side strip. */
+export async function getWhalesForEvent(slug: string): Promise<WhaleGame | null> {
+  try {
+    const data = await get<{ game: WhaleGame }>(`/whales/event/${encodeURIComponent(slug)}`, 300);
+    return data.game;
+  } catch (e) {
+    if (!(e instanceof ApiError && e.status === 404)) console.error("getWhalesForEvent", e);
     return null;
   }
 }

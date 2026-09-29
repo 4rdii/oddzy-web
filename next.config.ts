@@ -5,6 +5,21 @@ const nextConfig: NextConfig = {
   pageExtensions: ["ts", "tsx", "md", "mdx"],
 
   /**
+   * Team crests and league badges come from Polymarket's upload bucket (and a
+   * few from PandaScore). They are served through the image optimizer rather
+   * than hotlinked, so a visitor's browser only ever loads them from our own
+   * domain: most PolyBaaz readers are in Iran, where foreign image hosts are
+   * slow or filtered. Logos never change, hence the month-long cache.
+   */
+  images: {
+    remotePatterns: [
+      new URL("https://polymarket-upload.s3.us-east-2.amazonaws.com/**"),
+      new URL("https://cdn-api.pandascore.co/images/**"),
+    ],
+    minimumCacheTTL: 60 * 60 * 24 * 30,
+  },
+
+  /**
    * Baskets moved from /basket to /baskets when the editorial index and the
    * community feed became one page.
    *

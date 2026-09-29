@@ -894,3 +894,84 @@ html[data-locale="fa"] [lang="en"] .oz-prose {
 .oz-w98 { inline-size: 98%; }
 .oz-w99 { inline-size: 99%; }
 .oz-w100 { inline-size: 100%; }
+
+/* ── PolyBaaz content-page redesign (design/polybaaz_pages_redesign) ──────────
+   The handoff's own palette, scoped to `.pb` so it cannot leak into the rest of
+   the site (the global --card/--line/--up tokens mean different things there).
+   Same day/night model as the root tokens above: day by default, night via
+   [data-theme="night"] (PolyBaaz's default) or a dark OS preference. */
+.pb {
+  --bg: #f6f4ef; --bg2: #efece5; --card: #ffffff; --card2: #faf8f4;
+  --line: #e5e0d5; --line2: #d5cfc1;
+  --text: #17150f; --text2: #3a372e; --muted: #6b675c; --faint: #a19b8d;
+  --gold: #e8a20a; --gold2: #cf8f00; --goldink: #1b1405;
+  --goldbg: rgba(232, 162, 10, 0.12); --goldline: rgba(232, 162, 10, 0.45);
+  --up: #15935a; --upbg: rgba(21, 147, 90, 0.1);
+  --down: #cf3e4a; --downbg: rgba(207, 62, 74, 0.09);
+  --blue: #2d6ad0; --bluebg: rgba(45, 106, 208, 0.09); --blueline: rgba(45, 106, 208, 0.4);
+  --above: #5b9420; --scrim: rgba(20, 18, 12, 0.45);
+  --home: #d93a40; --homebg: rgba(217, 58, 64, 0.09); --homeline: rgba(217, 58, 64, 0.4);
+  --tg: #229ed9;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-vazir), "Vazirmatn", sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+:root[data-theme="night"] .pb {
+  --bg: #0d0f13; --bg2: #121519; --card: #171a20; --card2: #1c2027;
+  --line: #252a33; --line2: #333a45;
+  --text: #f1f2f4; --text2: #c3c8d0; --muted: #8a919c; --faint: #5d6470;
+  --gold: #f3b53a; --gold2: #ffcd66; --goldink: #1b1405;
+  --goldbg: rgba(243, 181, 58, 0.1); --goldline: rgba(243, 181, 58, 0.32);
+  --up: #3fcf8e; --upbg: rgba(63, 207, 142, 0.12);
+  --down: #f0646e; --downbg: rgba(240, 100, 110, 0.12);
+  --blue: #6ea8ff; --bluebg: rgba(110, 168, 255, 0.12); --blueline: rgba(110, 168, 255, 0.4);
+  --above: #a6d86e; --scrim: rgba(4, 5, 8, 0.66);
+  --home: #f05a5f; --homebg: rgba(240, 90, 95, 0.12); --homeline: rgba(240, 90, 95, 0.4);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="day"]) .pb {
+    --bg: #0d0f13; --bg2: #121519; --card: #171a20; --card2: #1c2027;
+    --line: #252a33; --line2: #333a45;
+    --text: #f1f2f4; --text2: #c3c8d0; --muted: #8a919c; --faint: #5d6470;
+    --gold: #f3b53a; --gold2: #ffcd66; --goldink: #1b1405;
+    --goldbg: rgba(243, 181, 58, 0.1); --goldline: rgba(243, 181, 58, 0.32);
+    --up: #3fcf8e; --upbg: rgba(63, 207, 142, 0.12);
+    --down: #f0646e; --downbg: rgba(240, 100, 110, 0.12);
+    --blue: #6ea8ff; --bluebg: rgba(110, 168, 255, 0.12); --blueline: rgba(110, 168, 255, 0.4);
+    --above: #a6d86e; --scrim: rgba(4, 5, 8, 0.66);
+    --home: #f05a5f; --homebg: rgba(240, 90, 95, 0.12); --homeline: rgba(240, 90, 95, 0.4);
+  }
+}
+.pb a { color: var(--gold); text-decoration: none; }
+.pb a:hover { color: var(--gold2); }
+.pb button { font-family: inherit; }
+.pb .pb-noscroll { scrollbar-width: none; }
+.pb .pb-noscroll::-webkit-scrollbar { display: none; }
+/* Moneyline / outcome tiles: lift on hover in the side's own colour. */
+.pb .pb-tile { transition: background 0.18s ease, border-color 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease; }
+.pb .pb-tile:hover { background: var(--tint); border-color: var(--col); transform: translateY(-2px); box-shadow: 0 10px 24px -12px var(--col); }
+.pb .pb-tile:active { transform: scale(0.97); }
+.pb .pb-card-link { transition: border-color 0.15s, background 0.15s; }
+.pb .pb-card-link:hover { border-color: var(--line2); background: var(--card2); }
+.pb .pb-gold-btn { background: var(--gold); color: var(--goldink); }
+.pb .pb-gold-btn:hover { background: var(--gold2); color: var(--goldink); }
+.pb .pb-yes:hover { border-color: var(--up); }
+.pb .pb-no:hover { border-color: var(--line2); }
+.pb .pb-row:hover { background: var(--card2); }
+@keyframes pbpulse {
+  0% { box-shadow: 0 0 0 0 rgba(63, 207, 142, 0.5); }
+  70% { box-shadow: 0 0 0 7px rgba(63, 207, 142, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(63, 207, 142, 0); }
+}
+@keyframes pbup { from { transform: translateY(24px); opacity: 0; } to { transform: none; opacity: 1; } }
+.pb .pb-pulse { width: 7px; height: 7px; border-radius: 50%; background: var(--up); display: inline-block; animation: pbpulse 2s infinite; }
+/* Match page: sticky quick-predict aside from 960px, fixed 3-outcome bar below it. */
+.pb .pb-aside { display: none; }
+.pb .pb-bottombar { display: block; }
+@media (min-width: 960px) {
+  .pb .pb-aside { display: flex; }
+  .pb .pb-bottombar { display: none; }
+}
+.pb .pb-flash { animation: pbflash 2.4s ease-out; }
+@keyframes pbflash { 0%, 30% { background: var(--goldbg); } 100% { background: transparent; } }

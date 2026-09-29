@@ -91,6 +91,8 @@ export async function SiteChrome({
                   place for someone who has not chosen a basket yet. The feed and
                   the builder are reached from there and from the home band. */}
               <NavLink href="/baskets">{t.nav.baskets}</NavLink>
+              {/* PolyBaaz only: the whales page has no English version. */}
+              {lang === "fa" && <NavLink href="/big-games">بازی‌های بزرگ</NavLink>}
               <NavLink href="/how-it-works">{t.nav.howItWorks}</NavLink>
               <NavLink href="/learn">{t.nav.learn}</NavLink>
               <NavLink href="/faq">{t.nav.faq}</NavLink>
@@ -130,6 +132,7 @@ export async function SiteChrome({
               <NavLink href="/how-it-works">{t.nav.howItWorks}</NavLink>
               <NavLink href="/learn">{t.nav.learn}</NavLink>
               <NavLink href="/updown">{t.nav.updown}</NavLink>
+              {lang === "fa" && <NavLink href="/big-games">بازی‌های بزرگ امروز</NavLink>}
               <NavLink href="/baskets">{t.nav.baskets}</NavLink>
               <NavLink href="/faq">{t.nav.faq}</NavLink>
               <NavLink href="/privacy">{t.nav.privacy}</NavLink>

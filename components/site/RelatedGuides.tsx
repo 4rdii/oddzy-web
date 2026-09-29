@@ -17,11 +17,14 @@ export async function RelatedGuides({
   lang,
   heading,
   lead,
+  variant,
 }: {
   categoryId?: string | null;
   lang: Locale;
   heading: string;
   lead: string;
+  /** "pb": the PolyBaaz redesign's card grid (render inside a `.pb` wrapper). */
+  variant?: "pb";
 }) {
   let path: string[] = categoryId ? [categoryId] : [];
   if (categoryId) {
@@ -33,6 +36,37 @@ export async function RelatedGuides({
   }
   const posts = await getGuidesFor(path, lang);
   if (posts.length === 0) return null;
+
+  if (variant === "pb") {
+    return (
+      <section style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+        <h2 style={{ margin: 0, fontSize: 18, fontWeight: 800 }}>{heading}</h2>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 10 }}>
+          {posts.map((p) => (
+            <Link
+              key={p.slug}
+              href={`/learn/${p.slug}`}
+              className="pb-card-link"
+              style={{
+                background: "var(--card)",
+                border: "1px solid var(--line)",
+                borderRadius: 16,
+                padding: "14px 16px",
+                display: "flex",
+                flexDirection: "column",
+                gap: 6,
+                color: "var(--text)",
+              }}
+              {...(!p.translated && lang !== "en" ? { lang: "en", dir: "ltr" as const } : {})}
+            >
+              <span style={{ fontSize: 11.5, color: "var(--gold)", fontWeight: 700 }}>{p.tag}</span>
+              <span style={{ fontSize: 14.5, fontWeight: 700, lineHeight: 1.7 }}>{p.title}</span>
+            </Link>
+          ))}
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="mt-8">

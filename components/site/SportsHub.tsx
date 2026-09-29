@@ -202,34 +202,13 @@ function Breadcrumbs({ items }: { items: { name: string; href?: string }[] }) {
   );
 }
 
-export function LeagueHubView({
-  lang,
-  t,
-  hub,
-  fixtures,
-  asOf,
-}: {
-  lang: Locale;
-  t: Dict;
-  hub: LeagueHub;
-  fixtures: MarketEvent[];
-  asOf: string | null;
-}) {
+/** Breadcrumb + fixture list + FAQ structured data for a league hub (shared by the EN and FA views). */
+export function leagueJsonLd(lang: Locale, t: Dict, hub: LeagueHub, fixtures: MarketEvent[], faq: { q: string; a: string }[]) {
   const brand = BRANDS[lang];
-  const { league, lines } = leagueSummary(lang, t, hub, fixtures);
+  const league = localized(lang, hub.name, hub.name_fa);
   const sport = hub.sport ? localized(lang, hub.sport.name, hub.sport.name_fa) : null;
-  const faq = t.hub.faq.map((f) => ({ q: f.q.replace("{league}", league), a: f.a.replace("{league}", league) }));
-
-  // Fixtures by day, in the reader's time zone (Tehran for PolyBaaz).
-  const days = new Map<string, MarketEvent[]>();
-  for (const ev of fixtures) {
-    const key = ev.starts_at ? dayLabel(ev.starts_at, lang) : "—";
-    if (!days.has(key)) days.set(key, []);
-    days.get(key)!.push(ev);
-  }
-
   const url = `${brand.siteUrl}/topic/${hub.slug}`;
-  const jsonLd = [
+  return [
     {
       "@context": "https://schema.org",
       "@type": "BreadcrumbList",
@@ -262,6 +241,34 @@ export function LeagueHubView({
       mainEntity: faq.map((f) => ({ "@type": "Question", name: f.q, acceptedAnswer: { "@type": "Answer", text: f.a } })),
     },
   ];
+}
+
+export function LeagueHubView({
+  lang,
+  t,
+  hub,
+  fixtures,
+  asOf,
+}: {
+  lang: Locale;
+  t: Dict;
+  hub: LeagueHub;
+  fixtures: MarketEvent[];
+  asOf: string | null;
+}) {
+  const { league, lines } = leagueSummary(lang, t, hub, fixtures);
+  const sport = hub.sport ? localized(lang, hub.sport.name, hub.sport.name_fa) : null;
+  const faq = t.hub.faq.map((f) => ({ q: f.q.replace("{league}", league), a: f.a.replace("{league}", league) }));
+
+  // Fixtures by day, in the reader's time zone (Tehran for PolyBaaz).
+  const days = new Map<string, MarketEvent[]>();
+  for (const ev of fixtures) {
+    const key = ev.starts_at ? dayLabel(ev.starts_at, lang) : "—";
+    if (!days.has(key)) days.set(key, []);
+    days.get(key)!.push(ev);
+  }
+
+  const jsonLd = leagueJsonLd(lang, t, hub, fixtures, faq);
 
   return (
     <article className="mx-auto max-w-3xl px-5 pt-10 pb-12">
@@ -320,20 +327,11 @@ export function LeagueHubView({
   );
 }
 
-export function SportHubView({
-  lang,
-  t,
-  sport,
-  leagues,
-}: {
-  lang: Locale;
-  t: Dict;
-  sport: SportHub;
-  leagues: { hub: LeagueHub; next: MarketEvent[] }[];
-}) {
+/** Breadcrumb + league list structured data for a sport hub. */
+export function sportJsonLd(lang: Locale, t: Dict, sport: SportHub, hubs: LeagueHub[]) {
   const brand = BRANDS[lang];
   const name = localized(lang, sport.name, sport.name_fa);
-  const jsonLd = [
+  return [
     {
       "@context": "https://schema.org",
       "@type": "BreadcrumbList",
@@ -346,14 +344,29 @@ export function SportHubView({
       "@context": "https://schema.org",
       "@type": "ItemList",
       name: t.hub.leaguesHeading,
-      itemListElement: leagues.map((l, i) => ({
+      itemListElement: hubs.map((l, i) => ({
         "@type": "ListItem",
         position: i + 1,
-        name: localized(lang, l.hub.name, l.hub.name_fa),
-        url: `${brand.siteUrl}/topic/${l.hub.slug}`,
+        name: localized(lang, l.name, l.name_fa),
+        url: `${brand.siteUrl}/topic/${l.slug}`,
       })),
     },
   ];
+}
+
+export function SportHubView({
+  lang,
+  t,
+  sport,
+  leagues,
+}: {
+  lang: Locale;
+  t: Dict;
+  sport: SportHub;
+  leagues: { hub: LeagueHub; next: MarketEvent[] }[];
+}) {
+  const name = localized(lang, sport.name, sport.name_fa);
+  const jsonLd = sportJsonLd(lang, t, sport, leagues.map((l) => l.hub));
   return (
     <article className="mx-auto max-w-3xl px-5 pt-10 pb-12">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />

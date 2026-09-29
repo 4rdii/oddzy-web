@@ -2,7 +2,9 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound, permanentRedirect } from "next/navigation";
 import { SiteChrome } from "@/components/site/Chrome";
-import { getQuestionSeries, getQuestionSeriesIndex } from "@/lib/api";
+import { QuestionPb } from "@/components/pb/QuestionPb";
+import { faDay, faTime } from "@/lib/pb";
+import { getMarketDetail, getQuestionSeries, getQuestionSeriesIndex } from "@/lib/api";
 import { brandFor, isLocale, LOCALES } from "@/lib/i18n";
 import { getDict } from "@/lib/dict";
 import { compactUsd, deadlineDate, localized, pct } from "@/lib/format";
@@ -118,6 +120,50 @@ export default async function QuestionPage(props: Params) {
 
   const { market, history, members, as_of } = series;
   const t = getDict(lang);
+  if (series.outcomes && lang === "fa") {
+    // PolyBaaz redesign (PB Question).
+    const o = series.outcomes;
+    // The series carries no history for a multi-outcome question; chart the
+    // favourite from its own market instead (MARKET_TTL ≥ this page's window,
+    // so it cannot make the route regenerate faster).
+    const fav = o.options.find((x) => x.status === "active") ?? null;
+    const chart = history.length
+      ? { points: history, slug: market.slug }
+      : fav
+        ? { points: (await getMarketDetail(fav.slug).catch(() => null))?.history ?? [], slug: fav.slug }
+        : { points: [], slug: market.slug };
+    const headline = o.options.find((x) => x.slug === chart.slug);
+    const cat = market.category;
+    return (
+      <SiteChrome lang={lang}>
+        <QuestionPb
+          crumbs={[
+            { name: "خانه", href: "/" },
+            ...(cat ? [{ name: localized(lang, cat.name, cat.name_fa), href: `/topic/${cat.id}` }] : []),
+          ]}
+          title={localized(lang, o.title, o.title_fa)}
+          lead={t.series.outcomesLead}
+          settles={market.close_time ? faDay(market.close_time) : null}
+          vol24={o.options.reduce((a, x) => a + (x.status === "active" ? x.volume.h24 ?? 0 : 0), 0)}
+          options={o.options.map((x) => ({
+            slug: x.slug,
+            label: x.label_fa ?? x.label,
+            p: x.probability?.yes ?? null,
+            h24: x.volume.h24 ?? 0,
+            status: x.status,
+            outcome: x.outcome,
+            q: localized(lang, x.title, x.title_fa),
+          }))}
+          history={chart.points}
+          historyLabel={headline ? headline.label_fa ?? headline.label : null}
+          rules={market.description_fa ?? market.description}
+          rulesEnglish={!market.description_fa && !!market.description}
+          topic={cat ? { name: localized(lang, cat.name, cat.name_fa), href: `/topic/${cat.id}` } : null}
+          asOf={`${faDay(as_of)} · ${faTime(as_of)}`}
+        />
+      </SiteChrome>
+    );
+  }
   if (series.outcomes) {
     return (
       <SiteChrome lang={lang}>
