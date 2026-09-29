@@ -939,13 +939,17 @@ export type WhaleGame = {
   sharp_bet_count?: number;
   whale_total_usdc: number | null;
   whales: WhaleBet[];
+  /** On /whales/today: score / finished state (see MatchLive). */
+  live?: MatchLive | null;
   error?: string;
 };
 
 /** The whales page, cached like any page fetch; `revalidate` must match the page's own. */
-export async function getWhalesToday(revalidate: number): Promise<{ games: WhaleGame[]; generated_at: string } | null> {
+export async function getWhalesToday(
+  revalidate: number,
+): Promise<{ games: WhaleGame[]; finished?: WhaleGame[]; generated_at: string } | null> {
   try {
-    return await get<{ games: WhaleGame[]; generated_at: string }>("/whales/today?tz=Asia/Tehran", revalidate);
+    return await get<{ games: WhaleGame[]; finished?: WhaleGame[]; generated_at: string }>("/whales/today?tz=Asia/Tehran", revalidate);
   } catch (e) {
     console.error("getWhalesToday", e);
     return null;

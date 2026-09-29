@@ -251,7 +251,9 @@ async function PolybaazHome() {
 
   // Hero: the biggest match that has not finished — today's first, else the next day's.
   const now = nowMs();
-  const live = events.events.filter((e) => e.starts_at && new Date(e.starts_at).getTime() > now - 2 * 3600_000 && new Date(e.starts_at).getTime() < now + 36 * 3600_000);
+  // Kicked off at most 100 minutes ago (a match is ~2h with half-time): past
+  // that it has probably ended, and a finished game must not headline the page.
+  const live = events.events.filter((e) => e.starts_at && new Date(e.starts_at).getTime() > now - 100 * 60_000 && new Date(e.starts_at).getTime() < now + 36 * 3600_000);
   const pick = [...live].sort((a, b) => (b.volume_24h ?? 0) - (a.volume_24h ?? 0))[0] ?? null;
   let hero: HomeHero | null = null;
   if (pick) {

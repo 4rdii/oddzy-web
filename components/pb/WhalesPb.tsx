@@ -35,7 +35,18 @@ function passes(f: Filter, b: WhaleBet): boolean {
 
 type Sel = { bet: WhaleBet; game: WhaleGame; names: Record<SideKey, string> };
 
-export function WhalesPb({ games, generatedAt, dateLabel }: { games: WhaleGame[]; generatedAt: string | null; dateLabel: string }) {
+export function WhalesPb({
+  games,
+  finished = [],
+  generatedAt,
+  dateLabel,
+}: {
+  games: WhaleGame[];
+  /** Today's games that have ended: listed after the top 5, collapsed, with their score. */
+  finished?: WhaleGame[];
+  generatedAt: string | null;
+  dateLabel: string;
+}) {
   const [filter, setFilter] = useState<Filter>("all");
   const [open, setOpen] = useState<Record<number, boolean>>({ 0: true });
   const [how, setHow] = useState(false);
@@ -111,6 +122,28 @@ export function WhalesPb({ games, generatedAt, dateLabel }: { games: WhaleGame[]
           />
         ))}
 
+        {finished.length > 0 && (
+          <section style={{ display: "flex", flexDirection: "column", gap: 12, marginTop: 8 }}>
+            <div style={{ display: "flex", alignItems: "baseline", gap: 10, borderBottom: "1px solid var(--line)", paddingBottom: 10 }}>
+              <h2 style={{ margin: 0, fontSize: 18, fontWeight: 800 }}>بازی‌های تمام‌شدهٔ امروز</h2>
+              <span style={{ fontSize: 12, color: "var(--muted)" }}>نتیجه و پیش‌بینی نهنگ‌ها پیش از بازی</span>
+            </div>
+            {finished.map((g, gi) => (
+              <GameCard
+                key={g.slug}
+                g={g}
+                rank={gi + 1}
+                done
+                open={!!open[100 + gi]}
+                toggle={() => setOpen((o) => ({ ...o, [100 + gi]: !o[100 + gi] }))}
+                filter={filter}
+                now={now}
+                onSelect={setSel}
+              />
+            ))}
+          </section>
+        )}
+
         {games.length < 5 && (
           <div style={{ border: "1px dashed var(--line2)", borderRadius: 16, padding: "18px 16px", display: "flex", flexDirection: "column", gap: 8, alignItems: "flex-start" }}>
             <div style={{ fontSize: 14, fontWeight: 700 }}>
@@ -185,6 +218,7 @@ function ScoreLegend({ how, setHow }: { how: boolean; setHow: (v: boolean) => vo
 function GameCard({
   g,
   rank,
+  done,
   open,
   toggle,
   filter,
@@ -193,6 +227,8 @@ function GameCard({
 }: {
   g: WhaleGame;
   rank: number;
+  /** Finished: score instead of odds, no rank, no predict CTA. */
+  done?: boolean;
   open: boolean;
   toggle: () => void;
   filter: Filter;
@@ -222,7 +258,9 @@ function GameCard({
     <article style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: 20, overflow: "hidden" }}>
       <div style={{ padding: "16px 16px 14px", display: "flex", flexDirection: "column", gap: 14 }}>
         <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
-          <div style={{ fontSize: 26, fontWeight: 900, color: "var(--gold)", lineHeight: 1.1, width: 22, flexShrink: 0 }}>{fa(rank)}</div>
+          <div style={{ fontSize: done ? 18 : 26, fontWeight: 900, color: done ? "var(--muted)" : "var(--gold)", lineHeight: 1.1, width: 22, flexShrink: 0 }}>
+            {done ? "✓" : fa(rank)}
+          </div>
           <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 3 }}>
             <div style={{ fontSize: 12, color: "var(--muted)" }}>
               {league}
@@ -241,7 +279,28 @@ function GameCard({
             <span style={{ fontSize: 14, fontWeight: 800 }}>{faMoney(g.volume_24h)}</span>
           </div>
         </div>
-        {sides.length > 0 && (
+        {done && (
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 14,
+              background: "var(--bg2)",
+              border: "1px solid var(--line)",
+              borderRadius: 14,
+              padding: "12px 10px",
+            }}
+          >
+            <span style={{ fontSize: 13, fontWeight: 800, color: "var(--muted)" }}>پایان بازی</span>
+            {g.live?.score && (
+              <span dir="ltr" style={{ fontSize: 26, fontWeight: 900, fontVariantNumeric: "tabular-nums" }}>
+                {fa(g.live.score.away)} – {fa(g.live.score.home)}
+              </span>
+            )}
+          </div>
+        )}
+        {!done && sides.length > 0 && (
           <div style={{ display: "grid", gridTemplateColumns: `repeat(${sides.length},minmax(0,1fr))`, gap: 6 }}>
             {sides.map((s) => {
               const col = SIDE_COLOR[s.key];
@@ -499,7 +558,7 @@ function GameCard({
           </div>
           <div style={{ padding: "12px 16px 16px", borderTop: "1px solid var(--line)", display: "flex" }}>
             <Link href={href} className="pb-gold-btn" style={{ flex: 1, textAlign: "center", fontWeight: 800, fontSize: 15, padding: 13, borderRadius: 13 }}>
-              پیش‌بینی این بازی
+              {done ? "مشاهدهٔ بازی" : "پیش‌بینی این بازی"}
             </Link>
           </div>
         </>

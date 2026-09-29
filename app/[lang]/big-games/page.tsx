@@ -40,7 +40,7 @@ export default async function BigGamesPage(props: Params) {
   const data = await getWhalesToday(revalidate);
   return (
     <SiteChrome lang={lang}>
-      <WhalesPb games={data?.games ?? []} generatedAt={data?.generated_at ?? null} dateLabel={faDay(new Date().toISOString())} />
+      <WhalesPb games={data?.games ?? []} finished={data?.finished ?? []} generatedAt={data?.generated_at ?? null} dateLabel={faDay(new Date().toISOString())} />
     </SiteChrome>
   );
 }
