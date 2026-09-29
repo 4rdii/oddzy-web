@@ -196,6 +196,7 @@ export default async function MatchPage(props: Params) {
           kickoff={event.starts_at}
           kickoffLabel={event.starts_at ? `${faDay(event.starts_at)} · ${faTime(event.starts_at)} تهران` : null}
           settled={settled}
+          live={board.live ?? null}
           resultType={result?.type ?? null}
           options={options}
           home={sideOf(0)}

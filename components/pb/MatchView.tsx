@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState, type CSSProperties } from "react";
-import type { MatchResultOption, WhaleGame } from "@/lib/api";
+import type { MatchLive, MatchResultOption, WhaleGame } from "@/lib/api";
 import { fa, faMoney, faPct, pc, SIDE_COLOR } from "@/lib/pb";
 import { Crest } from "@/components/pb/Crest";
 import { PredictCtas, PredictProvider, Presets, payout, usePredict, YesNo } from "@/components/pb/Predict";
@@ -35,6 +35,7 @@ export type MatchViewProps = {
   kickoff: string | null;
   kickoffLabel: string | null;
   settled: boolean;
+  live: MatchLive | null;
   resultType: "three_way" | "two_way" | "head_to_head" | null;
   options: MatchResultOption[];
   home: { name: string; logo: string | null } | null;
@@ -80,6 +81,10 @@ function MatchInner(p: MatchViewProps) {
   const open = usePredict();
   const [options, setOptions] = useState(p.options);
   const [settled, setSettled] = useState(p.settled);
+  const [live, setLive] = useState<MatchLive | null>(p.live);
+  // Over but not yet settled: no more predicting, and say why.
+  const ended = !settled && live?.status === "ended";
+  const closed = settled || ended;
   const [whales, setWhales] = useState<WhaleGame | null>(null);
   const [tab, setTab] = useState(p.groups[0]?.key ?? "");
   const [all, setAll] = useState(false);
@@ -99,11 +104,12 @@ function MatchInner(p: MatchViewProps) {
           if (!alive || !d) return;
           if (d.result?.options?.length) setOptions(d.result.options);
           if (d.status && d.status !== "active") setSettled(true);
+          if (d.live !== undefined) setLive(d.live);
           setWhales(d.whales ?? null);
         })
         .catch(() => {});
     load();
-    const t = setInterval(load, 60_000);
+    const t = setInterval(load, 30_000);
     return () => {
       alive = false;
       clearInterval(t);
@@ -149,7 +155,7 @@ function MatchInner(p: MatchViewProps) {
   });
   const openSide = (i: number) => {
     const x = outs[i];
-    if (!x || settled) return;
+    if (!x || closed) return;
     // A fight's second side is the NO of the same market; the sheet opens that
     // market either way, with the side's own odds.
     open({ title: `${p.title}: ${x.label}؟`, sub, outcome: x.label, prob: x.pct, slug: x.o.slug });
@@ -217,7 +223,27 @@ function MatchInner(p: MatchViewProps) {
               <div style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr", alignItems: "center", gap: 10 }}>
                 <Team t={p.home} />
                 <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
-                  {settled ? (
+                  {live?.score && live.status !== "scheduled" ? (
+                    <>
+                      <span dir="ltr" style={{ fontSize: 34, fontWeight: 900, fontVariantNumeric: "tabular-nums", lineHeight: 1.1 }}>
+                        {/* LTR box, so print away–home to read home on the right as the crests do. */}
+                        {fa(live.score.away)} – {fa(live.score.home)}
+                      </span>
+                      <span
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: 6,
+                          fontSize: 12,
+                          fontWeight: 800,
+                          color: live.status === "live" ? "var(--up)" : "var(--muted)",
+                        }}
+                      >
+                        {live.status === "live" && <span className="pb-pulse" />}
+                        {periodLabel(live)}
+                      </span>
+                    </>
+                  ) : settled || ended ? (
                     <span style={{ fontSize: 16, fontWeight: 800, color: "var(--muted)" }}>پایان</span>
                   ) : cd && !cd.started ? (
                     <>
@@ -236,8 +262,9 @@ function MatchInner(p: MatchViewProps) {
               </div>
               <div style={{ display: "flex", justifyContent: "center", gap: 8, flexWrap: "wrap" }}>
                 <span style={chip}>{fa(p.marketCount)} بازار</span>
-                {!settled && p.vol24 > 0 && <span style={chip}>حجم ۲۴ ساعت {faMoney(p.vol24)}</span>}
-                {!settled && (
+                {!closed && p.vol24 > 0 && <span style={chip}>حجم ۲۴ ساعت {faMoney(p.vol24)}</span>}
+                {ended && <span style={{ ...chip, color: "var(--gold)", borderColor: "var(--goldline)" }}>بازی تمام شد · در انتظار تسویهٔ رسمی</span>}
+                {!closed && (
                   <span style={{ ...chip, display: "inline-flex", alignItems: "center", gap: 6, color: "var(--up)" }}>
                     <span className="pb-pulse" /> قیمت زنده
                   </span>
@@ -259,7 +286,7 @@ function MatchInner(p: MatchViewProps) {
                         key={`${x.o.slug}-${x.o.label}`}
                         type="button"
                         onClick={() => openSide(i)}
-                        disabled={settled}
+                        disabled={closed}
                         className="pb-tile"
                         style={
                           {
@@ -274,7 +301,7 @@ function MatchInner(p: MatchViewProps) {
                             gap: 4,
                             alignItems: "center",
                             textAlign: "center",
-                            cursor: settled ? "default" : "pointer",
+                            cursor: closed ? "default" : "pointer",
                             color: "var(--text)",
                             minWidth: 0,
                           } as CSSProperties
@@ -354,7 +381,7 @@ function MatchInner(p: MatchViewProps) {
           <section style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             <div style={{ display: "flex", alignItems: "baseline", gap: 10, flexWrap: "wrap" }}>
               <h2 style={{ margin: 0, fontSize: 18, fontWeight: 800 }}>همهٔ بازارهای این بازی</h2>
-              {!settled && <span style={{ fontSize: 12, color: "var(--muted)" }}>روی هر گزینه بزنید تا پیش‌بینی کنید</span>}
+              {!closed && <span style={{ fontSize: 12, color: "var(--muted)" }}>روی هر گزینه بزنید تا پیش‌بینی کنید</span>}
             </div>
             <div
               role="tablist"
@@ -425,11 +452,11 @@ function MatchInner(p: MatchViewProps) {
                       <span style={{ fontSize: 12, color: "var(--muted)" }}>حجم ۲۴ ساعت {faMoney(r.h24)}</span>
                     )}
                   </div>
-                  {r.status === "active" ? (
+                  {r.status === "active" && !ended ? (
                     <YesNoLabelled row={r} sub={sub} />
                   ) : (
                     <span style={{ fontSize: 13, fontWeight: 700, color: "var(--muted)" }}>
-                      {r.outcome === "YES" ? `تسویه شد: ${r.yes}` : r.outcome === "NO" ? `تسویه شد: ${r.no}` : "بسته شد"}
+                      {r.outcome === "YES" ? `تسویه شد: ${r.yes}` : r.outcome === "NO" ? `تسویه شد: ${r.no}` : ended ? "در انتظار تسویه" : "بسته شد"}
                     </span>
                   )}
                 </div>
@@ -484,7 +511,7 @@ function MatchInner(p: MatchViewProps) {
           <div style={{ fontSize: 11.5, color: "var(--faint)" }}>قیمت‌ها از Polymarket · به‌روزرسانی زنده</div>
         </div>
 
-        {!settled && outs.length > 0 && sel && (
+        {!closed && outs.length > 0 && sel && (
           <aside
             className="pb-aside"
             style={{
@@ -543,7 +570,7 @@ function MatchInner(p: MatchViewProps) {
         )}
       </main>
 
-      {!settled && outs.length > 0 && (
+      {!closed && outs.length > 0 && (
         <div
           className="pb-bottombar"
           style={{
@@ -636,3 +663,17 @@ function LabelledPair({ row, sub, y }: { row: MatchRow; sub: string; y: number |
   );
 }
 
+
+/** «دقیقهٔ ۶۷» / «بین دو نیمه» / «پایان بازی» from Polymarket's period + clock. */
+function periodLabel(l: MatchLive): string {
+  if (l.status === "ended") return "پایان بازی";
+  const per = String(l.period ?? "").toUpperCase();
+  if (per === "HT") return "بین دو نیمه";
+  const min = parseInt(String(l.elapsed ?? ""), 10);
+  if (Number.isFinite(min) && min > 0) return `دقیقهٔ ${fa(min)}`;
+  if (per === "1H") return "نیمهٔ اول";
+  if (per === "2H") return "نیمهٔ دوم";
+  if (per === "ET") return "وقت اضافه";
+  if (per === "PEN") return "ضربات پنالتی";
+  return "در جریان";
+}

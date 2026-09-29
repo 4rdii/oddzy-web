@@ -75,6 +75,17 @@ export type Team = {
   abbr: string | null;
 };
 
+export type MatchLive = {
+  status: "scheduled" | "live" | "ended";
+  /** Home (first-named) first. Null when the sport's score is not "a-b". */
+  score: { home: number; away: number } | null;
+  score_raw: string | null;
+  /** "1H", "HT", "2H", "FT", "VFT"… */
+  period: string | null;
+  elapsed: string | null;
+  finished_at: string | null;
+};
+
 /** Both sides plus the league badge; null when Polymarket has no team block for the event. */
 export type Teams = { home: Team | null; away: Team | null; league_image: string | null };
 
@@ -361,6 +372,8 @@ export type EventBoard = {
   result: { type: "three_way" | "two_way" | "head_to_head"; options: MatchResultOption[] } | null;
   groups: { key: string; label: string; count: number; markets: EventMarket[] }[];
   teams?: Teams | null;
+  /** Score / clock / finished from Polymarket's event feed; null before kickoff. */
+  live?: MatchLive | null;
   as_of: string;
 };
 
@@ -396,7 +409,10 @@ export async function getEventBoard(slug: string): Promise<EventBoard | null> {
  */
 export async function getEventBoardFresh(slug: string): Promise<EventBoard | null> {
   try {
-    return await get<EventBoard>(`/events/${encodeURIComponent(slug)}?include_settled=true`, 60);
+    // `&fresh=1` (ignored upstream) gives this its own data-cache entry: the
+    // cache keys on the URL, not the revalidate window, so without it this
+    // could be answered from the page's day-long entry for the same URL.
+    return await get<EventBoard>(`/events/${encodeURIComponent(slug)}?include_settled=true&fresh=1`, 30);
   } catch (e) {
     if (e instanceof ApiError && e.status === 404) return null;
     throw e;

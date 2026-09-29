@@ -19,8 +19,9 @@ export async function GET(_req: Request, ctx: { params: Promise<{ slug: string }
     const [board, whales] = await Promise.all([getEventBoardFresh(slug), getWhalesForEvent(slug)]);
     if (!board) return NextResponse.json({ error: "not_found" }, { status: 404 });
     return NextResponse.json(
-      { result: board.result, status: board.event.status, as_of: board.as_of, whales },
-      { headers: { "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300" } },
+      { result: board.result, status: board.event.status, live: board.live ?? null, as_of: board.as_of, whales },
+      // 30s: the score is the part that moves (upstream caches it 20s).
+      { headers: { "Cache-Control": "public, s-maxage=30, stale-while-revalidate=120" } },
     );
   } catch (e) {
     console.error("GET /api/match", e);
