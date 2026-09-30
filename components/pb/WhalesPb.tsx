@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState, type CSSProperties } from "react";
-import type { MatchLive, SideKey, WhaleBet, WhaleGame } from "@/lib/api";
+import type { MatchLive, SideKey, WhaleBet, WhaleGame, WhaleSport } from "@/lib/api";
 import { Crest } from "@/components/pb/Crest";
 import { useNow } from "@/components/pb/useNow";
 import { Avatar, ScoreRing } from "@/components/pb/ScoreRing";
@@ -38,12 +38,15 @@ type Sel = { bet: WhaleBet; game: WhaleGame; names: Record<SideKey, string> };
 export function WhalesPb({
   games: initialGames,
   finished: initialFinished = [],
+  sports = [],
   generatedAt,
   dateLabel,
 }: {
   games: WhaleGame[];
   /** Today's games that have ended: listed after the top 5, collapsed, with their score. */
   finished?: WhaleGame[];
+  /** Sports with games today; the page filters by one, football by default. */
+  sports?: WhaleSport[];
   generatedAt: string | null;
   dateLabel: string;
 }) {
@@ -56,8 +59,13 @@ export function WhalesPb({
 
   // A game the live feed reports as ended leaves the ranking at once and joins
   // the finished list with its score — no page rebuild needed.
-  const games = initialGames.filter((g) => !ended[g.slug]);
-  const finished = [...initialGames.filter((g) => ended[g.slug]).map((g) => ({ ...g, live: ended[g.slug] })), ...initialFinished];
+  const [sport, setSport] = useState(sports.some((x) => x.slug === "football") ? "football" : (sports[0]?.slug ?? "all"));
+  const inSport = (g: WhaleGame) => sport === "all" || (g.sport?.slug ?? "football") === sport;
+  const games = initialGames.filter((g) => !ended[g.slug] && inSport(g));
+  const finished = [
+    ...initialGames.filter((g) => ended[g.slug] && inSport(g)).map((g) => ({ ...g, live: ended[g.slug] })),
+    ...initialFinished.filter(inSport),
+  ];
 
   const allBets = games.reduce((a, g) => a + g.whale_bet_count, 0);
   const allMoney = games.reduce((a, g) => a + (g.whale_total_usdc ?? 0), 0);
@@ -89,6 +97,37 @@ export function WhalesPb({
             </div>
           )}
         </header>
+
+        {sports.length > 1 && (
+          <div className="pb-noscroll" style={{ display: "flex", gap: 8, overflowX: "auto", margin: "0 -16px", padding: "0 16px" }}>
+            {sports.map((x) => {
+              const on = x.slug === sport;
+              return (
+                <button
+                  key={x.slug}
+                  type="button"
+                  onClick={() => {
+                    setSport(x.slug);
+                    setOpen({ 0: true });
+                  }}
+                  style={{
+                    flexShrink: 0,
+                    padding: "9px 18px",
+                    borderRadius: 12,
+                    fontSize: 14,
+                    fontWeight: 800,
+                    cursor: "pointer",
+                    border: `1px solid ${on ? "var(--gold)" : "var(--line)"}`,
+                    background: on ? "var(--gold)" : "var(--card)",
+                    color: on ? "var(--goldink)" : "var(--text2)",
+                  }}
+                >
+                  {x.name_fa}
+                </button>
+              );
+            })}
+          </div>
+        )}
 
         <ScoreLegend how={how} setHow={setHow} />
 
@@ -156,8 +195,8 @@ export function WhalesPb({
               {games.length === 0 ? "امروز هنوز بازی‌ای به فهرست بازی‌های بزرگ نرسیده است." : `امروز فقط ${fa(games.length)} بازی به فهرست بازی‌های بزرگ رسیده است.`}
             </div>
             <div style={{ fontSize: 13, color: "var(--muted)", lineHeight: 1.8 }}>فهرست در طول روز و با بالا رفتن حجم معاملات به‌روز می‌شود.</div>
-            <Link href="/topic/football" style={{ fontSize: 13, fontWeight: 700 }}>
-              همهٔ بازی‌های فوتبال ←
+            <Link href={`/topic/${sport === "all" || sport === "other" ? "football" : sport}`} style={{ fontSize: 13, fontWeight: 700 }}>
+              همهٔ بازی‌های {sports.find((x) => x.slug === sport)?.name_fa ?? "فوتبال"} ←
             </Link>
           </div>
         )}

@@ -886,6 +886,8 @@ export type WhaleStats = {
 
 export type SideKey = "home" | "draw" | "away";
 
+export type WhaleSport = { slug: string; name: string; name_fa: string };
+
 export type WhaleBet = {
   wallet: string;
   profile_url: string;
@@ -941,15 +943,17 @@ export type WhaleGame = {
   whales: WhaleBet[];
   /** On /whales/today: score / finished state (see MatchLive). */
   live?: MatchLive | null;
+  /** On /whales/today: the game's sport (football, mma, nba…). */
+  sport?: WhaleSport;
   error?: string;
 };
 
 /** The whales page, cached like any page fetch; `revalidate` must match the page's own. */
 export async function getWhalesToday(
   revalidate: number,
-): Promise<{ games: WhaleGame[]; finished?: WhaleGame[]; generated_at: string } | null> {
+): Promise<{ games: WhaleGame[]; finished?: WhaleGame[]; sports?: WhaleSport[]; generated_at: string } | null> {
   try {
-    return await get<{ games: WhaleGame[]; finished?: WhaleGame[]; generated_at: string }>("/whales/today?tz=Asia/Tehran", revalidate);
+    return await get<{ games: WhaleGame[]; finished?: WhaleGame[]; sports?: WhaleSport[]; generated_at: string }>("/whales/today?tz=Asia/Tehran", revalidate);
   } catch (e) {
     console.error("getWhalesToday", e);
     return null;
