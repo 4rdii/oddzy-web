@@ -880,6 +880,9 @@ export type WhaleStats = {
   portfolio_usdc: number | null;
   score: number | null;
   tier: WhaleTier | null;
+  /** On /whales/today: rank by score among the day's whales of this sport (1 = best), and how many there are. */
+  sport_rank?: number;
+  sport_pool?: number;
   verified: boolean;
   x_username: string | null;
 };

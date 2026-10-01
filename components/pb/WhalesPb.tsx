@@ -634,7 +634,11 @@ function WhaleSheet({ sel, onClose }: { sel: Sel; onClose: () => void }) {
     { l: "۳۰ روز اخیر", ...m30 },
     { l: "حجم کل معاملات", v: faMoney(s?.volume_usdc), c: "var(--text)" },
     { l: "بازارهای معامله‌شده", v: s?.markets_traded ? fa(s.markets_traded.toLocaleString("en-US")) : "—", c: "var(--text)" },
-    { l: "رتبه در جدول", v: s?.rank ? fa(s.rank.toLocaleString("en-US")) : "هنوز رتبه ندارد", c: s?.rank ? "var(--text)" : "var(--muted)" },
+    {
+      l: `رتبه در میان نهنگ‌های ${g.sport?.name_fa ?? "فوتبال"} امروز`,
+      v: s?.sport_rank && s.sport_pool ? `${fa(s.sport_rank)} از ${fa(s.sport_pool)}` : "—",
+      c: s?.sport_rank ? (s.sport_rank <= 3 ? "var(--up)" : "var(--text)") : "var(--muted)",
+    },
   ];
   const name = whaleName(b);
   return (
