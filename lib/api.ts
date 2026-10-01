@@ -652,7 +652,8 @@ export type BasketDetail = {
     multiple: number | null;
     /** Return if exactly one leg wins: worst and best case. */
     single_low: number;
-    single_high: number;
+    /** Null once settled legs leave no single-winner case to quote (e.g. two of three legs lost). */
+    single_high: number | null;
     /**
      * Set when every single-winner payout is the same — the point of
      * equal-shares sizing. Lets the page state one figure instead of a range

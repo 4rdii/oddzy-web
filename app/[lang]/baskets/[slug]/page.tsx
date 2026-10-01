@@ -40,7 +40,7 @@ export const revalidate = 3600;
  */
 function evenPayout(p: NonNullable<BasketDetail["payout"]>): number | null {
   if (p.single_even !== null) return p.single_even;
-  if (p.single_high <= 0) return null;
+  if (p.single_high === null || p.single_high <= 0) return null;
   return (p.single_high - p.single_low) / p.single_high <= 0.01
     ? (p.single_low + p.single_high) / 2
     : null;
@@ -211,7 +211,9 @@ export default async function BasketPage(props: Params) {
                 has no stake input; the app shows the real figure once a size is
                 chosen. An exclusive basket gets the single-winner range instead
                 of an "all hit" total, which for it is unreachable. */}
-            {basket.payout && !isRecord && (
+            {basket.payout &&
+              !isRecord &&
+              (basket.payout.all_hit !== null || evenPayout(basket.payout) !== null || basket.payout.single_high !== null) && (
               <section className="mt-3 rounded-2xl border border-[var(--line)] bg-[var(--card)] p-5">
                 <p className="font-mono text-[11px] tracking-[0.06em] text-[var(--faint)]">
                   {t.basket.payoutHeading}
@@ -238,14 +240,14 @@ export default async function BasketPage(props: Params) {
                       {t.basket.payoutEvenLead}
                     </p>
                   </>
-                ) : (
+                ) : basket.payout.single_high !== null ? (
                   <p className="mt-2 text-[15px] leading-relaxed">
                     {t.basket.payoutRange
                       .replace("{stake}", usd(basket.payout.notional))
                       .replace("{low}", usd(basket.payout.single_low))
                       .replace("{high}", usd(basket.payout.single_high))}
                   </p>
-                )}
+                ) : null}
                 {basket.payout.all_hit === null &&
                   evenPayout(basket.payout) === null &&
                   basket.payout.single_low < basket.payout.notional && (
