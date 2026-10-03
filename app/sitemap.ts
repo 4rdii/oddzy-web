@@ -78,7 +78,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const standalone = markets.filter((m) => !m.series_key);
   const topicSlugs = [
     ...new Set([
-      ...markets.map((m) => m.category_id),
+      // Active standalone markets only: that is what the topic page lists, so a
+      // topic whose markets have all settled is not advertised (it would render
+      // the no-open-markets page, which is noindex).
+      ...standalone.filter((m) => m.status === "active").map((m) => m.category_id),
       ...series.map((s) => s.category_id),
       ...hubs.leagues.map((l) => l.slug),
       ...hubs.sports.map((x) => x.slug),

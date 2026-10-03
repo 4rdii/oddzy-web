@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound, permanentRedirect } from "next/navigation";
+import { NoMarket, noMarketMetadata } from "@/components/site/NoMarket";
 import { SiteChrome } from "@/components/site/Chrome";
 import { QuestionPb } from "@/components/pb/QuestionPb";
 import { faDay, faTime } from "@/lib/pb";
@@ -51,7 +52,8 @@ export async function generateMetadata(props: Params): Promise<Metadata> {
   const { lang, key } = await props.params;
   if (!isLocale(lang)) return {};
   const series = await getQuestionSeries(key);
-  if (!series || series.moved_to) return {};
+  if (!series) return noMarketMetadata(lang);
+  if (series.moved_to) return {};
   const t = getDict(lang);
   const alternates = {
     canonical: `/question/${key}`,
@@ -113,7 +115,7 @@ export default async function QuestionPage(props: Params) {
   const { lang, key } = await props.params;
   if (!isLocale(lang)) notFound();
   const series = await getQuestionSeries(key);
-  if (!series) notFound();
+  if (!series) return <NoMarket lang={lang} />;
   // Old one-price-level pages ("will-bitcoin-reach-70-000") now live on their
   // asset/time-frame ladder page.
   if (series.moved_to) permanentRedirect(`/question/${series.moved_to}`);

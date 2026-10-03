@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound, permanentRedirect } from "next/navigation";
+import { NoMarket, noMarketMetadata } from "@/components/site/NoMarket";
 import { SiteChrome } from "@/components/site/Chrome";
 import { getIndexableMarkets, getMarketDetail, getQuestionSeries, MARKET_TTL } from "@/lib/api";
 import { brandFor, isLocale, LOCALES, type Locale } from "@/lib/i18n";
@@ -65,7 +66,7 @@ export async function generateMetadata(props: Params): Promise<Metadata> {
   const { lang, slug } = await props.params;
   if (!isLocale(lang)) return {};
   const detail = await getMarketDetail(slug);
-  if (!detail) return {};
+  if (!detail) return noMarketMetadata(lang);
   const { market } = detail;
   const t = getDict(lang);
   const title = localized(lang, market.title, market.title_fa);
@@ -106,7 +107,7 @@ export default async function MarketPage(props: Params) {
   const { lang, slug } = await props.params;
   if (!isLocale(lang)) notFound();
   const detail = await getMarketDetail(slug);
-  if (!detail) notFound();
+  if (!detail) return <NoMarket lang={lang} />;
   // A market of a sports match has no page of its own: the match page holds
   // the result and every sub-market, and ?m= opens this one's row there.
   // Permanent, so search engines move whatever these URLs had earned onto the

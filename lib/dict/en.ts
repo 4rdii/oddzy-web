@@ -615,6 +615,13 @@ export const en = {
     matches: "Matches",
     matchStarts: "Kick-off {date}",
   },
+  gone: {
+    metaTitle: "No open market",
+    topicTitle: "No open markets in {topic} right now",
+    title: "This market isn't open right now",
+    body: "There's nothing to trade here at the moment: the market may have closed, settled, or not opened yet. Check back later or browse what's live.",
+    home: "See live markets",
+  },
   guides: {
     heading: "Guides",
     marketLead: "Background worth reading before you trade this.",

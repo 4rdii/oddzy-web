@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound, permanentRedirect } from "next/navigation";
 import { SiteChrome } from "@/components/site/Chrome";
+import { NoMarket } from "@/components/site/NoMarket";
 import {
   getEvents,
   getIndexableMarkets,
@@ -156,7 +157,7 @@ export default async function TopicPage(props: Params) {
   if (!isLocale(lang)) notFound();
 
   const topic = findPath(await getTopics(), slug)?.at(-1);
-  if (!topic) notFound();
+  if (!topic) return <NoMarket lang={lang} />;
 
   const t = getDict(lang);
   const name = localized(lang, topic.name, topic.name_fa);
@@ -349,7 +350,7 @@ export default async function TopicPage(props: Params) {
 
   const hub = league ? await hubFixtures(slug) : null;
   if (!hub?.fixtures.length && rows.length === 0 && series.length === 0)
-    notFound();
+    return <NoMarket lang={lang} topic={name} />;
 
   if (league && hub && lang === "fa") {
     // PolyBaaz redesign (PB League Hub). Season questions, markets and guides
