@@ -463,16 +463,15 @@ function StatCard({
 const CHART_STAKE_PER_BASKET = 100;
 
 /**
- * "If you had started with $100 on the first night": a bankroll that goes into
- * that night's baskets in full (split evenly when there are several), and
- * whatever comes back rides into the next night's. One point per day, from the
- * first settled basket to today, carried flat on nights with no basket.
+ * Profit to date for someone who put $100 into every one of the creator's
+ * baskets, night by night — winnings are NOT reinvested, each basket is a fresh
+ * $100. One point per day from the first settled basket to today (flat on
+ * nights with none), starting at $0, so the line reads "how much would I be up
+ * by this day". Each basket's result is the backend's per-$1 score
+ * (pnlUsdc / stakeUsdc) at publish-time prices, the same basis as the cards.
  *
- * Replaces a monthly running SUM of "$100 into every basket", which (a) had a
- * single point per month, so two months drew a near-flat line, (b) started at
- * the first month's total instead of at $100, and (c) answered a question
- * nobody asks. Each basket's result is the backend's per-$1 score (pnlUsdc /
- * stakeUsdc), scored at publish-time prices — the same basis as the stat cards.
+ * Replaces a monthly running sum (two points over two months, starting at the
+ * first month's total) that drew a near-flat line.
  */
 function ReturnChart({
   perBasket,
@@ -508,18 +507,17 @@ function ReturnChart({
   if (nights.length === 0) return null;
 
   const points: Array<{ day: string; v: number }> = [];
-  let bank = CHART_STAKE_PER_BASKET;
+  let pnl = 0;
   const today = dayKey(new Date());
   for (let d = new Date(`${nights[0]}T12:00:00Z`); dayKey(d) <= today; d = new Date(d.getTime() + 86_400_000)) {
-    const r = byNight.get(dayKey(d));
-    if (r) bank *= 1 + r.reduce((a, x) => a + x, 0) / r.length;
-    points.push({ day: dayKey(d), v: bank });
+    for (const r of byNight.get(dayKey(d)) ?? []) pnl += r * CHART_STAKE_PER_BASKET;
+    points.push({ day: dayKey(d), v: pnl });
     if (points.length > 400) break;
   }
 
   const last = points[points.length - 1]!.v;
-  const lo = Math.min(CHART_STAKE_PER_BASKET, ...points.map((pt) => pt.v));
-  const hi = Math.max(CHART_STAKE_PER_BASKET, ...points.map((pt) => pt.v));
+  const lo = Math.min(0, ...points.map((pt) => pt.v));
+  const hi = Math.max(0, ...points.map((pt) => pt.v));
   const pad = Math.max((hi - lo) * 0.1, 5);
   const yMin = Math.max(0, lo - pad);
   const yMax = hi + pad;
@@ -528,16 +526,16 @@ function ReturnChart({
   const y = (v: number) => 170 - ((v - yMin) / (yMax - yMin)) * 140;
   const x = (i: number) => (points.length > 1 ? (i * W) / (points.length - 1) : 0);
   const line = "M" + points.map((pt, i) => `${x(i).toFixed(1)},${y(pt.v).toFixed(1)}`).join(" L");
-  const base = y(CHART_STAKE_PER_BASKET);
+  const base = y(0);
   const area = `${line} L${W},${base.toFixed(1)} L0,${base.toFixed(1)} Z`;
-  const up = last >= CHART_STAKE_PER_BASKET;
+  const up = last >= 0;
   const color = up ? "var(--bk-gold)" : "var(--down)";
   const fmtDay = (k: string) =>
     new Intl.DateTimeFormat(locale === "fa" ? "fa-IR" : "en-US", { day: "numeric", month: "short", timeZone: "UTC" }).format(
       new Date(`${k}T12:00:00Z`),
     );
-  const usd = (v: number) => `$${Math.round(v).toLocaleString("en-US")}`;
-  const change = Math.round(((last - CHART_STAKE_PER_BASKET) / CHART_STAKE_PER_BASKET) * 100);
+  const usd = (v: number) => `${v > 0 ? "+" : v < 0 ? "−" : ""}$${Math.abs(Math.round(v)).toLocaleString("en-US")}`;
+  const staked = [...byNight.values()].reduce((a, r) => a + r.length, 0) * CHART_STAKE_PER_BASKET;
   const ticks = [0, Math.floor((points.length - 1) / 2), points.length - 1].filter((v, i, a) => a.indexOf(v) === i);
 
   return (
@@ -545,16 +543,17 @@ function ReturnChart({
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <div className="text-[14px] font-extrabold text-[var(--ink)]">{title}</div>
         <div className="ltr-num text-[20px] font-extrabold" style={{ color }}>
-          {usd(last)} <span className="text-[12px] font-bold">({change >= 0 ? "+" : ""}{change}%)</span>
+          {usd(last)}
+          <span className="ms-1.5 text-[12px] font-bold text-[var(--faint)]">/ ${staked.toLocaleString("en-US")}</span>
         </div>
       </div>
       <div className="text-[11px] text-[var(--faint)]">{meta.replace("{date}", fmtDay(points[0]!.day))}</div>
       <svg viewBox={`0 0 ${W} ${H}`} className="h-auto w-full overflow-visible" style={{ direction: "ltr" }}>
         <line x1={0} y1={base} x2={W} y2={base} stroke="var(--line)" strokeWidth={1} strokeDasharray="4 5" />
         <text x={W - 4} y={base - 5} textAnchor="end" fontSize={10} fill="var(--faint)">
-          {usd(CHART_STAKE_PER_BASKET)}
+          $0
         </text>
-        {hi > CHART_STAKE_PER_BASKET * 1.15 && (
+        {hi > 0 && y(hi) < base - 18 && (
           <text x={W - 4} y={y(hi) - 6} textAnchor="end" fontSize={10} fill="var(--faint)">
             {usd(hi)}
           </text>
