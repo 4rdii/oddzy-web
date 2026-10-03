@@ -318,7 +318,7 @@ export const en = {
     pastBaskets: "Past baskets",
     winRate: "Win rate",
     acrossSettled: "across {n} settled predictions",
-    basketReturn: "Basket return",
+    basketReturn: "Return on $100 per basket",
     publishedCount: "{n} baskets published",
     feesEarned: "Fees earned",
     fromBuyers: "from {n} buyers",

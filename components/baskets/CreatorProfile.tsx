@@ -182,8 +182,8 @@ export function CreatorProfile({ creatorId }: { creatorId: string }) {
   const wonLegs = baskets.reduce((n, b) => n + (b.wonLegs ?? 0), 0);
   const winRate = settledLegs > 0 ? wonLegs / settledLegs : null;
 
-  const returnPct =
-    perf && perf.settledStakeUsdc > 0 ? (perf.pnlUsdc / perf.settledStakeUsdc) * 100 : null;
+  // Same basis as the chart: profit on the capital a $100-per-basket follower needed.
+  const returnPct = perf ? (rollingReturn(settledNights(perf.perBasket, baskets))?.pct ?? null) : null;
 
   const memberSince = !isHouse && creator.memberSince ? new Date(creator.memberSince) : null;
   const memberSinceLabel = memberSince
@@ -463,6 +463,46 @@ function StatCard({
 const CHART_STAKE_PER_BASKET = 100;
 
 /**
+ * Settled baskets grouped by the night they belong to (publish date in Tehran,
+ * else the date in the slug), each as a per-$1 result. Sorted by night.
+ */
+function settledNights(perBasket: Perf["perBasket"], baskets: CommunityBasket[]): Array<[string, number[]]> {
+  const dayKey = (d: Date) => new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Tehran" }).format(d);
+  const published = new Map(baskets.map((b) => [b.slug, b.publishedAt ?? null]));
+  const byNight = new Map<string, number[]>();
+  for (const pb of perBasket) {
+    if (!(pb.stakeUsdc > 0)) continue;
+    const at = published.get(pb.slug);
+    const night = at ? dayKey(new Date(at)) : (/(\d{4}-\d{2}-\d{2})$/.exec(pb.slug)?.[1] ?? null);
+    if (!night) continue;
+    const list = byNight.get(night) ?? [];
+    list.push(pb.pnlUsdc / pb.stakeUsdc);
+    byNight.set(night, list);
+  }
+  return [...byNight.entries()].sort(([a], [b]) => a.localeCompare(b));
+}
+
+/**
+ * Return on the money a follower actually needs: $100 into every basket, the
+ * same money rolled night to night (winnings not reinvested). The capital
+ * needed is the most that ever had to be on the table beyond what earlier
+ * baskets had already paid back — $100 for a creator who never dug a hole,
+ * more for one who lost early. Profit ÷ that capital is the honest "I put in
+ * $X and I'm up Y%". (The old card divided by the SUM of all stakes, i.e. the
+ * average per-basket return.)
+ */
+function rollingReturn(nights: Array<[string, number[]]>): { pnl: number; capital: number; pct: number } | null {
+  if (!nights.length) return null;
+  let pnl = 0;
+  let capital = 0;
+  for (const [, rs] of nights) {
+    capital = Math.max(capital, rs.length * CHART_STAKE_PER_BASKET - pnl);
+    for (const r of rs) pnl += r * CHART_STAKE_PER_BASKET;
+  }
+  return capital > 0 ? { pnl, capital, pct: (pnl / capital) * 100 } : null;
+}
+
+/**
  * Profit to date for someone who put $100 into every one of the creator's
  * baskets, night by night — winnings are NOT reinvested, each basket is a fresh
  * $100. One point per day from the first settled basket to today (flat on
@@ -486,25 +526,12 @@ function ReturnChart({
   meta: string;
   locale: string;
 }) {
-  const TZ = "Asia/Tehran";
-  const dayKey = (d: Date) => new Intl.DateTimeFormat("en-CA", { timeZone: TZ }).format(d);
-  const published = new Map(baskets.map((b) => [b.slug, b.publishedAt ?? null]));
-  // The night a basket belongs to: its publish date, else the date in its slug.
-  const nightOf = (slug: string): string | null => {
-    const at = published.get(slug);
-    if (at) return dayKey(new Date(at));
-    return /(\d{4}-\d{2}-\d{2})$/.exec(slug)?.[1] ?? null;
-  };
-  const byNight = new Map<string, number[]>();
-  for (const pb of perBasket) {
-    const night = nightOf(pb.slug);
-    if (!night || !(pb.stakeUsdc > 0)) continue;
-    const list = byNight.get(night) ?? [];
-    list.push(pb.pnlUsdc / pb.stakeUsdc);
-    byNight.set(night, list);
-  }
-  const nights = [...byNight.keys()].sort();
+  const dayKey = (d: Date) => new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Tehran" }).format(d);
+  const settled = settledNights(perBasket, baskets);
+  const byNight = new Map(settled);
+  const nights = settled.map(([n]) => n);
   if (nights.length === 0) return null;
+  const roll = rollingReturn(settled);
 
   const points: Array<{ day: string; v: number }> = [];
   let pnl = 0;
@@ -543,8 +570,13 @@ function ReturnChart({
         <div className="text-[14px] font-extrabold text-[var(--ink)]">{title}</div>
         <div className="ltr-num text-[20px] font-extrabold" style={{ color }}>
           {usd(last)}
-          {/* Against the $100 actually at risk: one basket's stake, rolled night to night. */}
-          <span className="ms-1.5 text-[12px] font-bold text-[var(--faint)]">/ ${CHART_STAKE_PER_BASKET}</span>
+          {/* Against the capital actually needed (see rollingReturn): $100 unless the creator dug a hole. */}
+          {roll && (
+            <span className="ms-1.5 text-[12px] font-bold">
+              ({roll.pct >= 0 ? "+" : ""}
+              {Math.round(roll.pct)}% <span className="text-[var(--faint)]">/ ${Math.round(roll.capital)}</span>)
+            </span>
+          )}
         </div>
       </div>
       <div className="text-[11px] text-[var(--faint)]">{meta.replace("{date}", fmtDay(points[0]!.day))}</div>

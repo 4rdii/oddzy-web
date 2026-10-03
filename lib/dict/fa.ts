@@ -326,7 +326,7 @@ export const fa: Dict = {
     pastBaskets: "سبدهای گذشته",
     winRate: "نرخ برد",
     acrossSettled: "از {n} پیش‌بینی تسویه‌شده",
-    basketReturn: "بازده سبدها",
+    basketReturn: "بازده با ۱۰۰ دلار در هر سبد",
     publishedCount: "{n} سبد منتشرشده",
     feesEarned: "کارمزد کسب‌شده",
     fromBuyers: "از {n} خریدار",
