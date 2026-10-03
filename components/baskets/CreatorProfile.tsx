@@ -535,7 +535,6 @@ function ReturnChart({
       new Date(`${k}T12:00:00Z`),
     );
   const usd = (v: number) => `${v > 0 ? "+" : v < 0 ? "−" : ""}$${Math.abs(Math.round(v)).toLocaleString("en-US")}`;
-  const staked = [...byNight.values()].reduce((a, r) => a + r.length, 0) * CHART_STAKE_PER_BASKET;
   const ticks = [0, Math.floor((points.length - 1) / 2), points.length - 1].filter((v, i, a) => a.indexOf(v) === i);
 
   return (
@@ -544,7 +543,8 @@ function ReturnChart({
         <div className="text-[14px] font-extrabold text-[var(--ink)]">{title}</div>
         <div className="ltr-num text-[20px] font-extrabold" style={{ color }}>
           {usd(last)}
-          <span className="ms-1.5 text-[12px] font-bold text-[var(--faint)]">/ ${staked.toLocaleString("en-US")}</span>
+          {/* Against the $100 actually at risk: one basket's stake, rolled night to night. */}
+          <span className="ms-1.5 text-[12px] font-bold text-[var(--faint)]">/ ${CHART_STAKE_PER_BASKET}</span>
         </div>
       </div>
       <div className="text-[11px] text-[var(--faint)]">{meta.replace("{date}", fmtDay(points[0]!.day))}</div>
