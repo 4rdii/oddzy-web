@@ -39,9 +39,12 @@ export function fixtureCard(ev: MarketEvent, meta: string): MatchCardData | null
       vol: ev.volume_24h,
     };
   }
-  // A fight: one market, YES = the first-named side.
-  if (wins.length === 1 && / vs\.? /.test(String(wins[0].label ?? ""))) {
-    const [x, y] = String(wins[0].label).split(/ vs\.? /, 2).map((s) => s.trim());
+  // A head-to-head (fight, tennis match): one market, YES = the first-named
+  // side. Tennis rows carry no label, so fall back to the event title's
+  // "A vs B" part ("Japan Open: Ugo Humbert vs Jiri Lehecka").
+  const versus = wins.length === 1 ? String(wins[0].label ?? (ev.title.includes(": ") ? ev.title.slice(ev.title.lastIndexOf(": ") + 2) : ev.title)) : "";
+  if (wins.length === 1 && / vs\.? /.test(versus)) {
+    const [x, y] = versus.split(/ vs\.? /, 2).map((s) => s.trim());
     const yes = wins[0].probability?.yes ?? null;
     return {
       href: `/match/${ev.id}`,

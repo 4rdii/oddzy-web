@@ -42,8 +42,10 @@ export function fixtureSides(lang: Locale, t: Dict, ev: MarketEvent): Side[] {
       { name: name(b.label, b.label_fa), p: b.probability?.yes ?? null },
     ];
   }
-  if (wins.length === 1 && / vs\.? /.test(String(wins[0].label ?? ""))) {
-    const [a, b] = String(wins[0].label).split(/ vs\.? /, 2);
+  // Tennis rows carry no label: the sides come from the title's "A vs B" part.
+  const versus = wins.length === 1 ? String(wins[0].label ?? (ev.title.includes(": ") ? ev.title.slice(ev.title.lastIndexOf(": ") + 2) : ev.title)) : "";
+  if (wins.length === 1 && / vs\.? /.test(versus)) {
+    const [a, b] = versus.split(/ vs\.? /, 2);
     const y = wins[0].probability?.yes ?? null;
     return [
       { name: a.trim(), p: y },
