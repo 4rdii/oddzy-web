@@ -288,7 +288,10 @@ export type SportHub = {
  */
 export async function getSportsHubs(): Promise<{ leagues: LeagueHub[]; sports: SportHub[] }> {
   try {
-    return await get<{ leagues: LeagueHub[]; sports: SportHub[] }>("/events/hubs", CATALOG_TTL);
+    // TOPICS_TAG: the hub list is catalogue shape like the topic tree, so the same
+    // POST /api/revalidate {"tag":"topics"} after adding a sport or league must
+    // refresh it too — otherwise a new sport's hub 404s for up to a day.
+    return await get<{ leagues: LeagueHub[]; sports: SportHub[] }>("/events/hubs", CATALOG_TTL, [TOPICS_TAG]);
   } catch {
     return { leagues: [], sports: [] };
   }
