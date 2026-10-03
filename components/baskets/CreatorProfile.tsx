@@ -281,8 +281,8 @@ export function CreatorProfile({ creatorId }: { creatorId: string }) {
 
       {/* Cumulative return chart — only once there are two real months to
           draw a line between. A one-point or empty chart is decoration. */}
-      {perf && perf.monthly.length >= 2 && (
-        <ReturnChart monthly={perf.monthly} title={p.cumulativeReturn} meta={p.chartMeta} locale={locale} />
+      {perf && perf.perBasket.length >= 2 && (
+        <ReturnChart perBasket={perf.perBasket} baskets={baskets} title={p.cumulativeReturn} meta={p.chartMeta} locale={locale} />
       )}
 
       {/* Active baskets */}
@@ -462,94 +462,110 @@ function StatCard({
 /** $ put into every scored basket for the chart's running P&L. */
 const CHART_STAKE_PER_BASKET = 100;
 
-const signedUsd = (v: number) =>
-  `${v > 0 ? "+" : v < 0 ? "−" : ""}$${Math.abs(v).toFixed(Math.abs(v) >= 100 ? 0 : 1)}`;
-
 /**
- * The cumulative-return line, drawn from realized monthly buckets. Each
- * settled basket is scored as if bought with $100 (the backend already
- * scores every basket as $1 equal-weight, so this is just a scale), and
- * each month's point is the running sum of those dollar results. So the
- * line answers "if I had put $100 into every basket, how much am I up".
+ * "If you had started with $100 on the first night": a bankroll that goes into
+ * that night's baskets in full (split evenly when there are several), and
+ * whatever comes back rides into the next night's. One point per day, from the
+ * first settled basket to today, carried flat on nights with no basket.
  *
- * Deliberately NOT the running average return: that line drops whenever a
- * modest win follows a big one, which reads as a loss when nothing was lost.
+ * Replaces a monthly running SUM of "$100 into every basket", which (a) had a
+ * single point per month, so two months drew a near-flat line, (b) started at
+ * the first month's total instead of at $100, and (c) answered a question
+ * nobody asks. Each basket's result is the backend's per-$1 score (pnlUsdc /
+ * stakeUsdc), scored at publish-time prices — the same basis as the stat cards.
  */
 function ReturnChart({
-  monthly,
+  perBasket,
+  baskets,
   title,
   meta,
   locale,
 }: {
-  monthly: Perf["monthly"];
+  perBasket: Perf["perBasket"];
+  baskets: CommunityBasket[];
   title: string;
   meta: string;
   locale: string;
 }) {
-  // pnlUsdc is per-$1-stake, so × stake-per-basket gives dollars.
-  const points = monthly.reduce<Array<{ month: string; v: number }>>((acc, m) => {
-    const prev = acc.length ? acc[acc.length - 1]!.v : 0;
-    acc.push({ month: m.month, v: prev + m.pnlUsdc * CHART_STAKE_PER_BASKET });
-    return acc;
-  }, []);
+  const TZ = "Asia/Tehran";
+  const dayKey = (d: Date) => new Intl.DateTimeFormat("en-CA", { timeZone: TZ }).format(d);
+  const published = new Map(baskets.map((b) => [b.slug, b.publishedAt ?? null]));
+  // The night a basket belongs to: its publish date, else the date in its slug.
+  const nightOf = (slug: string): string | null => {
+    const at = published.get(slug);
+    if (at) return dayKey(new Date(at));
+    return /(\d{4}-\d{2}-\d{2})$/.exec(slug)?.[1] ?? null;
+  };
+  const byNight = new Map<string, number[]>();
+  for (const pb of perBasket) {
+    const night = nightOf(pb.slug);
+    if (!night || !(pb.stakeUsdc > 0)) continue;
+    const list = byNight.get(night) ?? [];
+    list.push(pb.pnlUsdc / pb.stakeUsdc);
+    byNight.set(night, list);
+  }
+  const nights = [...byNight.keys()].sort();
+  if (nights.length === 0) return null;
 
-  const lo = Math.min(0, ...points.map((pt) => pt.v));
-  const hi = Math.max(1, ...points.map((pt) => pt.v));
-  const pad = (hi - lo) * 0.1;
-  const yMin = lo - pad;
+  const points: Array<{ day: string; v: number }> = [];
+  let bank = CHART_STAKE_PER_BASKET;
+  const today = dayKey(new Date());
+  for (let d = new Date(`${nights[0]}T12:00:00Z`); dayKey(d) <= today; d = new Date(d.getTime() + 86_400_000)) {
+    const r = byNight.get(dayKey(d));
+    if (r) bank *= 1 + r.reduce((a, x) => a + x, 0) / r.length;
+    points.push({ day: dayKey(d), v: bank });
+    if (points.length > 400) break;
+  }
+
+  const last = points[points.length - 1]!.v;
+  const lo = Math.min(CHART_STAKE_PER_BASKET, ...points.map((pt) => pt.v));
+  const hi = Math.max(CHART_STAKE_PER_BASKET, ...points.map((pt) => pt.v));
+  const pad = Math.max((hi - lo) * 0.1, 5);
+  const yMin = Math.max(0, lo - pad);
   const yMax = hi + pad;
   const W = 640;
   const H = 200;
   const y = (v: number) => 170 - ((v - yMin) / (yMax - yMin)) * 140;
   const x = (i: number) => (points.length > 1 ? (i * W) / (points.length - 1) : 0);
-
   const line = "M" + points.map((pt, i) => `${x(i).toFixed(1)},${y(pt.v).toFixed(1)}`).join(" L");
-  const area = `${line} L${W},${y(Math.max(yMin, 0)).toFixed(1)} L0,${y(Math.max(yMin, 0)).toFixed(1)} Z`;
-  const grid = [yMin + (yMax - yMin) * 0.15, (yMin + yMax) / 2, yMax - (yMax - yMin) * 0.15];
-
-  const monthLabel = (ym: string) => {
-    const [yr, mo] = ym.split("-").map(Number);
-    return new Intl.DateTimeFormat(locale === "fa" ? "fa-IR" : "en-US", { month: "short" }).format(
-      new Date(Date.UTC(yr!, (mo ?? 1) - 1, 15)),
+  const base = y(CHART_STAKE_PER_BASKET);
+  const area = `${line} L${W},${base.toFixed(1)} L0,${base.toFixed(1)} Z`;
+  const up = last >= CHART_STAKE_PER_BASKET;
+  const color = up ? "var(--bk-gold)" : "var(--down)";
+  const fmtDay = (k: string) =>
+    new Intl.DateTimeFormat(locale === "fa" ? "fa-IR" : "en-US", { day: "numeric", month: "short", timeZone: "UTC" }).format(
+      new Date(`${k}T12:00:00Z`),
     );
-  };
+  const usd = (v: number) => `$${Math.round(v).toLocaleString("en-US")}`;
+  const change = Math.round(((last - CHART_STAKE_PER_BASKET) / CHART_STAKE_PER_BASKET) * 100);
+  const ticks = [0, Math.floor((points.length - 1) / 2), points.length - 1].filter((v, i, a) => a.indexOf(v) === i);
 
   return (
     <div className="flex flex-col gap-3.5 rounded-2xl border border-[var(--line)] bg-[var(--card)] px-5 py-[18px]">
-      <div className="flex items-baseline justify-between">
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
         <div className="text-[14px] font-extrabold text-[var(--ink)]">{title}</div>
-        <div className="text-[11px] text-[var(--faint)]">
-          {meta.replace("{n}", String(points.length))}
+        <div className="ltr-num text-[20px] font-extrabold" style={{ color }}>
+          {usd(last)} <span className="text-[12px] font-bold">({change >= 0 ? "+" : ""}{change}%)</span>
         </div>
       </div>
+      <div className="text-[11px] text-[var(--faint)]">{meta.replace("{date}", fmtDay(points[0]!.day))}</div>
       <svg viewBox={`0 0 ${W} ${H}`} className="h-auto w-full overflow-visible" style={{ direction: "ltr" }}>
-        {grid.map((g, i) => (
-          <g key={i}>
-            <line x1={0} y1={y(g)} x2={W} y2={y(g)} stroke="var(--line)" strokeWidth={1} />
-            <text x={W - 4} y={y(g) - 5} textAnchor="end" fontSize={10} fill="var(--faint)">
-              {signedUsd(g)}
-            </text>
-          </g>
-        ))}
-        <path d={area} fill="var(--bk-goldtint)" />
-        <path
-          d={line}
-          fill="none"
-          stroke="var(--bk-gold)"
-          strokeWidth={2.5}
-          strokeLinejoin="round"
-          strokeLinecap="round"
-        />
-        <circle
-          cx={x(points.length - 1)}
-          cy={y(points[points.length - 1]!.v)}
-          r={4}
-          fill="var(--bk-gold)"
-        />
+        <line x1={0} y1={base} x2={W} y2={base} stroke="var(--line)" strokeWidth={1} strokeDasharray="4 5" />
+        <text x={W - 4} y={base - 5} textAnchor="end" fontSize={10} fill="var(--faint)">
+          {usd(CHART_STAKE_PER_BASKET)}
+        </text>
+        {hi > CHART_STAKE_PER_BASKET * 1.15 && (
+          <text x={W - 4} y={y(hi) - 6} textAnchor="end" fontSize={10} fill="var(--faint)">
+            {usd(hi)}
+          </text>
+        )}
+        <path d={area} fill={up ? "var(--bk-goldtint)" : "color-mix(in srgb, var(--down) 12%, transparent)"} />
+        <path d={line} fill="none" stroke={color} strokeWidth={2.5} strokeLinejoin="round" strokeLinecap="round" />
+        <circle cx={x(points.length - 1)} cy={y(last)} r={4} fill={color} />
       </svg>
       <div dir="ltr" className="flex justify-between text-[11px] text-[var(--faint)]">
-        {points.map((pt) => (
-          <span key={pt.month}>{monthLabel(pt.month)}</span>
+        {ticks.map((i) => (
+          <span key={i}>{fmtDay(points[i]!.day)}</span>
         ))}
       </div>
     </div>
