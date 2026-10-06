@@ -1,0 +1,3313 @@
+{
+ "openapi": "3.0.3",
+ "info": {
+  "title": "Oddzy basket API",
+  "version": "2026-10-06",
+  "description": "Basket-related endpoints of two separate internal services that share the host `app.oddzy.xyz`. Each path carries its own `servers` override because the base URLs differ.\n\n### 1. Bot mini-app API — `/webapp/v1/*` (tag: *Bot mini-app API (/webapp/v1)*)\nServed at `https://app.oddzy.xyz` (also `https://app.polybaaz.com`) with no path prefix. Used by the Telegram Mini App and the oddzy.xyz / polybaaz.com web apps. camelCase JSON.\n\n**Auth** (`authenticate`): either\n- `X-Telegram-Init-Data: <raw initData>` — Telegram WebApp initData, HMAC-verified against the EN or FA bot token, `auth_date` must be < 24h old; or\n- `Authorization: Bearer <Privy access token>` — verified against Privy JWKS (browsers on oddzy.xyz).\n\ninitData is tried first and wins when both are sent. Failures: 401 `unauthorized`, 404 `no_account` (valid identity but no user row — onboarding), 403 `blocked`. `community-baskets` and `creator` are public with optional auth (personalisation only); `event` is unauthenticated.\n\n**Rate limits**: per user, fixed 60-second window; 429 `{\"error\":\"rate_limited\"}`. basket=30/min (GET /basket), bet=10/min shared by /bet, /basket-buy and /basket-retry, basket_create=3/min, follow=30/min, event=30/min per visitorId (silently 204).\n\n**MONEY-MOVING:** `POST /webapp/v1/basket-buy` and `POST /webapp/v1/basket-retry` place REAL Polymarket orders from the user's wallet. Do not \"Try it out\" against production with a real user's credentials.\n\n### 2. oddzy-api — read-only (tag: *oddzy-api (read-only)*)\nPlain Node http service () mounted at `https://app.oddzy.xyz/api` (Traefik `PathPrefix(/api)`, prefix stripped). GET only (other methods: 405). snake_case JSON, every body carries `as_of` + `max_staleness_minutes`; `Cache-Control: no-store`.\n\n**Auth**: `Authorization: Bearer <API_TOKEN>` (constant-time compare, header only — no query-string token). 401 `unauthorized` otherwise. Never buys anything; prices are DB-synced mids, not executable quotes.\n",
+  "contact": {
+   "name": "Oddzy internal"
+  }
+ },
+ "servers": [
+  {
+   "url": "https://app.oddzy.xyz",
+   "description": "Default host. Each path overrides `servers` with its API's real base URL."
+  }
+ ],
+ "tags": [
+  {
+   "name": "Bot mini-app API (/webapp/v1)",
+   "description": "Fastify routes in the bot process at https://app.oddzy.xyz (and app.polybaaz.com). Auth: X-Telegram-Init-Data or Privy bearer."
+  },
+  {
+   "name": "oddzy-api (read-only)",
+   "description": "Read-only content API at https://app.oddzy.xyz/api. Auth: static bearer API_TOKEN."
+  }
+ ],
+ "paths": {
+  "/webapp/v1/baskets": {
+   "servers": [
+    {
+     "url": "https://app.oddzy.xyz",
+     "description": "Bot Fastify server (Traefik router `sportsbot`, no path prefix)"
+    },
+    {
+     "url": "https://app.polybaaz.com",
+     "description": "Same bot process, PolyBaaz host"
+    }
+   ],
+   "get": {
+    "tags": [
+     "Bot mini-app API (/webapp/v1)"
+    ],
+    "operationId": "botListBaskets",
+    "summary": "List published baskets (Baskets tab)",
+    "description": "Read-only and cheap: leg prices are NOT quoted. Requires an account. No rate limit. `Cache-Control: no-store`.",
+    "security": [
+     {
+      "telegramInitData": []
+     },
+     {
+      "privyBearer": []
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Published baskets",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/BasketListResponse"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "No valid credential: initData missing/invalid/older than 24h AND no valid Privy bearer token.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "required": [
+          "error"
+         ],
+         "properties": {
+          "error": {
+           "type": "string",
+           "enum": [
+            "unauthorized"
+           ]
+          }
+         }
+        }
+       }
+      }
+     },
+     "403": {
+      "description": "Account is blocked (`blocked`).",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "required": [
+          "error"
+         ],
+         "properties": {
+          "error": {
+           "type": "string",
+           "enum": [
+            "blocked"
+           ]
+          }
+         }
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "Authenticated but no account row yet (`no_account`) — send to onboarding.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "required": [
+          "error"
+         ],
+         "properties": {
+          "error": {
+           "type": "string",
+           "enum": [
+            "no_account"
+           ]
+          }
+         }
+        }
+       }
+      }
+     }
+    }
+   },
+   "post": {
+    "tags": [
+     "Bot mini-app API (/webapp/v1)"
+    ],
+    "operationId": "botCreateBasket",
+    "summary": "Publish a user-built basket",
+    "description": "Validated by parseBasketSpec + applyBasketSpec (same rules as the config seeder and admin API) and published LIVE immediately, with the caller as creator (earns the sharer rebate on every buy; self-buys earn nothing). Slug is server-derived and salted. Always sizing=weights, curated=false. Rate limit: 3/min per user (bucket `basket_create`). Note: no CORS preflight (OPTIONS) handler is registered for this path.",
+    "security": [
+     {
+      "telegramInitData": []
+     },
+     {
+      "privyBearer": []
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/BasketCreateRequest"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "Published",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/BasketCreateResponse"
+        }
+       }
+      }
+     },
+     "400": {
+      "description": "Shape errors. Messages: \"Name your basket.\", \"That name is too long.\" (name > 80 or creatorName > 32), \"A basket holds 2 to 10 positions.\", \"That name has characters we can't use.\"",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "required": [
+          "error"
+         ],
+         "properties": {
+          "error": {
+           "type": "string",
+           "enum": [
+            "bad_request"
+           ]
+          },
+          "message": {
+           "type": "string",
+           "description": "User-facing English copy"
+          }
+         }
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "No valid credential: initData missing/invalid/older than 24h AND no valid Privy bearer token.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "required": [
+          "error"
+         ],
+         "properties": {
+          "error": {
+           "type": "string",
+           "enum": [
+            "unauthorized"
+           ]
+          }
+         }
+        }
+       }
+      }
+     },
+     "403": {
+      "description": "Account is blocked (`blocked`).",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "required": [
+          "error"
+         ],
+         "properties": {
+          "error": {
+           "type": "string",
+           "enum": [
+            "blocked"
+           ]
+          }
+         }
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "`no_account`",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "required": [
+          "error"
+         ],
+         "properties": {
+          "error": {
+           "type": "string",
+           "enum": [
+            "no_account"
+           ]
+          }
+         }
+        }
+       }
+      }
+     },
+     "409": {
+      "description": "Salted slug collided with an existing basket (\"Try publishing again.\").",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "required": [
+          "error"
+         ],
+         "properties": {
+          "error": {
+           "type": "string",
+           "enum": [
+            "slug_taken"
+           ]
+          },
+          "message": {
+           "type": "string",
+           "description": "User-facing English copy"
+          }
+         }
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Spec/rule validation failed",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/InvalidBasketError"
+        }
+       }
+      }
+     },
+     "429": {
+      "description": "Rate limited (\"You're publishing baskets quickly. Give it a minute.\").",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "required": [
+          "error"
+         ],
+         "properties": {
+          "error": {
+           "type": "string",
+           "enum": [
+            "rate_limited"
+           ]
+          },
+          "message": {
+           "type": "string",
+           "description": "User-facing English copy"
+          }
+         }
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/webapp/v1/basket": {
+   "servers": [
+    {
+     "url": "https://app.oddzy.xyz",
+     "description": "Bot Fastify server (Traefik router `sportsbot`, no path prefix)"
+    },
+    {
+     "url": "https://app.polybaaz.com",
+     "description": "Same bot process, PolyBaaz host"
+    }
+   ],
+   "get": {
+    "tags": [
+     "Bot mini-app API (/webapp/v1)"
+    ],
+    "operationId": "botGetBasket",
+    "summary": "One basket, live-priced and split (preview)",
+    "description": "Resolves published AND archived baskets (archived = readable record, not buyable). Prices every kept leg at the live executable ask (Gamma). Without `size`, priced against a nominal $100. The optional buyer edit (`keep` + `w`) is applied before pricing, so minStake/payout reflect the edited basket. Rate limit: 30/min per user (bucket `basket`).",
+    "security": [
+     {
+      "telegramInitData": []
+     },
+     {
+      "privyBearer": []
+     }
+    ],
+    "parameters": [
+     {
+      "name": "slug",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Basket slug."
+     },
+     {
+      "name": "size",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "number",
+       "exclusiveMinimum": true,
+       "minimum": 0,
+       "default": 100
+      },
+      "description": "Stake in USDC to split. Non-numeric/<=0 falls back to 100. No upper bound here."
+     },
+     {
+      "name": "keep",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "example": "0xabc...,0xdef...",
+      "description": "Buyer edit: comma-separated marketIds to keep (subset of the basket's legs). Absent/blank = basket as curated. Unknown id -> 400 unknown_leg; duplicates ignored."
+     },
+     {
+      "name": "w",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "example": "0xabc...:6000,0xdef...:4000",
+      "description": "Optional weight overrides, comma-separated `<marketId>:<bps>` pairs (positive integers). Only read when `keep` is set; malformed pairs are dropped. If any override survives, every kept leg needs one (else 400 bad_weights). Ignored on equal_shares baskets. Renormalised to 10000 bps."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Priced basket",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/BasketDetail"
+        }
+       }
+      }
+     },
+     "400": {
+      "description": "`bad_request` (\"slug is required\") or a rejected selection: `unknown_leg`, `no_legs`, `bad_weights`.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "required": [
+          "error"
+         ],
+         "properties": {
+          "error": {
+           "type": "string",
+           "enum": [
+            "bad_request",
+            "unknown_leg",
+            "no_legs",
+            "bad_weights"
+           ]
+          },
+          "message": {
+           "type": "string",
+           "description": "User-facing English copy"
+          }
+         }
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "No valid credential: initData missing/invalid/older than 24h AND no valid Privy bearer token.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "required": [
+          "error"
+         ],
+         "properties": {
+          "error": {
+           "type": "string",
+           "enum": [
+            "unauthorized"
+           ]
+          }
+         }
+        }
+       }
+      }
+     },
+     "403": {
+      "description": "Account is blocked (`blocked`).",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "required": [
+          "error"
+         ],
+         "properties": {
+          "error": {
+           "type": "string",
+           "enum": [
+            "blocked"
+           ]
+          }
+         }
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "`no_basket` (missing, draft) or `no_account`.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "required": [
+          "error"
+         ],
+         "properties": {
+          "error": {
+           "type": "string",
+           "enum": [
+            "no_basket",
+            "no_account"
+           ]
+          }
+         }
+        }
+       }
+      }
+     },
+     "429": {
+      "description": "Rate limited",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "required": [
+          "error"
+         ],
+         "properties": {
+          "error": {
+           "type": "string",
+           "enum": [
+            "rate_limited"
+           ]
+          }
+         }
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/webapp/v1/basket-buy": {
+   "servers": [
+    {
+     "url": "https://app.oddzy.xyz",
+     "description": "Bot Fastify server (Traefik router `sportsbot`, no path prefix)"
+    },
+    {
+     "url": "https://app.polybaaz.com",
+     "description": "Same bot process, PolyBaaz host"
+    }
+   ],
+   "post": {
+    "tags": [
+     "Bot mini-app API (/webapp/v1)"
+    ],
+    "operationId": "botBuyBasket",
+    "summary": "BUY a basket — places REAL orders",
+    "description": "**Money-moving.** Re-derives and re-quotes the split server-side from `sizeUsdc` (client prices never trusted), then places each buyable leg sequentially on Polymarket under one per-user bet lock, from the user's delegated embedded wallet. Basket must be `published` (archived -> 404). Skipped legs' stake is NOT redistributed; dropped (edited-out) legs' stake IS. Checks the wallet's available balance first (400 `insufficient_balance`). Once orders are placed, returns 200 even on partial/failed fills. Rate limit: 10/min per user, SHARED with single bets and /basket-retry (bucket `bet`).",
+    "security": [
+     {
+      "telegramInitData": []
+     },
+     {
+      "privyBearer": []
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/BasketBuyRequest"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "Receipt (status filled | partial | failed)",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/BasketBuyReceipt"
+        }
+       }
+      }
+     },
+     "400": {
+      "description": "Validation / placement refusal. `bad_request` (slug is required), `bad_size` (\"Amount must be between $0 and $10,000.\"), `unknown_leg`/`no_legs`/`bad_weights` (selection), `below_min` (includes `minStake` when raised by the handler; may also come from placement without it), `bad_legs` (leg not in basket — should be unreachable). `insufficient_balance` (sizeUsdc exceeds the wallet's available balance; includes `free`).",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "required": [
+          "error"
+         ],
+         "properties": {
+          "error": {
+           "type": "string",
+           "enum": [
+            "bad_request",
+            "bad_size",
+            "unknown_leg",
+            "no_legs",
+            "bad_weights",
+            "below_min",
+            "bad_legs",
+            "insufficient_balance"
+           ]
+          },
+          "message": {
+           "type": "string",
+           "description": "User-facing English copy"
+          },
+          "minStake": {
+           "type": "number",
+           "description": "Only on the handler's below_min check."
+          },
+          "free": {
+           "type": "number",
+           "description": "Available pUSD balance. Only on insufficient_balance."
+          }
+         }
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "No valid credential: initData missing/invalid/older than 24h AND no valid Privy bearer token.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "required": [
+          "error"
+         ],
+         "properties": {
+          "error": {
+           "type": "string",
+           "enum": [
+            "unauthorized"
+           ]
+          }
+         }
+        }
+       }
+      }
+     },
+     "403": {
+      "description": "`blocked`, or `no_wallet` (onboarding incomplete).",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "required": [
+          "error"
+         ],
+         "properties": {
+          "error": {
+           "type": "string",
+           "enum": [
+            "blocked",
+            "no_wallet"
+           ]
+          },
+          "message": {
+           "type": "string",
+           "description": "User-facing English copy"
+          }
+         }
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "`no_basket` (missing / not published) or `no_account`.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "required": [
+          "error"
+         ],
+         "properties": {
+          "error": {
+           "type": "string",
+           "enum": [
+            "no_basket",
+            "no_account"
+           ]
+          },
+          "message": {
+           "type": "string",
+           "description": "User-facing English copy"
+          }
+         }
+        }
+       }
+      }
+     },
+     "409": {
+      "description": "`locked` (another bet/basket in flight) or `no_legs` (nothing buyable right now).",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "required": [
+          "error"
+         ],
+         "properties": {
+          "error": {
+           "type": "string",
+           "enum": [
+            "locked",
+            "no_legs"
+           ]
+          },
+          "message": {
+           "type": "string",
+           "description": "User-facing English copy"
+          }
+         }
+        }
+       }
+      }
+     },
+     "429": {
+      "description": "Rate limited",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "required": [
+          "error"
+         ],
+         "properties": {
+          "error": {
+           "type": "string",
+           "enum": [
+            "rate_limited"
+           ]
+          }
+         }
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/webapp/v1/basket-retry": {
+   "servers": [
+    {
+     "url": "https://app.oddzy.xyz",
+     "description": "Bot Fastify server (Traefik router `sportsbot`, no path prefix)"
+    },
+    {
+     "url": "https://app.polybaaz.com",
+     "description": "Same bot process, PolyBaaz host"
+    }
+   ],
+   "post": {
+    "tags": [
+     "Bot mini-app API (/webapp/v1)"
+    ],
+    "operationId": "botRetryBasketBuy",
+    "summary": "Retry failed legs of a basket purchase — places REAL orders",
+    "description": "**Money-moving.** Manual retry (receipt's Retry button). Only legs with filled=false and a retryable reason (no_fill, order_error, price_moved, no_quote, unbuyable) are re-attempted, each at a FRESH live price with the original requestedUsdc; legs whose market has since closed are marked `settled`. Fills land on the same buy id. Ownership checked server-side. Rate limit: 10/min per user, shared `bet` bucket. Error bodies carry only `error` (no `message`).",
+    "security": [
+     {
+      "telegramInitData": []
+     },
+     {
+      "privyBearer": []
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/BasketRetryRequest"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "Updated receipt",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/BasketRetryReceipt"
+        }
+       }
+      }
+     },
+     "400": {
+      "description": "`bad_request`: \"buyId is required\" / \"buyId is malformed\".",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "required": [
+          "error"
+         ],
+         "properties": {
+          "error": {
+           "type": "string",
+           "enum": [
+            "bad_request"
+           ]
+          },
+          "message": {
+           "type": "string",
+           "description": "User-facing English copy"
+          }
+         }
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "No valid credential: initData missing/invalid/older than 24h AND no valid Privy bearer token.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "required": [
+          "error"
+         ],
+         "properties": {
+          "error": {
+           "type": "string",
+           "enum": [
+            "unauthorized"
+           ]
+          }
+         }
+        }
+       }
+      }
+     },
+     "403": {
+      "description": "`blocked` or `no_wallet`.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "required": [
+          "error"
+         ],
+         "properties": {
+          "error": {
+           "type": "string",
+           "enum": [
+            "blocked",
+            "no_wallet"
+           ]
+          }
+         }
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "`no_buy` (no such buy OR not the caller's — same answer on purpose) or `no_account`.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "required": [
+          "error"
+         ],
+         "properties": {
+          "error": {
+           "type": "string",
+           "enum": [
+            "no_buy",
+            "no_account"
+           ]
+          }
+         }
+        }
+       }
+      }
+     },
+     "409": {
+      "description": "`locked` or `nothing_to_retry`.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "required": [
+          "error"
+         ],
+         "properties": {
+          "error": {
+           "type": "string",
+           "enum": [
+            "locked",
+            "nothing_to_retry"
+           ]
+          }
+         }
+        }
+       }
+      }
+     },
+     "429": {
+      "description": "Rate limited",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "required": [
+          "error"
+         ],
+         "properties": {
+          "error": {
+           "type": "string",
+           "enum": [
+            "rate_limited"
+           ]
+          }
+         }
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/webapp/v1/community-baskets": {
+   "servers": [
+    {
+     "url": "https://app.oddzy.xyz",
+     "description": "Bot Fastify server (Traefik router `sportsbot`, no path prefix)"
+    },
+    {
+     "url": "https://app.polybaaz.com",
+     "description": "Same bot process, PolyBaaz host"
+    }
+   ],
+   "get": {
+    "tags": [
+     "Bot mini-app API (/webapp/v1)"
+    ],
+    "operationId": "botCommunityBaskets",
+    "summary": "Community basket feed (public, optionally personalised)",
+    "description": "PUBLIC: no auth required. If a valid initData or Privy token for a non-blocked user is sent, it only personalises `viewerFollows` and enables the `following` tab; any credential problem is treated as anonymous (never 401). Published baskets only (editorial + user), limit 30. No rate limit. `Cache-Control: no-store`.",
+    "security": [
+     {},
+     {
+      "telegramInitData": []
+     },
+     {
+      "privyBearer": []
+     }
+    ],
+    "parameters": [
+     {
+      "name": "tab",
+      "in": "query",
+      "schema": {
+       "type": "string",
+       "enum": [
+        "all",
+        "hot",
+        "following",
+        "bought"
+       ],
+       "default": "all"
+      },
+      "description": "all = curated first then newest; hot = recency-weighted buys; bought = all-time buy_count; following = creators the viewer follows (empty when anonymous). Unknown values -> all."
+     },
+     {
+      "name": "category",
+      "in": "query",
+      "schema": {
+       "type": "string",
+       "pattern": "^[a-z0-9-]{1,32}$"
+      },
+      "description": "Root topic slug (lowercased); a basket matches if ANY leg is under it. Invalid shape is ignored; unknown slug -> empty feed."
+     },
+     {
+      "name": "q",
+      "in": "query",
+      "schema": {
+       "type": "string",
+       "maxLength": 64
+      },
+      "description": "Free-text ILIKE over titleEn, titleFa and creator name (trimmed, first 64 chars)."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Feed",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/CommunityFeedResponse"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/webapp/v1/creator": {
+   "servers": [
+    {
+     "url": "https://app.oddzy.xyz",
+     "description": "Bot Fastify server (Traefik router `sportsbot`, no path prefix)"
+    },
+    {
+     "url": "https://app.polybaaz.com",
+     "description": "Same bot process, PolyBaaz host"
+    }
+   ],
+   "get": {
+    "tags": [
+     "Bot mini-app API (/webapp/v1)"
+    ],
+    "operationId": "botCreatorProfile",
+    "summary": "Creator (or house desk) profile with baskets and performance",
+    "description": "PUBLIC, optional auth (personalises viewerFollows). Published + archived baskets with legs (limit 60). `house`, `house-daily`, `house-world` are the editorial desks (curated baskets with no creator). No rate limit.",
+    "security": [
+     {},
+     {
+      "telegramInitData": []
+     },
+     {
+      "privyBearer": []
+     }
+    ],
+    "parameters": [
+     {
+      "name": "id",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "oneOf": [
+        {
+         "type": "string",
+         "enum": [
+          "house",
+          "house-daily",
+          "house-world"
+         ]
+        },
+        {
+         "type": "string",
+         "pattern": "^-?\\d+$"
+        }
+       ]
+      },
+      "description": "Creator user id (Telegram ids positive, web-auth ids negative) or a house desk id."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Profile",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/CreatorProfileResponse"
+        }
+       }
+      }
+     },
+     "400": {
+      "description": "\"id is required\" / \"id is malformed\".",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "required": [
+          "error"
+         ],
+         "properties": {
+          "error": {
+           "type": "string",
+           "enum": [
+            "bad_request"
+           ]
+          },
+          "message": {
+           "type": "string",
+           "description": "User-facing English copy"
+          }
+         }
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "No published/archived baskets for this id (indistinguishable from unknown creator, on purpose).",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "required": [
+          "error"
+         ],
+         "properties": {
+          "error": {
+           "type": "string",
+           "enum": [
+            "no_creator"
+           ]
+          }
+         }
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/webapp/v1/follow": {
+   "servers": [
+    {
+     "url": "https://app.oddzy.xyz",
+     "description": "Bot Fastify server (Traefik router `sportsbot`, no path prefix)"
+    },
+    {
+     "url": "https://app.polybaaz.com",
+     "description": "Same bot process, PolyBaaz host"
+    }
+   ],
+   "post": {
+    "tags": [
+     "Bot mini-app API (/webapp/v1)"
+    ],
+    "operationId": "botFollowCreator",
+    "summary": "Follow / unfollow a basket creator",
+    "description": "Idempotent both ways. Rate limit: 30/min per user (bucket `follow`). Following an id with no user row hits a DB foreign key and would surface as a 500. No CORS preflight handler registered for this path.",
+    "security": [
+     {
+      "telegramInitData": []
+     },
+     {
+      "privyBearer": []
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/FollowRequest"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "New follow state",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/FollowResponse"
+        }
+       }
+      }
+     },
+     "400": {
+      "description": "`bad_request` (creatorTgUserId is required / malformed) or `self_follow`.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "required": [
+          "error"
+         ],
+         "properties": {
+          "error": {
+           "type": "string",
+           "enum": [
+            "bad_request",
+            "self_follow"
+           ]
+          },
+          "message": {
+           "type": "string",
+           "description": "User-facing English copy"
+          }
+         }
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "No valid credential: initData missing/invalid/older than 24h AND no valid Privy bearer token.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "required": [
+          "error"
+         ],
+         "properties": {
+          "error": {
+           "type": "string",
+           "enum": [
+            "unauthorized"
+           ]
+          }
+         }
+        }
+       }
+      }
+     },
+     "403": {
+      "description": "Account is blocked (`blocked`).",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "required": [
+          "error"
+         ],
+         "properties": {
+          "error": {
+           "type": "string",
+           "enum": [
+            "blocked"
+           ]
+          }
+         }
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "`no_creator` — the creator id does not exist (checked on follow only; unfollow always succeeds).",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "required": [
+          "error"
+         ],
+         "properties": {
+          "error": {
+           "type": "string",
+           "enum": [
+            "no_creator"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     },
+     "429": {
+      "description": "Rate limited",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "required": [
+          "error"
+         ],
+         "properties": {
+          "error": {
+           "type": "string",
+           "enum": [
+            "rate_limited"
+           ]
+          }
+         }
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/webapp/v1/event": {
+   "servers": [
+    {
+     "url": "https://app.oddzy.xyz",
+     "description": "Bot Fastify server (Traefik router `sportsbot`, no path prefix)"
+    },
+    {
+     "url": "https://app.polybaaz.com",
+     "description": "Same bot process, PolyBaaz host"
+    }
+   ],
+   "post": {
+    "tags": [
+     "Bot mini-app API (/webapp/v1)"
+    ],
+    "operationId": "botWebEvent",
+    "summary": "Anonymous web funnel event (basket_view, basket_cta, ...)",
+    "description": "Unauthenticated. Writes an allowlisted event to audit_log as `web_<event>` with actor `web:<visitorId>`. Always 204: invalid event/visitorId, rate limit (30/min per visitorId) and DB errors are silently dropped.",
+    "security": [
+     {}
+    ],
+    "requestBody": {
+     "required": false,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/WebEventRequest"
+       }
+      }
+     }
+    },
+    "responses": {
+     "204": {
+      "description": "Accepted or ignored (indistinguishable)."
+     }
+    }
+   }
+  },
+  "/baskets": {
+   "servers": [
+    {
+     "url": "https://app.oddzy.xyz/api",
+     "description": "oddzy-api container (Traefik `PathPrefix(/api)`, prefix stripped)"
+    }
+   ],
+   "get": {
+    "tags": [
+     "oddzy-api (read-only)"
+    ],
+    "operationId": "apiListBaskets",
+    "summary": "Every published basket with payout headline",
+    "description": "Read-only from the DB snapshot (no live quotes). Published only (archived excluded). Unpaginated. Prices are stored mids synced by the indexer. Non-GET methods return 405 `method_not_allowed`.",
+    "security": [
+     {
+      "oddzyApiBearer": []
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Basket index",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ApiBasketIndex"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "Missing/wrong bearer token. Sets `WWW-Authenticate: Bearer realm=\"oddzy-api\"`.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "required": [
+          "error"
+         ],
+         "properties": {
+          "error": {
+           "type": "string",
+           "enum": [
+            "unauthorized"
+           ]
+          },
+          "message": {
+           "type": "string",
+           "description": "User-facing English copy"
+          }
+         }
+        }
+       }
+      }
+     },
+     "500": {
+      "description": "Unexpected error (DB text never leaked).",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "required": [
+          "error"
+         ],
+         "properties": {
+          "error": {
+           "type": "string",
+           "enum": [
+            "internal_error"
+           ]
+          }
+         }
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/baskets/{slug}": {
+   "servers": [
+    {
+     "url": "https://app.oddzy.xyz/api",
+     "description": "oddzy-api container (Traefik `PathPrefix(/api)`, prefix stripped)"
+    }
+   ],
+   "get": {
+    "tags": [
+     "oddzy-api (read-only)"
+    ],
+    "operationId": "apiGetBasket",
+    "summary": "One basket with every leg's market",
+    "description": "Resolves published AND archived baskets (archived permalinks stay up as records). For archived baskets `payout` and `blended_probability` are null; use `result`. Legs are field-for-field identical to GET /markets/{slug}.",
+    "security": [
+     {
+      "oddzyApiBearer": []
+     }
+    ],
+    "parameters": [
+     {
+      "name": "slug",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "URL-encoded basket slug."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Basket detail",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ApiBasketDetail"
+        }
+       }
+      }
+     },
+     "400": {
+      "description": "Malformed percent-encoding in slug.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "required": [
+          "error"
+         ],
+         "properties": {
+          "error": {
+           "type": "string",
+           "enum": [
+            "bad_basket_slug"
+           ]
+          }
+         }
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "Missing/wrong bearer token.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "required": [
+          "error"
+         ],
+         "properties": {
+          "error": {
+           "type": "string",
+           "enum": [
+            "unauthorized"
+           ]
+          },
+          "message": {
+           "type": "string",
+           "description": "User-facing English copy"
+          }
+         }
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "No published/archived basket with this slug.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "required": [
+          "error"
+         ],
+         "properties": {
+          "error": {
+           "type": "string",
+           "enum": [
+            "basket_not_found"
+           ]
+          }
+         }
+        }
+       }
+      }
+     },
+     "500": {
+      "description": "Unexpected error.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "required": [
+          "error"
+         ],
+         "properties": {
+          "error": {
+           "type": "string",
+           "enum": [
+            "internal_error"
+           ]
+          }
+         }
+        }
+       }
+      }
+     }
+    }
+   }
+  }
+ },
+ "components": {
+  "securitySchemes": {
+   "telegramInitData": {
+    "type": "apiKey",
+    "in": "header",
+    "name": "X-Telegram-Init-Data",
+    "description": "Raw Telegram Mini App initData query string (Telegram.WebApp.initData). HMAC-SHA256 verified against the EN or FA bot token; auth_date must be within 24h; identifies the Telegram user id. Takes precedence over Authorization."
+   },
+   "privyBearer": {
+    "type": "http",
+    "scheme": "bearer",
+    "bearerFormat": "JWT",
+    "description": "Privy access token for web logins (Google, MetaMask, Telegram-in-browser...). Verified against Privy JWKS. Identity only; orders are always signed by the user's delegated embedded wallet."
+   },
+   "oddzyApiBearer": {
+    "type": "http",
+    "scheme": "bearer",
+    "description": "oddzy-api static token (API_TOKEN env). Header only."
+   }
+  },
+  "schemas": {
+   "BasketSizing": {
+    "type": "string",
+    "enum": [
+     "weights",
+     "equal_shares"
+    ],
+    "description": "weights = creator's stored split; equal_shares = same share count in every leg, split proportional to live price."
+   },
+   "BasketListItem": {
+    "type": "object",
+    "description": "One published basket in the Baskets tab. Leg prices are NOT quoted here; GET /webapp/v1/basket prices them.",
+    "required": [
+     "slug",
+     "shortId",
+     "title",
+     "titleFa",
+     "description",
+     "descriptionFa",
+     "curated",
+     "legCount",
+     "buys"
+    ],
+    "properties": {
+     "slug": {
+      "type": "string"
+     },
+     "shortId": {
+      "type": "string",
+      "description": "8-hex handle used in Telegram callback_data."
+     },
+     "title": {
+      "type": "string"
+     },
+     "titleFa": {
+      "type": "string",
+      "nullable": true
+     },
+     "description": {
+      "type": "string",
+      "nullable": true
+     },
+     "descriptionFa": {
+      "type": "string",
+      "nullable": true
+     },
+     "curated": {
+      "type": "boolean",
+      "description": "House-endorsed; sorted first."
+     },
+     "legCount": {
+      "type": "integer"
+     },
+     "buys": {
+      "type": "integer",
+      "description": "Denormalised buy counter (display only)."
+     }
+    }
+   },
+   "BasketListResponse": {
+    "type": "object",
+    "required": [
+     "baskets"
+    ],
+    "properties": {
+     "baskets": {
+      "type": "array",
+      "maxItems": 50,
+      "items": {
+       "$ref": "#/components/schemas/BasketListItem"
+      },
+      "description": "status=published only, ordered curated DESC, sort_order ASC, buy_count DESC; limit 50."
+     }
+    }
+   },
+   "BasketPayout": {
+    "type": "object",
+    "description": "What the buyer gets back (USDC) if the basket comes good, computed from buyable+priced legs only. All fields null and staked=0 when nothing is priced.",
+    "required": [
+     "staked",
+     "allHit",
+     "multiple",
+     "singleLow",
+     "singleHigh",
+     "singleEven",
+     "singleMultiple"
+    ],
+    "properties": {
+     "staked": {
+      "type": "number",
+      "description": "Total staked across buyable legs (may be < the requested size if legs skip)."
+     },
+     "allHit": {
+      "type": "number",
+      "description": "Payout if EVERY leg resolves YES. Null on exclusive baskets (cannot happen).",
+      "nullable": true
+     },
+     "multiple": {
+      "type": "number",
+      "description": "allHit / staked. Null when allHit is.",
+      "nullable": true
+     },
+     "singleLow": {
+      "type": "number",
+      "description": "Worst single-winner payout.",
+      "nullable": true
+     },
+     "singleHigh": {
+      "type": "number",
+      "description": "Best single-winner payout.",
+      "nullable": true
+     },
+     "singleEven": {
+      "type": "number",
+      "description": "Set when every single-winner payout is within 1% (equal-shares sizing).",
+      "nullable": true
+     },
+     "singleMultiple": {
+      "type": "number",
+      "description": "singleEven / staked. Null unless payouts are even.",
+      "nullable": true
+     }
+    }
+   },
+   "BasketResultAtPublish": {
+    "type": "object",
+    "description": "What `notional` (100) staked at PUBLISH prices returned. Only present when every leg has settled and every non-VOID leg has a publish price. VOID returns stake flat. Same basis as creatorPerf.",
+    "required": [
+     "notional",
+     "returned",
+     "pnl",
+     "multiple",
+     "won",
+     "settled"
+    ],
+    "properties": {
+     "notional": {
+      "type": "number",
+      "example": 100
+     },
+     "returned": {
+      "type": "number",
+      "description": "Rounded to cents."
+     },
+     "pnl": {
+      "type": "number",
+      "description": "returned - notional, rounded to cents."
+     },
+     "multiple": {
+      "type": "number",
+      "description": "Rounded to 4 dp."
+     },
+     "won": {
+      "type": "integer",
+      "description": "Legs whose outcome equals the held side."
+     },
+     "settled": {
+      "type": "integer"
+     }
+    }
+   },
+   "LegSkipReason": {
+    "type": "string",
+    "enum": [
+     "settled",
+     "no_quote",
+     "unbuyable",
+     "below_min"
+    ],
+    "description": "settled = market not active; no_quote = no Gamma quote; unbuyable = quote but no ask on this side; below_min = leg stake under MIN_BET_USDC."
+   },
+   "BasketDetailLeg": {
+    "type": "object",
+    "description": "Every leg the basket declares, in declared order, including ones the buyer dropped (kept=false, stakeUsdc=0).",
+    "required": [
+     "kept",
+     "marketId",
+     "slug",
+     "title",
+     "titleFa",
+     "side",
+     "weightBps",
+     "stakeUsdc",
+     "price",
+     "buyable",
+     "skipReason",
+     "outcome"
+    ],
+    "properties": {
+     "kept": {
+      "type": "boolean",
+      "description": "False when dropped by the `keep` selection."
+     },
+     "marketId": {
+      "type": "string"
+     },
+     "slug": {
+      "type": "string"
+     },
+     "title": {
+      "type": "string"
+     },
+     "titleFa": {
+      "type": "string",
+      "description": "Persian market title; null when untranslated.",
+      "nullable": true
+     },
+     "side": {
+      "type": "string",
+      "enum": [
+       "YES",
+       "NO"
+      ]
+     },
+     "weightBps": {
+      "type": "integer",
+      "description": "EFFECTIVE weight for this purchase (renormalised after a drop/override); the creator's weight for dropped legs."
+     },
+     "stakeUsdc": {
+      "type": "number",
+      "description": "This leg's share of `quotedFor`, whole cents (largest-remainder split)."
+     },
+     "price": {
+      "type": "number",
+      "description": "Live executable buy price (best ask) for this side; null when unavailable.",
+      "nullable": true
+     },
+     "buyable": {
+      "type": "boolean"
+     },
+     "skipReason": {
+      "type": "string",
+      "allOf": [
+       {
+        "$ref": "#/components/schemas/LegSkipReason"
+       }
+      ],
+      "nullable": true
+     },
+     "outcome": {
+      "type": "string",
+      "enum": [
+       "YES",
+       "NO",
+       "VOID"
+      ],
+      "description": "Resolution once the market resolves; null while undecided (on an archived basket: pending, not a loss).",
+      "nullable": true
+     }
+    }
+   },
+   "BasketDetail": {
+    "type": "object",
+    "description": "One basket, priced and split. The split for a real `size` is exactly what /basket-buy executes.",
+    "required": [
+     "slug",
+     "shortId",
+     "title",
+     "titleFa",
+     "description",
+     "descriptionFa",
+     "curated",
+     "exclusive",
+     "sizing",
+     "minStake",
+     "archived",
+     "result",
+     "quotedFor",
+     "customized",
+     "payout",
+     "legs"
+    ],
+    "properties": {
+     "slug": {
+      "type": "string"
+     },
+     "shortId": {
+      "type": "string"
+     },
+     "title": {
+      "type": "string"
+     },
+     "titleFa": {
+      "type": "string",
+      "nullable": true
+     },
+     "description": {
+      "type": "string",
+      "nullable": true
+     },
+     "descriptionFa": {
+      "type": "string",
+      "nullable": true
+     },
+     "curated": {
+      "type": "boolean"
+     },
+     "exclusive": {
+      "type": "boolean",
+      "description": "At most one leg can resolve YES."
+     },
+     "sizing": {
+      "$ref": "#/components/schemas/BasketSizing"
+     },
+     "minStake": {
+      "type": "number",
+      "description": "Smallest stake giving every (kept) leg MIN_BET_USDC, rounded up to the cent. Computed for the EDITED basket."
+     },
+     "archived": {
+      "type": "boolean",
+      "description": "Closed, not buyable. Gate buy UI on this, not on leg buyability."
+     },
+     "result": {
+      "type": "object",
+      "allOf": [
+       {
+        "$ref": "#/components/schemas/BasketResultAtPublish"
+       }
+      ],
+      "nullable": true
+     },
+     "quotedFor": {
+      "type": "number",
+      "description": "Echo of the size priced against (`size`, or 100 when absent/invalid)."
+     },
+     "customized": {
+      "type": "boolean",
+      "description": "Response reflects a buyer edit (subset and/or weight override)."
+     },
+     "payout": {
+      "$ref": "#/components/schemas/BasketPayout"
+     },
+     "legs": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/BasketDetailLeg"
+      }
+     }
+    }
+   },
+   "BasketLegSelectionItem": {
+    "description": "A kept leg: either a bare marketId string, or an object with optional integer weight override (bps, >0). Items that are neither are skipped.",
+    "oneOf": [
+     {
+      "type": "string",
+      "description": "marketId"
+     },
+     {
+      "type": "object",
+      "required": [
+       "marketId"
+      ],
+      "properties": {
+       "marketId": {
+        "type": "string"
+       },
+       "weightBps": {
+        "type": "integer",
+        "minimum": 1,
+        "description": "Override; ignored unless a positive integer. Ignored entirely on equal_shares baskets. If any override is given, every kept leg needs one."
+       }
+      }
+     }
+    ]
+   },
+   "BasketBuyRequest": {
+    "type": "object",
+    "required": [
+     "slug",
+     "sizeUsdc"
+    ],
+    "properties": {
+     "slug": {
+      "type": "string",
+      "description": "Basket slug. Must be status=published (archived is NOT buyable)."
+     },
+     "sizeUsdc": {
+      "type": "number",
+      "exclusiveMinimum": true,
+      "minimum": 0,
+      "maximum": 10000,
+      "description": "Total USDC to spend. Also must be >= the edited basket's minStake. Not checked against balance here; insufficient funds surface as per-leg failures."
+     },
+     "legs": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/BasketLegSelectionItem"
+      },
+      "description": "Optional buyer edit (subset of the basket's legs, optional re-split). Absent/empty = buy as curated. Ids must belong to the basket; duplicates are de-duplicated; weights renormalised to 10000 bps server-side."
+     },
+     "src": {
+      "type": "string",
+      "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,31}$",
+      "description": "Attribution source (e.g. `ig_0903`); lowercased; invalid values silently dropped. Reporting only."
+     },
+     "visitorId": {
+      "type": "string",
+      "pattern": "^[0-9a-f-]{8,40}$",
+      "description": "First-party visitor cookie; invalid values silently dropped. Reporting only."
+     }
+    }
+   },
+   "LegFailureReason": {
+    "type": "string",
+    "enum": [
+     "settled",
+     "no_quote",
+     "unbuyable",
+     "below_min",
+     "no_fill",
+     "no_market",
+     "no_wallet",
+     "order_error",
+     "price_moved"
+    ],
+    "description": "Why an unfilled leg didn't fill. settled/no_quote/unbuyable/below_min = never tried; no_fill/order_error/etc = tried and the market said no."
+   },
+   "BasketReceiptLeg": {
+    "type": "object",
+    "description": "Buy-time snapshot of one attempted leg (from basket_buys.legs). Title is English on purpose.",
+    "required": [
+     "slug",
+     "title",
+     "side",
+     "requestedUsdc",
+     "filled",
+     "filledUsdc",
+     "avgPrice",
+     "reason"
+    ],
+    "properties": {
+     "slug": {
+      "type": "string"
+     },
+     "title": {
+      "type": "string"
+     },
+     "side": {
+      "type": "string",
+      "enum": [
+       "YES",
+       "NO"
+      ]
+     },
+     "requestedUsdc": {
+      "type": "number",
+      "description": "What this leg was allocated from the stake."
+     },
+     "filled": {
+      "type": "boolean"
+     },
+     "filledUsdc": {
+      "type": "number",
+      "nullable": true
+     },
+     "avgPrice": {
+      "type": "number",
+      "nullable": true
+     },
+     "reason": {
+      "type": "string",
+      "allOf": [
+       {
+        "$ref": "#/components/schemas/LegFailureReason"
+       }
+      ],
+      "nullable": true
+     }
+    }
+   },
+   "BasketBuyStatus": {
+    "type": "string",
+    "enum": [
+     "filled",
+     "partial",
+     "failed"
+    ],
+    "description": "failed = 0 legs filled; filled = every attempted leg filled; else partial."
+   },
+   "BasketBuyReceipt": {
+    "type": "object",
+    "description": "Returned with 200 even on a partial or failed fill: money may have moved, and the per-leg breakdown is the answer.",
+    "required": [
+     "ok",
+     "buyId",
+     "status",
+     "requestedUsdc",
+     "filledUsdc",
+     "customized",
+     "legs"
+    ],
+    "properties": {
+     "ok": {
+      "type": "boolean",
+      "enum": [
+       true
+      ]
+     },
+     "buyId": {
+      "type": "string",
+      "description": "basket_buys.id (bigint as string). Pass to /basket-retry."
+     },
+     "status": {
+      "$ref": "#/components/schemas/BasketBuyStatus"
+     },
+     "requestedUsdc": {
+      "type": "number"
+     },
+     "filledUsdc": {
+      "type": "number"
+     },
+     "customized": {
+      "type": "boolean",
+      "description": "Echoed so the receipt can say \"4 of 4 bought\" on a trimmed basket."
+     },
+     "legs": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/BasketReceiptLeg"
+      },
+      "description": "Only the legs THIS purchase attempted."
+     }
+    }
+   },
+   "BasketRetryRequest": {
+    "type": "object",
+    "required": [
+     "buyId"
+    ],
+    "properties": {
+     "buyId": {
+      "oneOf": [
+       {
+        "type": "string",
+        "pattern": "^-?\\d+$"
+       },
+       {
+        "type": "integer"
+       }
+      ],
+      "description": "basket buy id from a /basket-buy receipt. Must belong to the caller."
+     }
+    }
+   },
+   "BasketRetryReceipt": {
+    "type": "object",
+    "description": "Same receipt shape as /basket-buy (minus `customized`, plus `retried`). Totals recomputed over ALL legs of the original buy.",
+    "required": [
+     "ok",
+     "buyId",
+     "status",
+     "retried",
+     "requestedUsdc",
+     "filledUsdc",
+     "legs"
+    ],
+    "properties": {
+     "ok": {
+      "type": "boolean",
+      "enum": [
+       true
+      ]
+     },
+     "buyId": {
+      "type": "string"
+     },
+     "status": {
+      "$ref": "#/components/schemas/BasketBuyStatus"
+     },
+     "retried": {
+      "type": "integer",
+      "description": "How many legs were actually re-attempted this call."
+     },
+     "requestedUsdc": {
+      "type": "number"
+     },
+     "filledUsdc": {
+      "type": "number"
+     },
+     "legs": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/BasketReceiptLeg"
+      }
+     }
+    }
+   },
+   "BasketCreateLeg": {
+    "type": "object",
+    "required": [
+     "slug",
+     "side"
+    ],
+    "properties": {
+     "slug": {
+      "type": "string",
+      "description": "Market slug (must exist, be active and not past close)."
+     },
+     "side": {
+      "type": "string",
+      "enum": [
+       "YES",
+       "NO"
+      ]
+     },
+     "weightBps": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Optional. Set on every leg or none; when set they must sum to exactly 10000. Omitted = even split."
+     }
+    }
+   },
+   "BasketCreateRequest": {
+    "type": "object",
+    "required": [
+     "name",
+     "legs"
+    ],
+    "properties": {
+     "name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 80,
+      "description": "Basket name (trimmed). Used as BOTH titleEn and titleFa; the slug is derived from it plus a random 6-char suffix (caller never chooses the slug)."
+     },
+     "legs": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 10,
+      "items": {
+       "$ref": "#/components/schemas/BasketCreateLeg"
+      },
+      "description": "2..10 legs. Rules (422 invalid_basket on failure): no duplicate market slugs, all slugs known, all active & not closed, close dates within 31 days of each other, weights sum 10000, minimum stake <= BASKET_MAX_MIN_STAKE_USDC (default $20)."
+     },
+     "description": {
+      "type": "string",
+      "description": "Optional; trimmed and silently truncated to 280 chars; used for both EN and FA."
+     },
+     "creatorName": {
+      "type": "string",
+      "maxLength": 32,
+      "description": "Optional byline (trimmed, no control chars). Stored on the user and renames the creator everywhere. A failed rename never fails the publish."
+     }
+    }
+   },
+   "BasketCreateResponse": {
+    "type": "object",
+    "required": [
+     "ok",
+     "slug",
+     "shortId",
+     "status",
+     "warnings",
+     "legs"
+    ],
+    "description": "Basket is published immediately (sizing=weights, curated=false, exclusive=false, creator = caller).",
+    "properties": {
+     "ok": {
+      "type": "boolean",
+      "enum": [
+       true
+      ]
+     },
+     "slug": {
+      "type": "string"
+     },
+     "shortId": {
+      "type": "string"
+     },
+     "status": {
+      "type": "string",
+      "example": "published"
+     },
+     "warnings": {
+      "type": "array",
+      "items": {
+       "type": "string"
+      }
+     },
+     "legs": {
+      "type": "array",
+      "items": {
+       "type": "object",
+       "required": [
+        "slug",
+        "title",
+        "side",
+        "weightBps",
+        "price"
+       ],
+       "properties": {
+        "slug": {
+         "type": "string"
+        },
+        "title": {
+         "type": "string"
+        },
+        "side": {
+         "type": "string",
+         "enum": [
+          "YES",
+          "NO"
+         ]
+        },
+        "weightBps": {
+         "type": "integer"
+        },
+        "price": {
+         "type": "number",
+         "description": "Stored mid price of the held side at apply time (becomes price_at_publish).",
+         "nullable": true
+        }
+       }
+      }
+     }
+    }
+   },
+   "InvalidBasketError": {
+    "type": "object",
+    "required": [
+     "error",
+     "errors"
+    ],
+    "properties": {
+     "error": {
+      "type": "string",
+      "enum": [
+       "invalid_basket"
+      ]
+     },
+     "errors": {
+      "type": "array",
+      "items": {
+       "type": "string"
+      },
+      "description": "Every rule violation, human-readable."
+     }
+    }
+   },
+   "CommunityBasketLeg": {
+    "type": "object",
+    "required": [
+     "title",
+     "titleFa",
+     "side",
+     "outcome"
+    ],
+    "properties": {
+     "title": {
+      "type": "string"
+     },
+     "titleFa": {
+      "type": "string",
+      "nullable": true
+     },
+     "side": {
+      "type": "string",
+      "enum": [
+       "YES",
+       "NO"
+      ]
+     },
+     "outcome": {
+      "type": "string",
+      "description": "Market outcome (YES/NO/VOID) or null while open.",
+      "nullable": true
+     }
+    }
+   },
+   "CommunityBasket": {
+    "type": "object",
+    "description": "One basket card in the community feed / creator profile. Display data only.",
+    "required": [
+     "slug",
+     "shortId",
+     "titleEn",
+     "titleFa",
+     "descriptionEn",
+     "descriptionFa",
+     "buyCount",
+     "legCount",
+     "publishedAt",
+     "creatorTgUserId",
+     "creatorName",
+     "creatorNameFa",
+     "creatorVerified",
+     "curated",
+     "editorialPersona",
+     "status",
+     "settledLegs",
+     "wonLegs",
+     "followers",
+     "accuracy",
+     "viewerFollows",
+     "weightsBps",
+     "multiplier"
+    ],
+    "properties": {
+     "slug": {
+      "type": "string"
+     },
+     "shortId": {
+      "type": "string"
+     },
+     "titleEn": {
+      "type": "string"
+     },
+     "titleFa": {
+      "type": "string",
+      "nullable": true
+     },
+     "descriptionEn": {
+      "type": "string",
+      "nullable": true
+     },
+     "descriptionFa": {
+      "type": "string",
+      "nullable": true
+     },
+     "buyCount": {
+      "type": "integer"
+     },
+     "legCount": {
+      "type": "integer"
+     },
+     "publishedAt": {
+      "type": "string",
+      "format": "date-time",
+      "nullable": true
+     },
+     "creatorTgUserId": {
+      "type": "string",
+      "description": "Creator user id as string (negative = web-only account). Null on editorial baskets.",
+      "nullable": true
+     },
+     "creatorName": {
+      "type": "string",
+      "description": "Chosen creator name, else Telegram display name.",
+      "nullable": true
+     },
+     "creatorNameFa": {
+      "type": "string",
+      "description": "Persian byline; client falls back to creatorName.",
+      "nullable": true
+     },
+     "creatorVerified": {
+      "type": "boolean"
+     },
+     "curated": {
+      "type": "boolean",
+      "description": "House-endorsed. Editorial baskets are curated and have no creator."
+     },
+     "editorialPersona": {
+      "type": "string",
+      "enum": [
+       "daily",
+       "world"
+      ],
+      "description": "House desk, derived from legs (all-sports = daily). Null on user baskets.",
+      "nullable": true
+     },
+     "status": {
+      "type": "string",
+      "enum": [
+       "published",
+       "archived"
+      ],
+      "description": "archived only appears on creator profiles."
+     },
+     "settledLegs": {
+      "type": "integer",
+      "description": "Legs resolved YES/NO (VOID excluded)."
+     },
+     "wonLegs": {
+      "type": "integer"
+     },
+     "legs": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/CommunityBasketLeg"
+      },
+      "description": "Only on GET /webapp/v1/creator (withLegs)."
+     },
+     "followers": {
+      "type": "integer"
+     },
+     "accuracy": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "Creator's settled-pick win rate; null below 5 settled picks.",
+      "nullable": true
+     },
+     "viewerFollows": {
+      "type": "boolean",
+      "description": "False for anonymous viewers."
+     },
+     "weightsBps": {
+      "type": "array",
+      "items": {
+       "type": "integer"
+      },
+      "description": "Leg weights in display order (card weight bar)."
+     },
+     "multiplier": {
+      "type": "number",
+      "description": "Σ(weight/10000)/yes_price: payout multiple if every leg resolves YES. Null if any leg is unpriced. Note: uses YES price regardless of side.",
+      "nullable": true
+     }
+    }
+   },
+   "CommunityFeedResponse": {
+    "type": "object",
+    "required": [
+     "tab",
+     "category",
+     "signedIn",
+     "baskets"
+    ],
+    "properties": {
+     "tab": {
+      "type": "string",
+      "enum": [
+       "all",
+       "hot",
+       "following",
+       "bought"
+      ]
+     },
+     "category": {
+      "type": "string",
+      "nullable": true
+     },
+     "signedIn": {
+      "type": "boolean",
+      "description": "Whether a valid, non-blocked viewer was resolved."
+     },
+     "baskets": {
+      "type": "array",
+      "maxItems": 30,
+      "items": {
+       "$ref": "#/components/schemas/CommunityBasket"
+      }
+     }
+    }
+   },
+   "FollowRequest": {
+    "type": "object",
+    "required": [
+     "creatorTgUserId"
+    ],
+    "properties": {
+     "creatorTgUserId": {
+      "oneOf": [
+       {
+        "type": "string",
+        "pattern": "^-?\\d+$"
+       },
+       {
+        "type": "integer"
+       }
+      ]
+     },
+     "follow": {
+      "type": "boolean",
+      "default": true,
+      "description": "Anything other than literal `false` follows."
+     }
+    }
+   },
+   "FollowResponse": {
+    "type": "object",
+    "required": [
+     "ok",
+     "following",
+     "followers"
+    ],
+    "properties": {
+     "ok": {
+      "type": "boolean",
+      "enum": [
+       true
+      ]
+     },
+     "following": {
+      "type": "boolean"
+     },
+     "followers": {
+      "type": "integer",
+      "description": "Authoritative follower count for optimistic-toggle reconciliation."
+     }
+    }
+   },
+   "CreatorPerf": {
+    "type": "object",
+    "description": "Profile performance, scored at CREATION prices: $1 per fully-settled basket.",
+    "required": [
+     "settledStakeUsdc",
+     "pnlUsdc",
+     "buyers",
+     "feesUsdc",
+     "monthly",
+     "perBasket"
+    ],
+    "properties": {
+     "settledStakeUsdc": {
+      "type": "number",
+      "description": "$1 per scored basket."
+     },
+     "pnlUsdc": {
+      "type": "number"
+     },
+     "buyers": {
+      "type": "integer",
+      "description": "Distinct buyers across all their baskets."
+     },
+     "feesUsdc": {
+      "type": "number",
+      "description": "Lifetime sharer fees accrued+paid. Null for the house.",
+      "nullable": true
+     },
+     "monthly": {
+      "type": "array",
+      "items": {
+       "type": "object",
+       "required": [
+        "month",
+        "stakeUsdc",
+        "pnlUsdc"
+       ],
+       "properties": {
+        "month": {
+         "type": "string",
+         "pattern": "^\\d{4}-\\d{2}$"
+        },
+        "stakeUsdc": {
+         "type": "number"
+        },
+        "pnlUsdc": {
+         "type": "number"
+        }
+       }
+      }
+     },
+     "perBasket": {
+      "type": "array",
+      "items": {
+       "type": "object",
+       "required": [
+        "slug",
+        "stakeUsdc",
+        "pnlUsdc"
+       ],
+       "properties": {
+        "slug": {
+         "type": "string"
+        },
+        "stakeUsdc": {
+         "type": "number"
+        },
+        "pnlUsdc": {
+         "type": "number"
+        }
+       }
+      }
+     }
+    }
+   },
+   "CreatorSummary": {
+    "type": "object",
+    "required": [
+     "id",
+     "name",
+     "verified",
+     "followers",
+     "accuracy",
+     "viewerFollows",
+     "basketCount",
+     "totalBuys"
+    ],
+    "properties": {
+     "id": {
+      "type": "string",
+      "description": "Numeric user id as string, or `house` / `house-daily` / `house-world`."
+     },
+     "name": {
+      "type": "string",
+      "description": "Always null for house profiles (client renders its brand).",
+      "nullable": true
+     },
+     "nameFa": {
+      "type": "string",
+      "description": "Real creators only.",
+      "nullable": true
+     },
+     "memberSince": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Real creators only.",
+      "nullable": true
+     },
+     "verified": {
+      "type": "boolean",
+      "description": "Always true for house profiles."
+     },
+     "followers": {
+      "type": "integer",
+      "description": "Always 0 for house profiles."
+     },
+     "accuracy": {
+      "type": "number",
+      "nullable": true
+     },
+     "settledLegs": {
+      "type": "integer",
+      "description": "House profiles and persona accounts only (leg-based record)."
+     },
+     "wonLegs": {
+      "type": "integer",
+      "description": "House profiles and persona accounts only."
+     },
+     "viewerFollows": {
+      "type": "boolean"
+     },
+     "basketCount": {
+      "type": "integer"
+     },
+     "totalBuys": {
+      "type": "integer"
+     }
+    }
+   },
+   "CreatorProfileResponse": {
+    "type": "object",
+    "required": [
+     "perf",
+     "creator",
+     "baskets"
+    ],
+    "properties": {
+     "perf": {
+      "$ref": "#/components/schemas/CreatorPerf"
+     },
+     "creator": {
+      "$ref": "#/components/schemas/CreatorSummary"
+     },
+     "baskets": {
+      "type": "array",
+      "maxItems": 60,
+      "items": {
+       "$ref": "#/components/schemas/CommunityBasket"
+      },
+      "description": "Published then archived baskets, with `legs`; limit 60."
+     }
+    }
+   },
+   "WebEventRequest": {
+    "type": "object",
+    "required": [
+     "event",
+     "visitorId"
+    ],
+    "properties": {
+     "event": {
+      "type": "string",
+      "enum": [
+       "basket_view",
+       "basket_cta",
+       "app_open",
+       "login_start"
+      ]
+     },
+     "visitorId": {
+      "type": "string",
+      "pattern": "^[0-9a-f-]{8,40}$"
+     },
+     "basket": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]{0,79}$",
+      "description": "Basket slug; invalid -> stored as null."
+     },
+     "src": {
+      "type": "string",
+      "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,31}$"
+     },
+     "target": {
+      "type": "string",
+      "enum": [
+       "tg",
+       "web"
+      ]
+     },
+     "ref": {
+      "type": "string",
+      "maxLength": 200
+     }
+    }
+   },
+   "Freshness": {
+    "type": "object",
+    "required": [
+     "as_of",
+     "max_staleness_minutes"
+    ],
+    "properties": {
+     "as_of": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Server time of the response."
+     },
+     "max_staleness_minutes": {
+      "type": "integer",
+      "description": "SYNC_INTERVAL_MIN (default 30): how stale the indexer-synced data may be."
+     }
+    }
+   },
+   "ApiBasketIndexPayout": {
+    "type": "object",
+    "description": "Per $100 staked, from stored mid prices. Null (on the parent) unless every leg is priced.",
+    "required": [
+     "notional",
+     "kind",
+     "multiple",
+     "amount"
+    ],
+    "properties": {
+     "notional": {
+      "type": "integer",
+      "example": 100
+     },
+     "kind": {
+      "type": "string",
+      "enum": [
+       "any_winner",
+       "all_hit",
+       "one_winner"
+      ],
+      "description": "any_winner = equal_shares (1/Σprice); all_hit = weights, independent; one_winner = weights + exclusive (value is still Σ(w/price))."
+     },
+     "multiple": {
+      "type": "number",
+      "description": "3 dp."
+     },
+     "amount": {
+      "type": "number",
+      "description": "notional × multiple, 2 dp."
+     }
+    }
+   },
+   "ApiBasketIndexItem": {
+    "type": "object",
+    "required": [
+     "slug",
+     "title",
+     "title_fa",
+     "description",
+     "description_fa",
+     "curated",
+     "exclusive",
+     "sizing",
+     "leg_count",
+     "status",
+     "published_at",
+     "first_close_time",
+     "last_close_time",
+     "payout",
+     "volume",
+     "stats",
+     "min_weight_bps"
+    ],
+    "properties": {
+     "slug": {
+      "type": "string"
+     },
+     "title": {
+      "type": "string"
+     },
+     "title_fa": {
+      "type": "string",
+      "nullable": true
+     },
+     "description": {
+      "type": "string",
+      "nullable": true
+     },
+     "description_fa": {
+      "type": "string",
+      "nullable": true
+     },
+     "curated": {
+      "type": "boolean"
+     },
+     "exclusive": {
+      "type": "boolean",
+      "description": "At most one leg can resolve YES."
+     },
+     "sizing": {
+      "$ref": "#/components/schemas/BasketSizing"
+     },
+     "leg_count": {
+      "type": "integer"
+     },
+     "status": {
+      "type": "string",
+      "enum": [
+       "active",
+       "settled"
+      ],
+      "description": "active while any leg's market is still active."
+     },
+     "published_at": {
+      "type": "string",
+      "format": "date-time",
+      "nullable": true
+     },
+     "first_close_time": {
+      "type": "string",
+      "format": "date-time",
+      "nullable": true
+     },
+     "last_close_time": {
+      "type": "string",
+      "format": "date-time",
+      "nullable": true
+     },
+     "payout": {
+      "type": "object",
+      "allOf": [
+       {
+        "$ref": "#/components/schemas/ApiBasketIndexPayout"
+       }
+      ],
+      "nullable": true
+     },
+     "volume": {
+      "type": "object",
+      "required": [
+       "legs_total"
+      ],
+      "properties": {
+       "legs_total": {
+        "type": "number",
+        "description": "Σ leg market volume, 2 dp; null for a zero-leg basket.",
+        "nullable": true
+       }
+      }
+     },
+     "stats": {
+      "type": "object",
+      "required": [
+       "buys",
+       "volume_usdc"
+      ],
+      "properties": {
+       "buys": {
+        "type": "integer"
+       },
+       "volume_usdc": {
+        "type": "number",
+        "description": "2 dp."
+       }
+      }
+     },
+     "min_weight_bps": {
+      "type": "integer",
+      "description": "Smallest leg weight (sets the min stake). Null for a zero-leg basket.",
+      "nullable": true
+     }
+    }
+   },
+   "ApiBasketIndex": {
+    "allOf": [
+     {
+      "type": "object",
+      "required": [
+       "baskets",
+       "count"
+      ],
+      "properties": {
+       "baskets": {
+        "type": "array",
+        "items": {
+         "$ref": "#/components/schemas/ApiBasketIndexItem"
+        },
+        "description": "status=published only (no archived), ordered curated DESC, sort_order, buy_count DESC. Unpaginated."
+       },
+       "count": {
+        "type": "integer"
+       }
+      }
+     },
+     {
+      "$ref": "#/components/schemas/Freshness"
+     }
+    ]
+   },
+   "ApiMarket": {
+    "type": "object",
+    "description": "Market shaped identically to GET /markets/{slug}.",
+    "required": [
+     "id",
+     "slug",
+     "title",
+     "title_fa",
+     "description",
+     "description_fa",
+     "category",
+     "probability",
+     "outcome_labels",
+     "volume",
+     "close_time",
+     "status",
+     "outcome",
+     "url"
+    ],
+    "properties": {
+     "id": {
+      "type": "string"
+     },
+     "slug": {
+      "type": "string"
+     },
+     "title": {
+      "type": "string"
+     },
+     "title_fa": {
+      "type": "string",
+      "description": "Null = not translated yet.",
+      "nullable": true
+     },
+     "description": {
+      "type": "string",
+      "description": "Polymarket resolution rules verbatim; render as text.",
+      "nullable": true
+     },
+     "description_fa": {
+      "type": "string",
+      "nullable": true
+     },
+     "category": {
+      "type": "object",
+      "required": [
+       "id",
+       "name",
+       "name_fa"
+      ],
+      "properties": {
+       "id": {
+        "type": "string",
+        "description": "Topic slug."
+       },
+       "name": {
+        "type": "string"
+       },
+       "name_fa": {
+        "type": "string",
+        "nullable": true
+       }
+      },
+      "nullable": true
+     },
+     "probability": {
+      "type": "object",
+      "description": "Last synced mid (display only, not executable). Null when prices withheld.",
+      "required": [
+       "yes",
+       "no"
+      ],
+      "properties": {
+       "yes": {
+        "type": "number",
+        "description": "4 dp"
+       },
+       "no": {
+        "type": "number",
+        "description": "4 dp"
+       }
+      },
+      "nullable": true
+     },
+     "outcome_labels": {
+      "type": "object",
+      "description": "Non-null only when sides aren't literally Yes/No.",
+      "required": [
+       "yes",
+       "no",
+       "yes_fa",
+       "no_fa"
+      ],
+      "properties": {
+       "yes": {
+        "type": "string",
+        "nullable": true
+       },
+       "no": {
+        "type": "string",
+        "nullable": true
+       },
+       "yes_fa": {
+        "type": "string",
+        "nullable": true
+       },
+       "no_fa": {
+        "type": "string",
+        "nullable": true
+       }
+      },
+      "nullable": true
+     },
+     "volume": {
+      "type": "object",
+      "required": [
+       "total",
+       "h24"
+      ],
+      "properties": {
+       "total": {
+        "type": "number",
+        "nullable": true
+       },
+       "h24": {
+        "type": "number",
+        "nullable": true
+       }
+      }
+     },
+     "close_time": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Date-granular (midnight UTC of resolution day).",
+      "nullable": true
+     },
+     "status": {
+      "type": "string",
+      "description": "Market status, e.g. active | settled | cancelled."
+     },
+     "outcome": {
+      "type": "string",
+      "description": "YES / NO (or VOID) once settled; null while live.",
+      "nullable": true
+     },
+     "url": {
+      "type": "string",
+      "format": "uri",
+      "nullable": true
+     }
+    }
+   },
+   "ApiBasketLeg": {
+    "type": "object",
+    "required": [
+     "side",
+     "weight_bps",
+     "weight_pct",
+     "price",
+     "market"
+    ],
+    "properties": {
+     "side": {
+      "type": "string",
+      "enum": [
+       "YES",
+       "NO"
+      ]
+     },
+     "weight_bps": {
+      "type": "integer",
+      "description": "Stored weight; for equal_shares (all legs priced) recomputed from live prices."
+     },
+     "weight_pct": {
+      "type": "number",
+      "description": "2 dp."
+     },
+     "price": {
+      "type": "number",
+      "description": "Mid price of the HELD side; null when unpriced.",
+      "nullable": true
+     },
+     "market": {
+      "$ref": "#/components/schemas/ApiMarket"
+     }
+    }
+   },
+   "ApiBasketPayout": {
+    "type": "object",
+    "description": "What $100 returns if the basket comes good (mid prices). Present only when every leg is priced and the basket is not archived.",
+    "required": [
+     "notional",
+     "exclusive",
+     "sizing",
+     "all_hit",
+     "multiple",
+     "single_low",
+     "single_high",
+     "single_even",
+     "single_multiple"
+    ],
+    "properties": {
+     "notional": {
+      "type": "integer",
+      "example": 100
+     },
+     "exclusive": {
+      "type": "boolean"
+     },
+     "sizing": {
+      "$ref": "#/components/schemas/BasketSizing"
+     },
+     "all_hit": {
+      "type": "number",
+      "description": "Null on exclusive baskets.",
+      "nullable": true
+     },
+     "multiple": {
+      "type": "number",
+      "description": "all_hit/100; null on exclusive baskets.",
+      "nullable": true
+     },
+     "single_low": {
+      "type": "number"
+     },
+     "single_high": {
+      "type": "number"
+     },
+     "single_even": {
+      "type": "number",
+      "description": "Set when single-winner payouts are within 1%.",
+      "nullable": true
+     },
+     "single_multiple": {
+      "type": "number",
+      "nullable": true
+     }
+    }
+   },
+   "ApiBasketResult": {
+    "type": "object",
+    "description": "How $100 would have finished at CREATION prices; null until every leg settled and priced at publish. Same arithmetic as the bot's basketResultAtPublish / creatorPerf.",
+    "required": [
+     "notional",
+     "returned",
+     "pnl",
+     "multiple",
+     "won",
+     "settled"
+    ],
+    "properties": {
+     "notional": {
+      "type": "integer"
+     },
+     "returned": {
+      "type": "number"
+     },
+     "pnl": {
+      "type": "number"
+     },
+     "multiple": {
+      "type": "number",
+      "description": "4 dp"
+     },
+     "won": {
+      "type": "integer"
+     },
+     "settled": {
+      "type": "integer"
+     }
+    }
+   },
+   "ApiBasketDetail": {
+    "allOf": [
+     {
+      "type": "object",
+      "required": [
+       "slug",
+       "title",
+       "title_fa",
+       "description",
+       "description_fa",
+       "curated",
+       "exclusive",
+       "sizing",
+       "status",
+       "archived",
+       "leg_count",
+       "blended_probability",
+       "payout",
+       "result",
+       "stats",
+       "legs"
+      ],
+      "properties": {
+       "slug": {
+        "type": "string"
+       },
+       "title": {
+        "type": "string"
+       },
+       "title_fa": {
+        "type": "string",
+        "nullable": true
+       },
+       "description": {
+        "type": "string",
+        "nullable": true
+       },
+       "description_fa": {
+        "type": "string",
+        "nullable": true
+       },
+       "curated": {
+        "type": "boolean"
+       },
+       "exclusive": {
+        "type": "boolean"
+       },
+       "sizing": {
+        "$ref": "#/components/schemas/BasketSizing"
+       },
+       "status": {
+        "type": "string",
+        "enum": [
+         "active",
+         "settled"
+        ],
+        "description": "active while any leg market is active. Can read active on an archived basket."
+       },
+       "archived": {
+        "type": "boolean",
+        "description": "Not buyable. Gate buy CTA on this, not on `status`."
+       },
+       "leg_count": {
+        "type": "integer"
+       },
+       "blended_probability": {
+        "type": "number",
+        "description": "Weight-averaged held-side price, 4 dp. Null if any leg unpriced or basket archived.",
+        "nullable": true
+       },
+       "payout": {
+        "type": "object",
+        "allOf": [
+         {
+          "$ref": "#/components/schemas/ApiBasketPayout"
+         }
+        ],
+        "nullable": true
+       },
+       "result": {
+        "type": "object",
+        "allOf": [
+         {
+          "$ref": "#/components/schemas/ApiBasketResult"
+         }
+        ],
+        "nullable": true
+       },
+       "stats": {
+        "type": "object",
+        "required": [
+         "buys",
+         "volume_usdc"
+        ],
+        "properties": {
+         "buys": {
+          "type": "integer"
+         },
+         "volume_usdc": {
+          "type": "number"
+         }
+        }
+       },
+       "legs": {
+        "type": "array",
+        "items": {
+         "$ref": "#/components/schemas/ApiBasketLeg"
+        },
+        "description": "Ordered by sort_order, market_id."
+       }
+      }
+     },
+     {
+      "$ref": "#/components/schemas/Freshness"
+     }
+    ]
+   }
+  }
+ }
+}
