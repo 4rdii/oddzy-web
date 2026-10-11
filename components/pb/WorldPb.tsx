@@ -154,9 +154,20 @@ export function WorldPb({ initial, renderedAt }: { initial: WorldView; renderedA
     setSelKey(c?.key ?? null);
     if (c) setPreviewKey(c.key);
     if (c && fly) globeRef.current?.flyToCountry(c);
-    if (c && isPhone()) setSheetOpen(true);
+    if (c && isPhone()) {
+      sheetOpenedAt.current = performance.now();
+      setSheetOpen(true);
+    }
     if (!c) setSheetOpen(false);
   }, []);
+  // A tap on the globe opens the sheet on pointerup; the browser then fires its
+  // compatibility click at the same spot, which lands on the scrim that just
+  // appeared and closed the sheet again — so tapping a country "did nothing".
+  const sheetOpenedAt = useRef(0);
+  const closeFromScrim = () => {
+    if (performance.now() - sheetOpenedAt.current < 450) return;
+    select(null, false);
+  };
   // The globe calls back from its own event handlers; keep it pointed at the latest closures.
   const selectRef = useRef(select);
   const byKeyRef = useRef(byKey);
@@ -384,7 +395,7 @@ export function WorldPb({ initial, renderedAt }: { initial: WorldView; renderedA
         <div style={{ fontSize: 11.5, color: "var(--faint)" }}>قیمت‌ها از Polymarket · درصدها احتمال از نگاه بازار است، نه پیش‌بینی پلی‌باز</div>
       </div>
 
-      <div className="scrim" onClick={() => select(null, false)} />
+      <div className="scrim" onClick={closeFromScrim} />
       <div className="sheet" role="dialog" aria-modal="true">
         <div className="grab" />
         <button className="sheet-x" aria-label="بستن" onClick={() => select(null, false)}>✕</button>
