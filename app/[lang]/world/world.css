@@ -36,6 +36,7 @@
 @keyframes wmblink{50%{opacity:.25}}
 .wm .lede{margin:0;font-size:15px;color:var(--text2);line-height:1.9;max-width:720px;text-wrap:pretty}
 .wm .totals{display:flex;gap:22px;flex-wrap:wrap;font-size:13px;color:var(--muted)}.wm .totals b{color:var(--text);font-size:15px;font-weight:800;margin-inline-end:4px}
+.wm .mv-row{display:flex;align-items:center;gap:12px}
 .wm .movers{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;margin:0;padding:2px 0;flex:1}
 .wm .movers::-webkit-scrollbar{display:none}
 .wm .mv{flex-shrink:0;display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:8px 12px;max-width:330px;color:var(--text);text-align:right}
@@ -99,11 +100,24 @@
 .wm .rk-q{grid-column:2/4;font-size:12px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.wm .rk-q b{color:var(--text2)}
 .wm .rk .bar{grid-column:2/4;height:3px}
 .wm .more{align-self:center;margin-top:12px;border:1px solid var(--line);background:var(--card);color:var(--text2);font-weight:700;font-size:13px;padding:9px 20px;border-radius:11px}
-.wm .scrim{position:fixed;inset:0;background:var(--scrim);opacity:0;pointer-events:none;transition:opacity .2s;z-index:50}
-.wm .sheet{position:fixed;inset-inline:0;bottom:0;max-height:74vh;background:var(--card);border-top:1px solid var(--line2);border-radius:22px 22px 0 0;transform:translateY(105%);transition:transform .28s cubic-bezier(.2,.8,.2,1);z-index:51;display:flex;flex-direction:column}
+.wm .scrim{position:fixed;inset:0;background:var(--scrim);opacity:0;pointer-events:none;transition:opacity .2s;z-index:1000}
+.wm .sheet{position:fixed;inset-inline:0;bottom:0;max-height:74vh;background:var(--card);border-top:1px solid var(--line2);border-radius:22px 22px 0 0;transform:translateY(calc(100% + 24px));visibility:hidden;transition:transform .28s cubic-bezier(.2,.8,.2,1),visibility 0s linear .28s;z-index:1001;display:flex;flex-direction:column}
 .wm .sheet .grab{width:44px;height:5px;border-radius:3px;background:var(--line2);margin:9px auto 0;flex-shrink:0}
 .wm .sheet .panel{border:0;border-radius:0;max-height:none;min-height:0;background:transparent;padding:12px 16px 22px}
 .wm .sheet-x{position:absolute;top:10px;left:12px;width:36px;height:36px;border-radius:50%;border:1px solid var(--line);background:var(--bg2);color:var(--text2);font-size:16px}
-.wm.sheet-open .scrim{opacity:1;pointer-events:auto}.wm.sheet-open .sheet{transform:none}
+.wm.sheet-open .scrim{opacity:1;pointer-events:auto}.wm.sheet-open .sheet{transform:none;visibility:visible;transition:transform .28s cubic-bezier(.2,.8,.2,1),visibility 0s}
 @media(max-width:979px){.wm .stage{grid-template-columns:1fr}.wm .stage>.panel{display:none}.wm .gwrap{height:58vh;min-height:360px;border-radius:18px;margin:0 -4px}.wm h1{font-size:25px}.wm .legend .hint{display:none}.wm .rank{grid-template-columns:1fr}}
 @media(min-width:980px){.wm .sheet,.wm .scrim{display:none}}
+
+/* Phone pass (2026-10-11). */
+@media(max-width:979px){
+  .wm .totals{display:grid;grid-template-columns:1fr 1fr;gap:8px 16px}
+  .wm .totals span{display:flex;flex-direction:column;gap:2px;font-size:12px}
+  .wm .mv-row{flex-direction:column;align-items:stretch;gap:8px}
+  .wm .rank-h{flex-direction:column;align-items:flex-start;gap:4px}
+  .wm .rk-en{display:none}
+  .wm .zoom{flex-direction:row;bottom:10px;left:10px}
+  .wm .zoom button{width:34px;height:34px;font-size:15px}
+  .wm .legend{bottom:12px;right:12px}
+  .wm .ramp{min-width:110px}
+}

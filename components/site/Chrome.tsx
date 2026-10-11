@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { ActiveChipIntoView } from "@/components/site/ActiveChipIntoView";
 import Link from "next/link";
 import { ThemeToggle } from "./ThemeToggle";
 import { TelegramRedirect } from "./TelegramRedirect";
@@ -132,6 +133,7 @@ export async function SiteChrome({
             <nav
               className="pb-noscroll flex gap-1.5 overflow-x-auto px-4 pb-2.5 [scrollbar-width:none] min-[900px]:hidden"
               aria-label={t.nav.primary}
+              data-pb-chips
             >
               {FA_NAV.map(([href, label]) => (
                 <PbNavLink key={href} href={href} on={href === active} chip>
@@ -139,6 +141,9 @@ export async function SiteChrome({
                 </PbNavLink>
               ))}
             </nav>
+          )}
+          {fa && (
+            <ActiveChipIntoView selector="nav[data-pb-chips]" />
           )}
         </header>
 

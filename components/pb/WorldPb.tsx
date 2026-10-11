@@ -109,7 +109,11 @@ function Panel({
         <div className="stat"><span>بازار فعال</span><b>{fa(c.n)}</b></div>
         <div className="stat"><span>ریسک تنش</span><b style={metric === "risk" ? { color: "var(--down)" } : undefined}>{fa(c.r)}٪</b></div>
       </div>
-      <div className="chips">{c.topics.map((t) => <span key={t}>{t}</span>)}</div>
+      {/* Capped: the US alone sits in ~20 topics, which buried the markets under a wall of chips. */}
+      <div className="chips">
+        {c.topics.slice(0, 6).map((t) => <span key={t}>{t}</span>)}
+        {c.topics.length > 6 && <span>+{fa(c.topics.length - 6)}</span>}
+      </div>
       <div>
         <div className="sec">داغ‌ترین بازارها <span>{fa(Math.min(6, c.mk.length))} از {fa(c.n)}</span></div>
         {c.mk.map((i) => <MarketRow key={view.markets[i].slug} m={view.markets[i]} self={c.key} byKey={byKey} />)}
@@ -282,7 +286,7 @@ export function WorldPb({ initial, renderedAt }: { initial: WorldView; renderedA
         </section>
 
         {movers.length > 0 && (
-          <section style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <section className="mv-row">
             <span className="lbl">بیشترین تغییر امروز</span>
             <div className="movers">
               {movers.map((m) => (
@@ -360,7 +364,7 @@ export function WorldPb({ initial, renderedAt }: { initial: WorldView; renderedA
                     <span className="rk-c">
                       {metric === "vol" && <i style={{ background: `rgb(var(--wm-p${c.ci}))` }} />}
                       <b>{c.fa}</b>
-                      <small>{c.en} · {fa(c.n)} بازار</small>
+                      <small><span className="rk-en">{c.en} · </span>{fa(c.n)} بازار</small>
                     </span>
                     <span className="rk-v" style={{ color: mcol }}>
                       {metric === "vol" ? wVolS(c.v) : `${fa(c.r)}٪`}
