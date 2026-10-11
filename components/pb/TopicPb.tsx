@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import type { Market } from "@/lib/api";
 import { PredictProvider, YesNo } from "@/components/pb/Predict";
-import { fa, faMoney, nowMs, pc } from "@/lib/pb";
+import { fa, faMoney, nowMs, pc, probWord as word } from "@/lib/pb";
 
 /**
  * PB Topic — a non-sport topic hub («ایران: بازار چه می‌گوید»): featured
@@ -13,10 +13,6 @@ import { fa, faMoney, nowMs, pc } from "@/lib/pb";
  */
 
 export type TopicFeature = { href: string; kicker: string; title: string; sub: string };
-
-function word(p: number): string {
-  return p >= 95 ? "تقریباً قطعی" : p >= 65 ? "محتمل" : p >= 35 ? "نامعلوم" : p >= 6 ? "بعید" : "بسیار بعید";
-}
 
 function daysLeft(iso: string): number {
   return Math.max(0, Math.ceil((new Date(iso).getTime() - nowMs()) / 86_400_000));

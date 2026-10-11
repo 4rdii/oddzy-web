@@ -34,7 +34,8 @@ const plexMono = IBM_Plex_Mono({
 const vazirmatn = Vazirmatn({
   variable: "--font-vazir",
   subsets: ["arabic", "latin"],
-  weight: ["400", "500", "600", "700", "800"],
+  // 900: the PolyBaaz redesign's figures and headings (handoff: Vazirmatn 400–900).
+  weight: ["400", "500", "600", "700", "800", "900"],
   display: "swap",
 });
 

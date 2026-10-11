@@ -1,0 +1,109 @@
+/* «نقشهٔ جهان» — page CSS from design/polybaaz_pages_redesign/PB World Map.html,
+   scoped to `.wm`. Colour tokens are NOT redefined here: the design's body /
+   body.light variables are the same values as the `.pb` tokens in globals.css
+   (same day/night model), so the page root carries both classes. Only the
+   globe palette, which the server-rendered ranking dots and legend also use,
+   is added below. The design's header and footer are the shared SiteChrome. */
+
+.wm {
+  /* The design sets no line-height (UA `normal`); preflight would make it 1.5. */
+  line-height: normal;
+  /* Globe palette (design PAL_L / PAL_D) and the risk red, as "r,g,b". */
+  --wm-p0: 214,146,0; --wm-p1: 14,150,130; --wm-p2: 45,106,208; --wm-p3: 118,84,214;
+  --wm-p4: 214,84,52; --wm-p5: 78,148,40; --wm-p6: 196,62,140; --wm-red: 207,62,74;
+}
+:root[data-theme="night"] .wm {
+  --wm-p0: 243,181,58; --wm-p1: 64,200,180; --wm-p2: 110,168,255; --wm-p3: 176,140,255;
+  --wm-p4: 255,132,100; --wm-p5: 150,212,110; --wm-p6: 240,122,190; --wm-red: 240,100,110;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="day"]) .wm {
+    --wm-p0: 243,181,58; --wm-p1: 64,200,180; --wm-p2: 110,168,255; --wm-p3: 176,140,255;
+    --wm-p4: 255,132,100; --wm-p5: 150,212,110; --wm-p6: 240,122,190; --wm-red: 240,100,110;
+  }
+}
+.wm button { cursor: pointer; }
+/* globals.css gives FA body/h1/h2 its own tracking and leading; the design has neither. */
+.pb.wm { letter-spacing: normal; }
+.pb.wm h2 { letter-spacing: normal; }
+.pb.wm h1 { letter-spacing: -.5px; }
+
+.wm .wm-main{max-width:1240px;margin:0 auto;padding:22px 16px 40px;display:flex;flex-direction:column;gap:22px}
+.wm .crumb{font-size:12px;color:var(--muted)}.wm .crumb a{color:var(--muted)}
+.wm h1{margin:0;font-size:32px;font-weight:900;letter-spacing:-.5px;line-height:1.35;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.wm .live{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:var(--down);background:var(--downbg);border-radius:999px;padding:3px 10px;letter-spacing:0}
+.wm .live b{width:7px;height:7px;border-radius:50%;background:var(--down);animation:wmblink 1.6s infinite}
+@keyframes wmblink{50%{opacity:.25}}
+.wm .lede{margin:0;font-size:15px;color:var(--text2);line-height:1.9;max-width:720px;text-wrap:pretty}
+.wm .totals{display:flex;gap:22px;flex-wrap:wrap;font-size:13px;color:var(--muted)}.wm .totals b{color:var(--text);font-size:15px;font-weight:800;margin-inline-end:4px}
+.wm .movers{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;margin:0;padding:2px 0;flex:1}
+.wm .movers::-webkit-scrollbar{display:none}
+.wm .mv{flex-shrink:0;display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:8px 12px;max-width:330px;color:var(--text);text-align:right}
+.wm .mv:hover{border-color:var(--line2)}.wm .mv span{font-size:12.5px;font-weight:600;line-height:1.5;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wm .mv em{font-style:normal;font-size:12px;font-weight:800;white-space:nowrap}.wm .mv strong{font-size:15px;font-weight:900}
+.wm .lbl{font-size:12px;font-weight:700;color:var(--muted);flex-shrink:0}
+.wm .stage{display:grid;grid-template-columns:minmax(0,1fr) 400px;gap:16px;align-items:start}
+.wm .gwrap{position:relative;background:var(--bg2);border:1px solid var(--line);border-radius:22px;overflow:hidden;height:min(72vh,660px);min-height:440px}
+.wm canvas{display:block;width:100%;height:100%;touch-action:none;cursor:grab}.wm canvas.drag{cursor:grabbing}.wm canvas.hit{cursor:pointer}
+.wm .ctrl{position:absolute;top:12px;inset-inline:12px;display:flex;gap:8px;flex-wrap:wrap;pointer-events:none}.wm .ctrl>*{pointer-events:auto}
+.wm .seg{display:flex;background:color-mix(in oklab,var(--card) 88%,transparent);border:1px solid var(--line);border-radius:11px;padding:3px;backdrop-filter:blur(8px)}
+.wm .seg button{border:0;background:transparent;color:var(--muted);font-size:12.5px;font-weight:700;padding:6px 11px;border-radius:8px;white-space:nowrap}
+.wm .seg button.on{background:var(--goldbg);color:var(--gold)}.wm .seg.risk button.on[data-m=risk]{background:var(--downbg);color:var(--down)}
+.wm .regions{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;max-width:100%}
+.wm .regions::-webkit-scrollbar{display:none}
+.wm .regions button{flex-shrink:0;border:1px solid var(--line);background:color-mix(in oklab,var(--card) 88%,transparent);color:var(--text2);font-size:12.5px;font-weight:600;padding:6px 11px;border-radius:999px;backdrop-filter:blur(8px)}
+.wm .regions button.on{border-color:var(--goldline);color:var(--gold);background:var(--goldbg)}
+.wm .zoom{position:absolute;bottom:12px;left:12px;display:flex;flex-direction:column;gap:6px}
+.wm .zoom button{width:38px;height:38px;border-radius:11px;border:1px solid var(--line);background:color-mix(in oklab,var(--card) 90%,transparent);color:var(--text2);font-size:17px;font-weight:700;backdrop-filter:blur(8px)}
+.wm .zoom button:hover{border-color:var(--line2);color:var(--text)}
+.wm .legend{position:absolute;bottom:14px;right:14px;display:flex;flex-direction:column;gap:6px;font-size:11.5px;color:var(--muted);pointer-events:none}
+.wm .ramp{width:100%;min-width:150px;height:6px;border-radius:3px}.wm .ramp-l{display:flex;justify-content:space-between;gap:14px;white-space:nowrap}
+.wm .ramp.vol{background:linear-gradient(to left,rgb(var(--wm-p0)) 0%,rgb(var(--wm-p1)) 16.667%,rgb(var(--wm-p2)) 33.333%,rgb(var(--wm-p3)) 50%,rgb(var(--wm-p4)) 66.667%,rgb(var(--wm-p5)) 83.333%,rgb(var(--wm-p6)) 100%)}
+.wm .ramp.risk{background:linear-gradient(to left,rgba(var(--wm-red),.22),rgba(var(--wm-red),1))}
+.wm .hint{font-size:11.5px;color:var(--faint);white-space:nowrap}
+.wm .tip{position:absolute;pointer-events:none;background:var(--card);border:1px solid var(--line2);border-radius:12px;padding:8px 11px;font-size:12px;min-width:150px;max-width:260px;box-shadow:0 10px 30px rgba(0,0,0,.28);opacity:0;transition:opacity .12s;z-index:3}
+.wm .tip b{display:block;font-size:14px;font-weight:800;margin-bottom:2px}.wm .tip span{color:var(--muted)}
+.wm .loading{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:13px;color:var(--muted)}
+.wm .panel{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:18px;display:flex;flex-direction:column;gap:14px;max-height:min(72vh,660px);min-height:440px;overflow:auto}
+.wm .p-top{display:flex;align-items:flex-start;gap:10px}.wm .p-name{flex:1;display:flex;flex-direction:column;gap:2px}
+.wm .p-name h2{margin:0;font-size:24px;font-weight:900;line-height:1.3}.wm .p-name small{font-size:12px;color:var(--muted);font-weight:600}
+/* English fallback titles keep their own direction (the "?" stays at the end) but still align with the Persian ones. */
+.wm [dir=auto]{text-align:right;unicode-bidi:plaintext}
+/* In the sheet the ✕ already closes and unpins; the chip would sit under it. */
+.wm .sheet .pin{display:none}
+.wm .pin{font-size:11.5px;font-weight:700;color:var(--gold);background:var(--goldbg);border:0;border-radius:999px;padding:4px 10px}
+.wm .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.wm .stat{background:var(--bg2);border-radius:12px;padding:9px 10px;display:flex;flex-direction:column;gap:2px}.wm .stat span{font-size:11px;color:var(--muted);font-weight:600}.wm .stat b{font-size:15px;font-weight:800}
+.wm .chips{display:flex;gap:6px;flex-wrap:wrap}.wm .chips span{font-size:11.5px;font-weight:600;color:var(--text2);background:var(--bg2);border:1px solid var(--line);border-radius:999px;padding:2px 9px}
+.wm .sec{font-size:13px;font-weight:800;color:var(--text2);display:flex;justify-content:space-between;align-items:baseline;border-bottom:1px solid var(--line);padding-bottom:8px}.wm .sec span{font-size:11.5px;color:var(--muted);font-weight:600}
+.wm .mk{display:flex;flex-direction:column;gap:9px;padding:12px 0;border-bottom:1px solid var(--line)}.wm .mk:last-child{border-bottom:0}
+.wm .mk-r{display:flex;gap:12px;align-items:flex-start}.wm .mk-q{flex:1;font-size:14px;font-weight:600;line-height:1.75;color:var(--text);text-wrap:pretty}.wm .mk-q:hover{color:var(--gold)}
+.wm .mk-p{display:flex;flex-direction:column;align-items:flex-end;flex-shrink:0}.wm .mk-p b{font-size:22px;font-weight:900;line-height:1.2}.wm .mk-p span{font-size:11px;color:var(--muted);font-weight:600}
+.wm .bar{height:4px;background:var(--bg2);border-radius:2px;overflow:hidden}.wm .bar i{display:block;height:100%;border-radius:2px}
+.wm .mk-m{display:flex;align-items:center;gap:8px}.wm .mk-m>span{flex:1;font-size:11.5px;color:var(--muted);line-height:1.6}
+.wm .yes,.wm .no{padding:6px 12px;border-radius:10px;font-weight:800;font-size:12.5px;border:1px solid transparent}
+.wm .yes{background:var(--upbg);color:var(--up)}.wm .yes:hover{border-color:var(--up);color:var(--up)}
+.wm .no{background:var(--bg2);color:var(--text2);border-color:var(--line)}.wm .no:hover{border-color:var(--line2);color:var(--text2)}
+.wm .with{font-size:11.5px;color:var(--blue);font-weight:600}
+.wm .cta{display:flex;align-items:center;justify-content:center;gap:8px;background:var(--gold);color:var(--goldink);font-weight:800;font-size:14px;padding:12px;border-radius:13px;margin-top:auto;position:sticky;bottom:0;z-index:2;box-shadow:0 -16px 16px 4px var(--card),0 18px 0 18px var(--card)}.wm .cta:hover{background:var(--gold2);color:var(--goldink)}
+.wm .empty{display:flex;flex-direction:column;gap:10px;color:var(--muted);font-size:13.5px;line-height:1.9}
+.wm .rank-h{display:flex;align-items:baseline;gap:10px;border-bottom:1px solid var(--line);padding-bottom:10px}.wm .rank-h h2{margin:0;font-size:18px;font-weight:800}.wm .rank-h span{font-size:12px;color:var(--muted)}
+.wm .rank{display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:8px;margin-top:12px;list-style:none;padding:0}
+/* The full list is server-rendered for crawlers; beyond 12 it waits for «نمایش همهٔ کشورها». */
+.wm .rank:not(.all)>li:nth-child(n+13){display:none}
+.wm .rk{display:grid;grid-template-columns:28px minmax(0,1fr) auto;gap:4px 12px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:11px 14px;color:var(--text)}
+.wm .rk:hover{border-color:var(--line2);color:var(--text)}.wm .rk.on{border-color:var(--goldline)}
+.wm .rk-n{font-size:14px;font-weight:900;color:var(--faint);grid-row:span 2}.wm .rk-c{display:flex;align-items:baseline;gap:8px;min-width:0}.wm .rk-c b{font-size:15px;font-weight:800}.wm .rk-c small{font-size:11.5px;color:var(--muted)}
+.wm .rk-c i{width:9px;height:9px;border-radius:50%;flex-shrink:0;align-self:center}
+.wm .rk-v{font-size:13px;font-weight:800;text-align:left;white-space:nowrap}.wm .rk-v small{display:block;font-size:11px;color:var(--muted);font-weight:600}
+.wm .rk-q{grid-column:2/4;font-size:12px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.wm .rk-q b{color:var(--text2)}
+.wm .rk .bar{grid-column:2/4;height:3px}
+.wm .more{align-self:center;margin-top:12px;border:1px solid var(--line);background:var(--card);color:var(--text2);font-weight:700;font-size:13px;padding:9px 20px;border-radius:11px}
+.wm .scrim{position:fixed;inset:0;background:var(--scrim);opacity:0;pointer-events:none;transition:opacity .2s;z-index:50}
+.wm .sheet{position:fixed;inset-inline:0;bottom:0;max-height:74vh;background:var(--card);border-top:1px solid var(--line2);border-radius:22px 22px 0 0;transform:translateY(105%);transition:transform .28s cubic-bezier(.2,.8,.2,1);z-index:51;display:flex;flex-direction:column}
+.wm .sheet .grab{width:44px;height:5px;border-radius:3px;background:var(--line2);margin:9px auto 0;flex-shrink:0}
+.wm .sheet .panel{border:0;border-radius:0;max-height:none;min-height:0;background:transparent;padding:12px 16px 22px}
+.wm .sheet-x{position:absolute;top:10px;left:12px;width:36px;height:36px;border-radius:50%;border:1px solid var(--line);background:var(--bg2);color:var(--text2);font-size:16px}
+.wm.sheet-open .scrim{opacity:1;pointer-events:auto}.wm.sheet-open .sheet{transform:none}
+@media(max-width:979px){.wm .stage{grid-template-columns:1fr}.wm .stage>.panel{display:none}.wm .gwrap{height:58vh;min-height:360px;border-radius:18px;margin:0 -4px}.wm h1{font-size:25px}.wm .legend .hint{display:none}.wm .rank{grid-template-columns:1fr}}
+@media(min-width:980px){.wm .sheet,.wm .scrim{display:none}}

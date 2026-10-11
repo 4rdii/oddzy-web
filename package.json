@@ -15,6 +15,7 @@
     "@privy-io/react-auth": "^3.35.2",
     "@types/mdx": "^2.0.14",
     "@vercel/analytics": "^2.0.1",
+    "d3": "7.9.0",
     "github-slugger": "^2.0.0",
     "gray-matter": "^4.0.3",
     "next": "16.2.11",
@@ -24,14 +25,18 @@
     "rehype-slug": "^6.0.0",
     "remark-frontmatter": "^5.0.0",
     "remark-gfm": "^4.0.1",
-    "server-only": "^0.0.1"
+    "server-only": "^0.0.1",
+    "topojson-client": "3.1.0"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
+    "@types/d3": "^7.4.3",
     "@types/node": "^20",
     "@types/qrcode": "^1.5.6",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/topojson-client": "^3.1.5",
+    "@types/topojson-specification": "^1.0.5",
     "eslint": "^9",
     "eslint-config-next": "16.2.11",
     "tailwindcss": "^4",

@@ -24,9 +24,12 @@ import type { Topic } from "@/lib/taxonomy";
  */
 export async function SiteChrome({
   lang,
+  active,
   children,
 }: {
   lang: Locale;
+  /** PolyBaaz: the nav item to mark as the current page (its href, e.g. "/world"). */
+  active?: string;
   children: React.ReactNode;
 }) {
   const brand = brandFor(lang);
@@ -81,22 +84,30 @@ export async function SiteChrome({
               </span>
             </Link>
 
-            <nav
-              className="hidden items-center gap-6 sm:flex"
-              aria-label={t.nav.primary}
-            >
-              {/* Baskets sits first: it is the only nav item that leads to
-                  something buyable, and /basket is the crawlable editorial index
-                  rather than the noindex community feed — the right landing
-                  place for someone who has not chosen a basket yet. The feed and
-                  the builder are reached from there and from the home band. */}
-              <NavLink href="/baskets">{t.nav.baskets}</NavLink>
-              {/* PolyBaaz only: the whales page has no English version. */}
-              {lang === "fa" && <NavLink href="/big-games">بازی‌های بزرگ</NavLink>}
-              <NavLink href="/how-it-works">{t.nav.howItWorks}</NavLink>
-              <NavLink href="/learn">{t.nav.learn}</NavLink>
-              <NavLink href="/faq">{t.nav.faq}</NavLink>
-            </nav>
+            {fa ? (
+              <nav className="hidden items-center gap-0.5 min-[900px]:flex" aria-label={t.nav.primary}>
+                {FA_NAV.map(([href, label]) => (
+                  <PbNavLink key={href} href={href} on={href === active}>
+                    {label}
+                  </PbNavLink>
+                ))}
+              </nav>
+            ) : (
+              <nav
+                className="hidden items-center gap-6 sm:flex"
+                aria-label={t.nav.primary}
+              >
+                {/* Baskets sits first: it is the only nav item that leads to
+                    something buyable, and /basket is the crawlable editorial index
+                    rather than the noindex community feed — the right landing
+                    place for someone who has not chosen a basket yet. The feed and
+                    the builder are reached from there and from the home band. */}
+                <NavLink href="/baskets">{t.nav.baskets}</NavLink>
+                <NavLink href="/how-it-works">{t.nav.howItWorks}</NavLink>
+                <NavLink href="/learn">{t.nav.learn}</NavLink>
+                <NavLink href="/faq">{t.nav.faq}</NavLink>
+              </nav>
+            )}
 
             <div className="flex items-center gap-2">
               <ThemeToggle labels={t.theme} />
@@ -116,6 +127,19 @@ export async function SiteChrome({
               </Link>
             </div>
           </div>
+          {/* PolyBaaz under 900px: the nav becomes a scrollable chip row (PbHeader). */}
+          {fa && (
+            <nav
+              className="pb-noscroll flex gap-1.5 overflow-x-auto px-4 pb-2.5 [scrollbar-width:none] min-[900px]:hidden"
+              aria-label={t.nav.primary}
+            >
+              {FA_NAV.map(([href, label]) => (
+                <PbNavLink key={href} href={href} on={href === active} chip>
+                  {label}
+                </PbNavLink>
+              ))}
+            </nav>
+          )}
         </header>
 
         <main>{children}</main>
@@ -133,6 +157,7 @@ export async function SiteChrome({
               <NavLink href="/learn">{t.nav.learn}</NavLink>
               <NavLink href="/updown">{t.nav.updown}</NavLink>
               {lang === "fa" && <NavLink href="/big-games">بازی‌های بزرگ امروز</NavLink>}
+              {lang === "fa" && <NavLink href="/world">نقشهٔ جهان</NavLink>}
               <NavLink href="/baskets">{t.nav.baskets}</NavLink>
               <NavLink href="/faq">{t.nav.faq}</NavLink>
               <NavLink href="/privacy">{t.nav.privacy}</NavLink>
@@ -190,6 +215,39 @@ function flattenTopics(tree: Topic[]): Topic[] {
   };
   walk(tree);
   return out;
+}
+
+/**
+ * PolyBaaz header nav, in the redesign's order (PbHeader): «نقشهٔ جهان»
+ * took the slot «ایران» had in the design. English keeps its own nav.
+ */
+const FA_NAV: [string, string][] = [
+  ["/topic/football", "فوتبال"],
+  ["/big-games", "بازی‌های بزرگ"],
+  ["/updown", "صعودی یا نزولی"],
+  ["/baskets", "سبدها"],
+  ["/world", "نقشهٔ جهان"],
+  ["/how-it-works", "آموزش کار با پلی‌باز"],
+];
+
+/** PbHeader's nav item: muted, gold with a tint when current; a bordered pill in the phone chip row. */
+function PbNavLink({ href, on, chip, children }: { href: string; on: boolean; chip?: boolean; children: React.ReactNode }) {
+  const tint = "bg-[color-mix(in_srgb,var(--accent)_10%,transparent)]";
+  return (
+    <Link
+      href={href}
+      aria-current={on ? "page" : undefined}
+      // Inline sizes: the FA legibility floor in globals.css re-maps text-[13px]/[12px] utilities.
+      style={chip ? { fontSize: 13 } : { fontSize: 14 }}
+      className={
+        chip
+          ? `shrink-0 whitespace-nowrap rounded-full border px-3 py-1.5 font-semibold ${on ? `border-[color-mix(in_srgb,var(--accent)_32%,transparent)] text-[var(--accent)] ${tint}` : "border-[var(--line)] text-[var(--mute)]"}`
+          : `whitespace-nowrap rounded-[10px] px-3 py-[7px] font-medium ${on ? `text-[var(--accent)] ${tint}` : "text-[var(--mute)] hover:text-[var(--ink)]"}`
+      }
+    >
+      {children}
+    </Link>
+  );
 }
 
 function NavLink({ href, children }: { href: string; children: React.ReactNode }) {

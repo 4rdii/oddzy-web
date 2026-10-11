@@ -59,6 +59,16 @@ export function faDay(iso: string): string {
   return new Date(iso).toLocaleDateString("fa-IR-u-ca-gregory", { weekday: "long", day: "numeric", month: "long", timeZone: TZ });
 }
 
+/** "۳۱ دسامبر" in Tehran, Gregorian — a close date without the weekday. */
+export function faDayMonth(iso: string): string {
+  return new Date(iso).toLocaleDateString("fa-IR-u-ca-gregory", { day: "numeric", month: "long", timeZone: TZ });
+}
+
+/** The design's verbal read of a 0–100 probability. */
+export function probWord(p: number): string {
+  return p >= 95 ? "تقریباً قطعی" : p >= 65 ? "محتمل" : p >= 35 ? "نامعلوم" : p >= 6 ? "بعید" : "بسیار بعید";
+}
+
 /** The Tehran calendar day of an instant, as YYYY-MM-DD — for grouping and "today". */
 export function tehranDate(iso: string | Date): string {
   return new Intl.DateTimeFormat("en-CA", { timeZone: TZ }).format(new Date(iso));

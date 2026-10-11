@@ -1,6 +1,7 @@
 import "server-only";
 
 import type { Topic } from "./taxonomy";
+import type { WorldApi } from "./world";
 
 /**
  * Server-side client for the Oddzy market-data API (app.oddzy.xyz/api).
@@ -974,6 +975,35 @@ export async function getWhalesForEvent(slug: string): Promise<WhaleGame | null>
     return data.game;
   } catch (e) {
     if (!(e instanceof ApiError && e.status === 404)) console.error("getWhalesForEvent", e);
+    return null;
+  }
+}
+
+/**
+ * Cache tag on the world-map fetch, so a backend change can mark it stale
+ * without waiting out the window.
+ */
+export const WORLD_TAG = "world";
+
+/**
+ * «نقشهٔ جهان»: countries and markets tagged by country (GET /world).
+ *
+ * `revalidate` must match the caller's own: the page passes its ISR window,
+ * /api/world (the client's 60s refresh) passes 60.
+ *
+ * Local development only: ODDZY_WORLD_FIXTURE=<path to a JSON file> serves
+ * that file instead (e.g. fixtures/world.json) — nothing sets it in production.
+ */
+export async function getWorld(revalidate = 60): Promise<WorldApi | null> {
+  const fixture = process.env.ODDZY_WORLD_FIXTURE;
+  if (fixture) {
+    const { readFile } = await import("node:fs/promises");
+    return JSON.parse(await readFile(/* turbopackIgnore: true */ fixture, "utf8")) as WorldApi;
+  }
+  try {
+    return await get<WorldApi>("/world", revalidate, [WORLD_TAG]);
+  } catch (e) {
+    console.error("getWorld", e);
     return null;
   }
 }
