@@ -44,9 +44,29 @@ export type WorldApiMarket = {
   topic?: unknown;
 };
 
+/** A news story (DW / BBC Persian), tagged with countries and markets upstream. */
+export type WorldApiNews = {
+  /** = url. */
+  id: string;
+  titleFa: string;
+  summaryFa: string;
+  /** «دویچه‌وله فارسی» | «بی‌بی‌سی فارسی». */
+  source: string;
+  url: string;
+  /** ISO. */
+  publishedAt: string;
+  iso2: string[];
+  /** ISO numeric, matching countries[].id. */
+  countryIds: string[];
+  /** Ids into markets[]; may be empty. */
+  marketIds: string[];
+};
+
 export type WorldApi = {
   countries: WorldApiCountry[];
   markets: WorldApiMarket[];
+  /** Newest first, at most 20. */
+  news?: WorldApiNews[];
   totals: { countries: number; markets: number; vol24h: number };
   scanned?: number;
   tagged?: number;
@@ -99,14 +119,51 @@ export type WC = {
   ci: number;
 };
 
+/** A news story as the page shows it (the design's `NEWS` row). */
+export type WN = {
+  /** = url. */
+  id: string;
+  /** Headline. */
+  q: string;
+  /** One-line summary. */
+  s: string;
+  src: string;
+  url: string;
+  /** ISO publish time; the relative «۱۲ دقیقه پیش» is formatted on the client (it ticks). */
+  at: string;
+  /** Country keys (see WC.key) of the countries on this page, in the story's order. */
+  ids: string[];
+  /** Indices into WorldView.markets: the story's related markets that the page has. */
+  mk: number[];
+};
+
 export type WorldView = {
   countries: WC[];
   markets: WM[];
+  /** Newest first. */
+  news: WN[];
   /** Indices into markets: the 8 biggest absolute movers today. */
   movers: number[];
   totals: { countries: number; markets: number; vol24h: number };
   asOf: string | null;
 };
+
+export type Region = { k: string; l: string; c?: [number, number]; z?: number; ids?: number[] };
+
+/** The region chips: label, fly-to centre and zoom, members (atlas ids). Shared by the globe and the news feed filter. */
+export const REGIONS: Region[] = [
+  { k: "all", l: "همهٔ جهان" },
+  { k: "me", l: "خاورمیانه", c: [46, 29], z: 2.6, ids: [364, 376, 422, 760, 368, 682, 887, 792, 818, 634, 784, 512, 400] },
+  { k: "eu", l: "اروپا و روسیه", c: [28, 50], z: 2, ids: [643, 804, 276, 250, 826, 616, 348, 642, 498, 112, 268, 51, 31] },
+  { k: "am", l: "قارهٔ آمریکا", c: [-78, 18], z: 1.25, ids: [840, 124, 484, 862, 76, 32, 170, 192, 304] },
+  { k: "as", l: "آسیا", c: [108, 28], z: 1.7, ids: [156, 158, 408, 410, 392, 586, 356, 4, 608] },
+  { k: "af", l: "آفریقا", c: [22, 6], z: 1.6, ids: [729, 231, 706, 434, 566, 180, 818] },
+];
+const pad = (n: number) => String(n).padStart(3, "0");
+/** Region key → member country keys (null = the whole world). */
+export const REG_SET: Record<string, Set<string> | null> = Object.fromEntries(
+  REGIONS.map((r) => [r.k, r.ids ? new Set(r.ids.map(pad)) : null]),
+);
 
 const MAX_PANEL = 6;
 const MAX_MOVERS = 8;
@@ -116,7 +173,7 @@ const MOVER_MIN_VOL = 1000;
 const neighbors = NEIGHBORS as Record<string, string[]>;
 
 export function emptyWorldView(): WorldView {
-  return { countries: [], markets: [], movers: [], totals: { countries: 0, markets: 0, vol24h: 0 }, asOf: null };
+  return { countries: [], markets: [], news: [], movers: [], totals: { countries: 0, markets: 0, vol24h: 0 }, asOf: null };
 }
 
 /**
@@ -209,9 +266,33 @@ export function toWorldView(w: WorldApi): WorldView {
     .slice(0, MAX_MOVERS)
     .map(idx);
 
+  const byMarketId = new Map(all.map((x) => [x.raw.id, x]));
+  const news: WN[] = (w.news ?? []).map((n) => {
+    const ids = new Set<string>();
+    for (const id of n.countryIds ?? []) if (id && known.has(id)) ids.add(id);
+    for (const iso of n.iso2 ?? []) {
+      const k = byIso.get(iso);
+      if (k) ids.add(k);
+    }
+    return {
+      id: n.id,
+      q: faDigits(n.titleFa),
+      s: faDigits(n.summaryFa ?? ""),
+      src: n.source,
+      url: n.url,
+      at: n.publishedAt,
+      ids: [...ids],
+      mk: [...new Set(n.marketIds ?? [])].flatMap((id) => {
+        const x = byMarketId.get(id);
+        return x ? [idx(x)] : [];
+      }),
+    };
+  });
+
   return {
     countries,
     markets,
+    news,
     movers,
     totals: w.totals,
     asOf: w.as_of ?? null,

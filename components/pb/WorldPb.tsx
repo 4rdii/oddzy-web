@@ -5,7 +5,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type MouseEvent } fr
 import { useNow } from "@/components/pb/useNow";
 import type { Globe, GlobeState } from "@/components/pb/worldGlobe";
 import { fa, faAgo, probWord } from "@/lib/pb";
-import { wVol, wVolS, type WC, type WM, type WorldView } from "@/lib/world";
+import { REGIONS, REG_SET, wVol, wVolS, type WC, type WM, type WN, type WorldView } from "@/lib/world";
 
 /**
  * PB World Map — «نقشهٔ جهان» (design: PB World Map.html; handoff
@@ -17,26 +17,20 @@ import { wVol, wVolS, type WC, type WM, type WorldView } from "@/lib/world";
 
 type Metric = GlobeState["metric"];
 
-/** Kept in sync with REGIONS in worldGlobe.ts (labels only; the globe owns centres and members). */
-const REGION_CHIPS: [string, string][] = [
-  ["all", "همهٔ جهان"],
-  ["me", "خاورمیانه"],
-  ["eu", "اروپا و روسیه"],
-  ["am", "قارهٔ آمریکا"],
-  ["as", "آسیا"],
-  ["af", "آفریقا"],
-];
+const REGION_CHIPS: [string, string][] = REGIONS.map((r) => [r.k, r.l]);
 
 const RANK_SHOWN = 12;
 const REFRESH_MS = 60_000;
+/** Stories younger than this get the blinking red dot. */
+const FRESH_MS = 15 * 60_000;
 
 const isPhone = () => window.innerWidth < 980;
 const pctColor = (p: number | null) => (p !== null && p >= 50 ? "var(--gold)" : "var(--text)");
 const pctText = (p: number | null) => (p === null ? "—" : `${fa(p)}٪`);
 
-function MarketRow({ m, self, byKey }: { m: WM; self: string; byKey: Map<string, WC> }) {
+function MarketRow({ m, self, byKey }: { m: WM; self: string | string[]; byKey: Map<string, WC> }) {
   const col = pctColor(m.p);
-  const others = m.ids.filter((x) => x !== self && byKey.has(x)).map((x) => byKey.get(x)!.fa);
+  const others = m.ids.filter((x) => (Array.isArray(self) ? !self.includes(x) : x !== self) && byKey.has(x)).map((x) => byKey.get(x)!.fa);
   const href = `/market/${m.slug}`;
   return (
     <div className="mk">
@@ -123,11 +117,127 @@ function Panel({
   );
 }
 
+/** The related market that moved most today (the card's badge); null when none moved. */
+function biggestMove(n: WN, view: WorldView): number | null {
+  let best = 0;
+  for (const i of n.mk) {
+    const d = view.markets[i]?.d ?? 0;
+    if (Math.abs(d) > Math.abs(best)) best = d;
+  }
+  return best || null;
+}
+
+function NewsDetail({
+  n,
+  now,
+  view,
+  byKey,
+  onClose,
+  onCountry,
+}: {
+  n: WN;
+  now: number;
+  view: WorldView;
+  byKey: Map<string, WC>;
+  onClose: () => void;
+  onCountry: (e: MouseEvent, key: string) => void;
+}) {
+  const cs = n.ids.filter((k) => byKey.has(k));
+  return (
+    <>
+      <div className="p-top">
+        <div className="p-name">
+          <small>{n.src} · {faAgo(n.at, now)}</small>
+          <h2 style={{ fontSize: 19, lineHeight: 1.65, fontWeight: 800 }}>{n.q}</h2>
+        </div>
+        <button className="pin" aria-label="بستن" onClick={onClose}>✕</button>
+      </div>
+      {n.s && <p style={{ margin: 0, fontSize: 13.5, lineHeight: 1.9, color: "var(--text2)" }}>{n.s}</p>}
+      {cs.length > 0 && (
+        <div className="chips">
+          {cs.map((k) => <button key={k} data-c={k} onClick={(e) => onCountry(e, k)}>{byKey.get(k)!.fa}</button>)}
+        </div>
+      )}
+      {n.mk.length > 0 && (
+        <div>
+          <div className="sec">بازارهای مرتبط با این خبر <span>{fa(n.mk.length)} بازار</span></div>
+          {n.mk.map((i) => <MarketRow key={view.markets[i].slug} m={view.markets[i]} self={n.ids} byKey={byKey} />)}
+        </div>
+      )}
+      <a href={n.url} target="_blank" rel="noopener" style={{ fontSize: 12.5, fontWeight: 700 }}>خبر کامل در {n.src} ↗</a>
+    </>
+  );
+}
+
+function NewsFeed({
+  view,
+  byKey,
+  sel,
+  region,
+  openId,
+  now,
+  onOpen,
+  onClear,
+}: {
+  view: WorldView;
+  byKey: Map<string, WC>;
+  sel: WC | null;
+  region: string;
+  openId: string | null;
+  now: number;
+  onOpen: (n: WN) => void;
+  onClear: () => void;
+}) {
+  // A pinned country filters to its stories (with «همهٔ اخبار» to clear); else a region chip
+  // filters to the region's. Either falls back to everything when nothing matches.
+  let list = view.news, title = "آخرین اخبار", clear = false;
+  const reg = REG_SET[region] ?? null;
+  if (sel) {
+    const f = view.news.filter((n) => n.ids.includes(sel.key));
+    if (f.length) { list = f; title = `اخبار ${sel.fa}`; clear = true; }
+  } else if (reg) {
+    const f = view.news.filter((n) => n.ids.some((k) => reg.has(k)));
+    if (f.length) { list = f; title = `اخبار ${REGIONS.find((r) => r.k === region)!.l}`; }
+  }
+  return (
+    <>
+      <div className="news-h">
+        <h2>{title}</h2>
+        {clear && <button onClick={onClear}>همهٔ اخبار</button>}
+      </div>
+      <div className="news-list">
+        {list.map((n) => {
+          const names = n.ids.filter((k) => byKey.has(k)).map((k) => byKey.get(k)!.fa);
+          const mv = biggestMove(n, view);
+          return (
+            <button key={n.id} className={`nw${openId === n.id ? " on" : ""}`} data-n={n.id} onClick={() => onOpen(n)}>
+              <span className="nw-m">
+                {now - Date.parse(n.at) < FRESH_MS && <b className="fresh" />}
+                {n.src} · {faAgo(n.at, now)}
+              </span>
+              <span className="nw-t">{n.q}</span>
+              {(names.length > 0 || n.mk.length > 0) && (
+                <span className="nw-f">
+                  {names.length > 0 && <span>{names.join("، ")}</span>}
+                  {names.length > 0 && n.mk.length > 0 && <span>·</span>}
+                  {n.mk.length > 0 && <span>{fa(n.mk.length)} بازار مرتبط</span>}
+                  {mv && <span style={{ color: mv > 0 ? "var(--up)" : "var(--down)", fontWeight: 800 }}>{mv > 0 ? "▲" : "▼"} {fa(Math.abs(mv))}</span>}
+                </span>
+              )}
+            </button>
+          );
+        })}
+      </div>
+    </>
+  );
+}
+
 export function WorldPb({ initial, renderedAt }: { initial: WorldView; renderedAt: number }) {
   const [view, setView] = useState(initial);
   const [metric, setMetric] = useState<Metric>("vol");
   const [region, setRegionK] = useState("all");
   const [selKey, setSelKey] = useState<string | null>(null);
+  const [newsId, setNewsId] = useState<string | null>(null);
   const [previewKey, setPreviewKey] = useState<string | null>(() => (initial.countries.find((c) => c.geo === "364") ?? initial.countries[0])?.key ?? null);
   const [showAll, setShowAll] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -137,6 +247,8 @@ export function WorldPb({ initial, renderedAt }: { initial: WorldView; renderedA
   const byKey = useMemo(() => new Map(view.countries.map((c) => [c.key, c])), [view]);
   const sel = selKey ? byKey.get(selKey) ?? null : null;
   const preview = previewKey ? byKey.get(previewKey) ?? null : null;
+  // A refresh can drop the open story; the panel then falls back to the country.
+  const story = newsId ? view.news.find((n) => n.id === newsId) ?? null : null;
   const metricVal = useCallback((c: WC) => (metric === "vol" ? c.v : c.r), [metric]);
   const ranked = useMemo(() => [...view.countries].sort((a, b) => metricVal(b) - metricVal(a)), [view, metricVal]);
 
@@ -144,14 +256,17 @@ export function WorldPb({ initial, renderedAt }: { initial: WorldView; renderedA
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const tipRef = useRef<HTMLDivElement>(null);
   const globeRef = useRef<Globe | null>(null);
-  const stateRef = useRef<GlobeState>({ metric, region, sel });
+  const storyIds = story?.ids ?? null;
+  const stateRef = useRef<GlobeState>({ metric, region, sel, news: storyIds });
   const viewRef = useRef(view);
   useEffect(() => {
-    stateRef.current = { metric, region, sel };
-  }, [metric, region, sel]);
+    stateRef.current = { metric, region, sel, news: storyIds };
+  }, [metric, region, sel, storyIds]);
 
+  const sheetOpenedAt = useRef(0);
   const select = useCallback((c: WC | null, fly = true) => {
     setSelKey(c?.key ?? null);
+    setNewsId(null);
     if (c) setPreviewKey(c.key);
     if (c && fly) globeRef.current?.flyToCountry(c);
     if (c && isPhone()) {
@@ -163,11 +278,22 @@ export function WorldPb({ initial, renderedAt }: { initial: WorldView; renderedA
   // A tap on the globe opens the sheet on pointerup; the browser then fires its
   // compatibility click at the same spot, which lands on the scrim that just
   // appeared and closed the sheet again — so tapping a country "did nothing".
-  const sheetOpenedAt = useRef(0);
   const closeFromScrim = () => {
     if (performance.now() - sheetOpenedAt.current < 450) return;
     select(null, false);
   };
+  // A story takes over the panel (or the sheet on phone); the globe fits its countries.
+  const openNews = useCallback((n: WN) => {
+    setNewsId(n.id);
+    setSelKey(null);
+    globeRef.current?.flyToNews(n.ids);
+    if (isPhone()) {
+      // Same ghost-click guard as a globe tap: the scrim appears under the finger.
+      sheetOpenedAt.current = performance.now();
+      setSheetOpen(true);
+      window.scrollTo({ top: wrapRef.current!.getBoundingClientRect().top + scrollY - 70, behavior: "smooth" });
+    }
+  }, []);
   // The globe calls back from its own event handlers; keep it pointed at the latest closures.
   const selectRef = useRef(select);
   const byKeyRef = useRef(byKey);
@@ -191,7 +317,7 @@ export function WorldPb({ initial, renderedAt }: { initial: WorldView; renderedA
             getState: () => stateRef.current,
             isPhone,
             onHover: (c) => {
-              if (c && !stateRef.current.sel) setPreviewKey(c.key);
+              if (c && !stateRef.current.sel && !stateRef.current.news) setPreviewKey(c.key);
             },
             onTap: (c, fly) => selectRef.current(c, fly),
           },
@@ -280,6 +406,9 @@ export function WorldPb({ initial, renderedAt }: { initial: WorldView; renderedA
   const mcol = metric === "vol" ? "var(--gold)" : "var(--down)";
   const movers = view.movers.map((i) => view.markets[i]);
   const updated = view.asOf ? faAgo(view.asOf, now ?? renderedAt) : "—";
+  const storyEl = story && (
+    <NewsDetail n={story} now={now ?? renderedAt} view={view} byKey={byKey} onClose={() => select(null, false)} onCountry={pickCountry} />
+  );
 
   return (
     <div dir="rtl" className={`pb wm${sheetOpen ? " sheet-open" : ""}`}>
@@ -312,6 +441,18 @@ export function WorldPb({ initial, renderedAt }: { initial: WorldView; renderedA
         )}
 
         <section className="stage">
+          <aside className="news" aria-label="آخرین اخبار">
+            <NewsFeed
+              view={view}
+              byKey={byKey}
+              sel={sel}
+              region={region}
+              openId={story?.id ?? null}
+              now={now ?? renderedAt}
+              onOpen={openNews}
+              onClear={() => select(null, false)}
+            />
+          </aside>
           <div className="gwrap" ref={wrapRef}>
             <canvas ref={canvasRef} aria-label="کرهٔ زمین؛ کشورها بر اساس حجم معامله روشن شده‌اند" />
             {geo !== "ok" && (
@@ -356,7 +497,7 @@ export function WorldPb({ initial, renderedAt }: { initial: WorldView; renderedA
             <div className="tip" ref={tipRef} />
           </div>
           <aside className="panel">
-            <Panel c={panelC} pinned={!!sel && sel === panelC} metric={metric} rank={rankOf(panelC)} view={view} byKey={byKey} onUnpin={() => select(null)} />
+            {storyEl || <Panel c={panelC} pinned={!!sel && sel === panelC} metric={metric} rank={rankOf(panelC)} view={view} byKey={byKey} onUnpin={() => select(null)} />}
           </aside>
         </section>
 
@@ -400,7 +541,7 @@ export function WorldPb({ initial, renderedAt }: { initial: WorldView; renderedA
         <div className="grab" />
         <button className="sheet-x" aria-label="بستن" onClick={() => select(null, false)}>✕</button>
         <div className="panel">
-          {sel && <Panel c={sel} pinned metric={metric} rank={rankOf(sel)} view={view} byKey={byKey} onUnpin={() => select(null)} />}
+          {sel ? <Panel c={sel} pinned metric={metric} rank={rankOf(sel)} view={view} byKey={byKey} onUnpin={() => select(null)} /> : storyEl}
         </div>
       </div>
     </div>

@@ -3,7 +3,7 @@ import type { Feature, Geometry } from "geojson";
 import { feature } from "topojson-client";
 import type { GeometryCollection, Topology } from "topojson-specification";
 import { fa } from "@/lib/pb";
-import { wVol, wVolS, type WC, type WM } from "@/lib/world";
+import { REGIONS, REG_SET, wVol, wVolS, type WC, type WM } from "@/lib/world";
 
 /**
  * The «نقشهٔ جهان» globe, ported line for line from the design file
@@ -21,22 +21,9 @@ import { wVol, wVolS, type WC, type WM } from "@/lib/world";
  * reads it through `getState` every frame and reports hover / taps back.
  */
 
-export type GlobeState = { metric: "vol" | "risk"; region: string; sel: WC | null };
+/** `news`: the open story's country keys (WN.ids), or null when no story is open. */
+export type GlobeState = { metric: "vol" | "risk"; region: string; sel: WC | null; news: string[] | null };
 
-export type Region = { k: string; l: string; c?: [number, number]; z?: number; ids?: number[] };
-
-export const REGIONS: Region[] = [
-  { k: "all", l: "همهٔ جهان" },
-  { k: "me", l: "خاورمیانه", c: [46, 29], z: 2.6, ids: [364, 376, 422, 760, 368, 682, 887, 792, 818, 634, 784, 512, 400] },
-  { k: "eu", l: "اروپا و روسیه", c: [28, 50], z: 2, ids: [643, 804, 276, 250, 826, 616, 348, 642, 498, 112, 268, 51, 31] },
-  { k: "am", l: "قارهٔ آمریکا", c: [-78, 18], z: 1.25, ids: [840, 124, 484, 862, 76, 32, 170, 192, 304] },
-  { k: "as", l: "آسیا", c: [108, 28], z: 1.7, ids: [156, 158, 408, 410, 392, 586, 356, 4, 608] },
-  { k: "af", l: "آفریقا", c: [22, 6], z: 1.6, ids: [729, 231, 706, 434, 566, 180, 818] },
-];
-const pad = (n: number) => String(n).padStart(3, "0");
-const REG_SET: Record<string, Set<string> | null> = Object.fromEntries(
-  REGIONS.map((r) => [r.k, r.ids ? new Set(r.ids.map(pad)) : null]),
-);
 
 /** Manual centroids for labels and fly-to (handoff §5: keep them). */
 const CENT: Record<string, [number, number]> = { "840": [-98, 39], "643": [48, 56], "250": [2.5, 46.6], "124": [-100, 57], "304": [-41, 72], "376": [35, 31.3] };
@@ -83,6 +70,8 @@ export type Globe = {
   setData: (countries: WC[], markets: WM[]) => void;
   flyToCountry: (c: WC) => void;
   flyToRegion: (k: string) => void;
+  /** Fly to fit a story's countries (keys). */
+  flyToNews: (keys: string[]) => void;
   zoomBy: (f: number) => void;
   resetIdle: () => void;
   readColors: () => void;
@@ -245,7 +234,7 @@ export async function createGlobe(o: GlobeOptions, countries: WC[], markets: WM[
     const rad = Math.PI / 180, lr = G.rot[0] * rad, pr = G.rot[1] * rad, cP = Math.cos(pr), sP = Math.sin(pr);
     const L = G.lod[G.zoom < 1.9 ? 0 : G.zoom < 4 ? 1 : 2];
     const sp = R * L.stepRad, base = Math.max(0.55, Math.min(sp * 0.34, 2.6));
-    const reg = REG_SET[S.region] ?? null, focus = S.sel || hover;
+    const reg = REG_SET[S.region] ?? null, focus = S.sel || hover, NS = S.news ? new Set(S.news) : null;
     const inactive = new Path2D(), inactiveDim = new Path2D(), act = new Map<WC, Path2D>();
     for (const d of L.dots) {
       const l = d.l + lr, x0 = d.cp * Math.sin(l), y0 = d.sp, z0 = d.cp * Math.cos(l);
@@ -256,13 +245,14 @@ export async function createGlobe(o: GlobeOptions, countries: WC[], markets: WM[
       const dc = d.s.c;
       if (!dc) { const p = reg ? inactiveDim : inactive, r = base * k * 0.82; p.moveTo(X + r, Y); p.arc(X, Y, r, 0, 6.2832); continue; }
       let p = act.get(dc); if (!p) act.set(dc, p = new Path2D());
-      const r = base * k * (dc === focus ? 1.25 : 1.08) * (d.small ? Math.max(0.45, d.small) : 1); p.moveTo(X + r, Y); p.arc(X, Y, r, 0, 6.2832);
+      const r = base * k * (dc === focus || (NS && NS.has(dc.key)) ? 1.25 : 1.08) * (d.small ? Math.max(0.45, d.small) : 1); p.moveTo(X + r, Y); p.arc(X, Y, r, 0, 6.2832);
     }
     ctx.fillStyle = COL.land; ctx.fill(inactive); ctx.fillStyle = COL.landDim; ctx.fill(inactiveDim);
     for (const [c, p] of act) {
       let a = 0.22 + 0.78 * Math.min(1, heat(c));
       if (reg && !reg.has(c.key)) a *= 0.28;
       if (focus && c !== focus && !focus.links.includes(c.key)) a *= 0.7;
+      if (NS) a = NS.has(c.key) ? 1 : a * 0.3;
       const crgb = cRGB(c);
       ctx.fillStyle = c === focus ? `rgb(${crgb})` : `rgba(${crgb},${a.toFixed(3)})`;
       ctx.fill(p);
@@ -278,9 +268,21 @@ export async function createGlobe(o: GlobeOptions, countries: WC[], markets: WM[
         ctx.setLineDash([]);
       }
     }
-    // pulses + labels for top 5 (+ focus)
+    // the open story: its countries outlined, dashed arcs from the first to the others
+    if (NS) {
+      const ns = S.news!.map((k) => C.find((c) => c.key === k)).filter((c): c is WC => !!c && !!c.geo);
+      ctx.lineJoin = "round"; ctx.lineWidth = 1.5;
+      for (const c of ns) { const f = G.fIdx[c.geo!]; if (f) { ctx.strokeStyle = `rgba(${cRGB(c)},.95)`; ctx.beginPath(); path(f); ctx.stroke(); } }
+      if (ns.length > 1) {
+        const a = centOf(ns[0]); ctx.setLineDash([3, 5]); ctx.lineDashOffset = -(now / 40) % 8; ctx.lineWidth = 1.4; ctx.strokeStyle = `rgba(${COL.arc},.85)`;
+        for (const c of ns.slice(1)) { ctx.beginPath(); path({ type: "LineString", coordinates: [a, centOf(c)] }); ctx.stroke(); }
+        ctx.setLineDash([]);
+      }
+    }
+    // pulses + labels for top 5 (+ focus, + the open story's countries)
     const center: [number, number] = [-G.rot[0], -G.rot[1]], top = ranked().slice(0, 5);
     const showL = new Set(top); if (focus) { showL.add(focus); focus.links.forEach((id) => byId[id] && showL.add(byId[id])); }
+    if (NS) for (const c of C) if (NS.has(c.key)) showL.add(c);
     ctx.font = `700 ${o.isPhone() ? 11 : 12}px ${fontFamily}`; ctx.textAlign = "center"; ctx.direction = "rtl";
     for (const c of showL) {
       if (!c.geo) continue;
@@ -383,6 +385,14 @@ export async function createGlobe(o: GlobeOptions, countries: WC[], markets: WM[
     flyToRegion(k) {
       const r = REGIONS.find((x) => x.k === k);
       if (r?.c) flyTo(r.c, r.z); else flyTo([30, 22], 1);
+    },
+    flyToNews(keys) {
+      const cs = keys.map((k) => C.find((c) => c.key === k)).filter((c): c is WC => !!c && !!c.geo);
+      if (!cs.length) return;
+      const cents = cs.map(centOf);
+      const ctr = geoCentroid({ type: "MultiPoint", coordinates: cents }) as [number, number];
+      const sp = Math.max(...cents.map((c) => geoDistance(c, ctr)));
+      flyTo(ctr, cs.length === 1 ? 1.8 : sp < .15 ? 3.2 : sp < .35 ? 2.2 : sp < .7 ? 1.4 : 1);
     },
     zoomBy(f) {
       flyTo([-G.rot[0], -G.rot[1]], f > 1 ? Math.min(10, G.zoom * f) : Math.max(.85, G.zoom * f));
