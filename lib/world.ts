@@ -167,8 +167,9 @@ export const REG_SET: Record<string, Set<string> | null> = Object.fromEntries(
 
 const MAX_PANEL = 6;
 const MAX_MOVERS = 8;
-/** Thin markets swing on a single trade; keep them out of the movers strip. */
-const MOVER_MIN_VOL = 1000;
+/** Thin markets swing on a single trade; keep them out of the movers strip.
+ *  1k let $1.5k-a-day markets lead with ±10pt moves that read as fake (2026-10-13). */
+const MOVER_MIN_VOL = 10_000;
 
 const neighbors = NEIGHBORS as Record<string, string[]>;
 
