@@ -337,12 +337,14 @@ export function CreatorProfile({ creatorId }: { creatorId: string }) {
                 const real = perBasket.get(b.slug);
                 const pl =
                   real && real.stakeUsdc > 0 ? (real.pnlUsdc / real.stakeUsdc) * 100 : null;
-                const when = b.publishedAt
+                const day = gamesDay(b.slug, b.publishedAt);
+                const when = day
                   ? new Intl.DateTimeFormat(locale === "fa" ? "fa-IR" : "en-US", {
                       year: "numeric",
                       month: "short",
                       day: "numeric",
-                    }).format(new Date(b.publishedAt))
+                      timeZone: "UTC",
+                    }).format(new Date(`${day}T12:00:00Z`))
                   : null;
                 const expanded = openRecord === b.slug;
                 return (
@@ -463,17 +465,30 @@ function StatCard({
 const CHART_STAKE_PER_BASKET = 100;
 
 /**
- * Settled baskets grouped by the night they belong to (publish date in Tehran,
- * else the date in the slug), each as a per-$1 result. Sorted by night.
+ * The day a basket's games are played, as YYYY-MM-DD.
+ *
+ * Dated baskets carry it in their slug ("auto-risky-2026-10-11"), and that is
+ * the day the record should show. Publish time drifts — the 11 Oct basket went
+ * out at 21:42 on the 10th, the 12 Oct one at 11:18 on the 12th — so dating by
+ * publish date put two baskets on one day and left 19 Mehr looking empty.
+ * Undated (editorial) baskets fall back to their publish day in Tehran.
+ */
+function gamesDay(slug: string, publishedAt: string | null | undefined): string | null {
+  const m = /(\d{4}-\d{2}-\d{2})$/.exec(slug);
+  if (m) return m[1]!;
+  return publishedAt ? new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Tehran" }).format(new Date(publishedAt)) : null;
+}
+
+/**
+ * Settled baskets grouped by their games day (see gamesDay), each as a per-$1
+ * result. Sorted by day.
  */
 function settledNights(perBasket: Perf["perBasket"], baskets: CommunityBasket[]): Array<[string, number[]]> {
-  const dayKey = (d: Date) => new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Tehran" }).format(d);
   const published = new Map(baskets.map((b) => [b.slug, b.publishedAt ?? null]));
   const byNight = new Map<string, number[]>();
   for (const pb of perBasket) {
     if (!(pb.stakeUsdc > 0)) continue;
-    const at = published.get(pb.slug);
-    const night = at ? dayKey(new Date(at)) : (/(\d{4}-\d{2}-\d{2})$/.exec(pb.slug)?.[1] ?? null);
+    const night = gamesDay(pb.slug, published.get(pb.slug));
     if (!night) continue;
     const list = byNight.get(night) ?? [];
     list.push(pb.pnlUsdc / pb.stakeUsdc);
