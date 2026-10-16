@@ -162,6 +162,7 @@ export async function SiteChrome({
               <NavLink href="/learn">{t.nav.learn}</NavLink>
               <NavLink href="/updown">{t.nav.updown}</NavLink>
               {lang === "fa" && <NavLink href="/big-games">بازی‌های بزرگ امروز</NavLink>}
+              {lang === "fa" && <NavLink href="/live">بازی‌های زنده</NavLink>}
               {lang === "fa" && <NavLink href="/world">نقشهٔ جهان</NavLink>}
               <NavLink href="/baskets">{t.nav.baskets}</NavLink>
               <NavLink href="/faq">{t.nav.faq}</NavLink>
@@ -229,6 +230,7 @@ function flattenTopics(tree: Topic[]): Topic[] {
 const FA_NAV: [string, string][] = [
   ["/topic/football", "فوتبال"],
   ["/big-games", "بازی‌های بزرگ"],
+  ["/live", "زنده"],
   ["/updown", "صعودی یا نزولی"],
   ["/baskets", "سبدها"],
   ["/world", "نقشهٔ جهان"],

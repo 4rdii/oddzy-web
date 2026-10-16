@@ -665,7 +665,7 @@ function LabelledPair({ row, sub, y }: { row: MatchRow; sub: string; y: number |
 
 
 /** «دقیقهٔ ۶۷» / «بین دو نیمه» / «پایان بازی» from Polymarket's period + clock. */
-function periodLabel(l: MatchLive): string {
+export function periodLabel(l: MatchLive): string {
   if (l.status === "ended") return "پایان بازی";
   const per = String(l.period ?? "").toUpperCase();
   if (per === "HT") return "بین دو نیمه";

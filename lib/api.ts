@@ -1007,3 +1007,76 @@ export async function getWorld(revalidate = 60): Promise<WorldApi | null> {
     return null;
   }
 }
+
+// ---------------------------------------------------------------- live board
+
+/**
+ * A sport or league chip on «زنده», with how many of its games are in each
+ * section. In tennis a "league" is a tournament («ATP مایا»).
+ */
+export type LiveSport = { slug: string; name: string; name_fa: string; live: number; soon: number; finished: number };
+export type LiveLeague = {
+  slug: string;
+  name: string;
+  name_fa: string | null;
+  image: string | null;
+  /** The league hub this belongs to (/topic/{hub}); differs from slug for a tennis tournament. */
+  hub: string;
+  /** The sport's slug. */
+  sport: string;
+  live: number;
+  soon: number;
+  finished: number;
+};
+
+/** One main-result side: home / draw / away, or the two sides of a head-to-head. */
+export type LiveSide = { key: SideKey; label: string; label_fa: string | null; p: number | null };
+
+export type LiveGame = {
+  slug: string;
+  title: string;
+  title_fa: string | null;
+  starts_at: string;
+  league: { slug: string; name: string; name_fa: string | null; image: string | null };
+  /** The page's sub-category (a LiveLeague slug): the league, or the tournament in tennis. */
+  group: { slug: string; name: string; name_fa: string | null };
+  sport: WhaleSport;
+  teams: { home: Team | null; away: Team | null } | null;
+  sides: LiveSide[];
+  volume_24h: number | null;
+  /** Null until 15 min before kickoff (and on an upstream blip). */
+  live: MatchLive | null;
+};
+
+export type LiveBoard = {
+  sports: LiveSport[];
+  leagues: LiveLeague[];
+  live: LiveGame[];
+  /** Kickoff within 3 hours, or past kickoff and not started yet (delayed). */
+  soon: LiveGame[];
+  /** Ended today (Tehran), latest first. */
+  finished: LiveGame[];
+  as_of: string;
+};
+
+/**
+ * «زنده»: games in play now, kicking off within 3h, and finished today (GET /live).
+ * `revalidate` must match the caller's own: the page passes its ISR window,
+ * /api/live (the client's 15s refresh) passes 15.
+ *
+ * Local development only: ODDZY_LIVE_FIXTURE=<path to a JSON file> serves that
+ * file instead (e.g. fixtures/live.json) — nothing sets it in production.
+ */
+export async function getLive(revalidate = 15): Promise<LiveBoard | null> {
+  const fixture = process.env.ODDZY_LIVE_FIXTURE;
+  if (fixture) {
+    const { readFile } = await import("node:fs/promises");
+    return JSON.parse(await readFile(/* turbopackIgnore: true */ fixture, "utf8")) as LiveBoard;
+  }
+  try {
+    return await get<LiveBoard>("/live", revalidate);
+  } catch (e) {
+    console.error("getLive", e);
+    return null;
+  }
+}
