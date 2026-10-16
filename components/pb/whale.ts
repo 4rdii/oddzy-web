@@ -36,7 +36,14 @@ export function tagOf(b: WhaleBet): { label: string; c: string; bg: string } | n
 }
 
 export function whaleName(b: WhaleBet): string {
-  return b.name || b.pseudonym || `${b.wallet.slice(0, 6)}…${b.wallet.slice(-3)}`;
+  const short = (addr: string) => `${addr.slice(0, 6)}…${addr.slice(-4)}`;
+  // Accounts that never set a username get "0x<wallet>-<timestamp>" from
+  // Polymarket — one unbreakable 55-character string that pushed the match
+  // page sideways on phones. Show those as a short address instead.
+  const raw = b.name || b.pseudonym || "";
+  const m = /^(0x[0-9a-f]{40})(?:-\d+)?$/i.exec(raw.trim());
+  if (m) return short(m[1]!);
+  return raw || short(b.wallet);
 }
 
 const FA_OUTCOME: Record<string, string> = { Yes: "بله", No: "خیر", Over: "بالاتر", Under: "پایین‌تر" };

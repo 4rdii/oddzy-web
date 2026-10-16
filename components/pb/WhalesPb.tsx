@@ -541,7 +541,7 @@ function GameCard({
                   <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 4 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 7, flexWrap: "wrap" }}>
                       <Avatar name={whaleName(b)} src={b.profile_image} />
-                      <span dir="ltr" style={{ fontSize: 14, fontWeight: 700 }}>
+                      <span dir="ltr" style={{ fontSize: 14, fontWeight: 700, minWidth: 0, maxWidth: "60%", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                         {whaleName(b)}
                       </span>
                       <span style={{ fontSize: 11, fontWeight: 700, color: t.c }}>{t.label}</span>

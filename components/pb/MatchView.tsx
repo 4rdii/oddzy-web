@@ -365,7 +365,8 @@ function MatchInner(p: MatchViewProps) {
                   return (
                     <div key={`${w.wallet}-${w.market.id}-${w.outcome_index}`} style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
                       <span style={{ fontWeight: 800, color: t.c, width: 22, flexShrink: 0 }}>{w.stats?.score === null || !w.stats ? "—" : fa(w.stats.score)}</span>
-                      <span dir="ltr" style={{ fontWeight: 700, color: "var(--text)", flexShrink: 0 }}>
+                      {/* Capped: a long name must clip, never widen the page. */}
+                      <span dir="ltr" style={{ fontWeight: 700, color: "var(--text)", flexShrink: 0, maxWidth: "45%", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                         {whaleName(w)}
                       </span>
                       <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
