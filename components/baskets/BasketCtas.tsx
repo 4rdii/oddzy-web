@@ -4,7 +4,9 @@ import { useEffect, useRef } from "react";
 import { captureSource, track } from "@/lib/track";
 
 /**
- * The two buy buttons on a basket page, with attribution.
+ * The buy button(s) on a basket page, with attribution. Oddzy (en) is
+ * web-first and renders the web button only; PolyBaaz (fa) passes `tgBot`
+ * and keeps the secondary Telegram link.
  *
  * Server-rendered with plain hrefs (the page is static and crawlable, and the
  * links must work with JS off). After mount this reads `?src=` from the URL —
@@ -12,7 +14,7 @@ import { captureSource, track } from "@/lib/track";
  * visitor to serve the few who arrive via a shared link — and carries the
  * source into both destinations:
  *
- *  - Telegram: `start=bsk_<slug>_<src>`; the bot strips the suffix and audits
+ *  - Telegram (when shown): `start=bsk_<slug>_<src>`; the bot strips the suffix and audits
  *    a `basket_open` with it (apps/bot/src/commands/start.ts).
  *  - Web app: `/app?basket=<slug>&src=<src>`; MiniApp remembers it for the
  *    register and buy calls.
@@ -27,15 +29,16 @@ export function BasketCtas({
   tgLabel,
 }: {
   slug: string;
-  tgBot: string;
+  /** Omit to render the web button only. */
+  tgBot?: string;
   webLabel: string;
-  tgLabel: string;
+  tgLabel?: string;
 }) {
   // The source is written straight onto the anchors rather than held in
   // state: the server-rendered hrefs are already correct without it, and a
   // DOM update from an effect is the sanctioned shape for enhancing them.
   const webHref = `/app?basket=${encodeURIComponent(slug)}`;
-  const tgHref = `https://t.me/${tgBot}?start=bsk_${slug}`;
+  const tgHref = tgBot ? `https://t.me/${tgBot}?start=bsk_${slug}` : null;
   const webRef = useRef<HTMLAnchorElement>(null);
   const tgRef = useRef<HTMLAnchorElement>(null);
   const srcRef = useRef<string | null>(null);
@@ -45,7 +48,7 @@ export function BasketCtas({
     srcRef.current = src;
     if (src) {
       if (webRef.current) webRef.current.href = `${webHref}&src=${encodeURIComponent(src)}`;
-      if (tgRef.current) tgRef.current.href = `${tgHref}_${src}`;
+      if (tgRef.current && tgHref) tgRef.current.href = `${tgHref}_${src}`;
     }
     track("basket_view", { basket: slug, src });
   }, [slug, webHref, tgHref]);
@@ -65,14 +68,16 @@ export function BasketCtas({
       >
         {webLabel}
       </a>
-      <a
-        ref={tgRef}
-        href={tgHref}
-        onClick={() => track("basket_cta", { basket: slug, target: "tg", src: srcRef.current })}
-        className="mt-3 block text-center text-[14px] font-medium text-[var(--mute)] underline underline-offset-4"
-      >
-        {tgLabel}
-      </a>
+      {tgHref && tgLabel ? (
+        <a
+          ref={tgRef}
+          href={tgHref}
+          onClick={() => track("basket_cta", { basket: slug, target: "tg", src: srcRef.current })}
+          className="mt-3 block text-center text-[14px] font-medium text-[var(--mute)] underline underline-offset-4"
+        >
+          {tgLabel}
+        </a>
+      ) : null}
     </div>
   );
 }

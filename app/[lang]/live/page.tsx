@@ -1,12 +1,15 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { SiteChrome } from "@/components/site/Chrome";
-import { LivePb } from "@/components/pb/LivePb";
+import { LivePb, type HubLink } from "@/components/pb/LivePb";
 import { getLive, type LiveBoard } from "@/lib/api";
+import { getDict } from "@/lib/dict";
 import { isLocale } from "@/lib/i18n";
+import { publishedTopicSlugs } from "@/lib/topic-slugs";
 
 /**
- * «زنده» — every game in play right now, across sports. PolyBaaz only.
+ * «زنده» — every game in play right now, across sports. PolyBaaz (fa) and
+ * Oddzy (en) both serve it; the copy comes from the dictionary's `live` section.
  *
  * ISR window: 5 minutes, matched by the /live fetch (a route regenerates at
  * the LOWEST revalidate of any fetch it makes); every regeneration is a billed
@@ -18,36 +21,50 @@ import { isLocale } from "@/lib/i18n";
 export const revalidate = 300;
 
 export async function generateStaticParams() {
-  return [{ lang: "fa" }];
+  return [{ lang: "fa" }, { lang: "en" }];
 }
 
 type Params = { params: Promise<{ lang: string }> };
 
-const TITLE = "بازی‌های زنده | پلی‌باز";
-const DESCRIPTION = "همهٔ بازی‌هایی که همین حالا در جریان‌اند — فوتبال، تنیس و بقیه — با نتیجه، زمان بازی و شانس لحظه‌ای هر طرف در بازار پیش‌بینی.";
-
 export async function generateMetadata(props: Params): Promise<Metadata> {
   const { lang } = await props.params;
-  if (lang !== "fa") return {};
+  if (!isLocale(lang)) return {};
+  const { metaTitle, metaDescription } = getDict(lang).live;
   return {
-    // Already carries the brand: skip the layout's "· پلی‌باز" template.
-    title: { absolute: TITLE },
-    description: DESCRIPTION,
+    // PolyBaaz's title already carries the brand: skip the layout's "· پلی‌باز" template.
+    // Oddzy's goes through it ("… · Oddzy").
+    title: lang === "fa" ? { absolute: metaTitle } : metaTitle,
+    description: metaDescription,
     alternates: { canonical: "/live" },
-    openGraph: { title: TITLE, description: DESCRIPTION, url: "/live" },
+    openGraph: { title: metaTitle, description: metaDescription, url: "/live" },
   };
 }
 
 const EMPTY: LiveBoard = { sports: [], leagues: [], live: [], soon: [], finished: [], as_of: new Date(0).toISOString() };
 
+/**
+ * English only: the sports hubs linked under the heading, so the Sports tab
+ * reaches them. A topic hub is linked only when its page really exists.
+ */
+const HUB_TOPICS = ["football", "epl", "ucl", "laliga", "seriea", "bundesliga", "tennis", "nba"] as const;
+const MAX_HUB_TOPICS = 6;
+
+async function hubLinks(t: ReturnType<typeof getDict>["live"]): Promise<HubLink[]> {
+  const published = await publishedTopicSlugs().catch(() => new Set<string>());
+  const topics = HUB_TOPICS.filter((s) => published.has(s))
+    .slice(0, MAX_HUB_TOPICS)
+    .map((s) => ({ href: `/topic/${s}`, label: t.hubs[s] }));
+  return [{ href: "/big-games", label: t.hubs.bigGames }, ...topics];
+}
+
 export default async function LivePage(props: Params) {
   const { lang } = await props.params;
-  // Persian-only page: the design, copy and audience are PolyBaaz's.
-  if (!isLocale(lang) || lang !== "fa") notFound();
-  const board = (await getLive(revalidate)) ?? EMPTY;
+  if (!isLocale(lang)) notFound();
+  const t = getDict(lang).live;
+  const [board, hubs] = await Promise.all([getLive(revalidate), lang === "en" ? hubLinks(t) : undefined]);
   return (
-    <SiteChrome lang={lang} active="/live">
-      <LivePb initial={board} />
+    <SiteChrome lang={lang} active="/live" pb>
+      <LivePb initial={board ?? EMPTY} lang={lang} t={t} hubs={hubs} />
     </SiteChrome>
   );
 }

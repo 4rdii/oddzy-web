@@ -25,9 +25,10 @@ import {
  * render reaches the browser.
  *
  * The desk itself lives in ./desk and is shared with the mini-app's trading tab.
- * The only thing this file adds is the action slot: a payout calculator and the
- * standard Telegram CTA, because positions open in the bot and the app and a
- * live-looking buy that silently did nothing would be worse than none.
+ * The only thing this file adds is the action slot: a payout calculator and a
+ * CTA out to where positions actually open (the web app's Up/Down tab on
+ * Oddzy, the bot on PolyBaaz), because a live-looking buy that silently did
+ * nothing would be worse than none.
  */
 
 const POLL_MS = 5000;
@@ -74,13 +75,14 @@ export function UpDownBoard({
   initialSettled,
   copy,
   locale,
-  tgBot,
+  ctaHref,
 }: {
   initial: UpDownWindow[];
   initialSettled: SettledUpDownWindow[];
   copy: UpDownCopy;
   locale: "en" | "fa";
-  tgBot: string;
+  /** Where the CTA goes — chosen per brand by the page. */
+  ctaHref: string;
 }) {
   const [windows, setWindows] = useState<UpDownWindow[]>(initial);
   const [settled, setSettled] = useState<SettledUpDownWindow[]>(initialSettled);
@@ -295,7 +297,7 @@ export function UpDownBoard({
           </div>
 
           <a
-            href={`https://t.me/${tgBot}`}
+            href={ctaHref}
             className="mt-4 block rounded-xl bg-[var(--accent)] px-5 py-3 text-center text-[15px] font-semibold text-[var(--on-accent)]"
           >
             {copy.cta}

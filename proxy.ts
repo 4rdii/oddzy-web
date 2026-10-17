@@ -31,6 +31,16 @@ export function proxy(request: NextRequest) {
   }
 
   const locale = localeForHost(request.headers.get("host"));
+
+  // Oddzy opens on the world map, so its /world is the home page. 308 keeps
+  // any link equity /world earned and stops two URLs serving one page.
+  // PolyBaaz keeps /world as its own page.
+  if (locale === "en" && (pathname === "/world" || pathname === "/world/")) {
+    const home = request.nextUrl.clone();
+    home.pathname = "/";
+    return NextResponse.redirect(home, 308);
+  }
+
   const url = request.nextUrl.clone();
   url.pathname = `/${locale}${pathname}`;
 

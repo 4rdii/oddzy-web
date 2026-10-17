@@ -194,7 +194,17 @@ export default async function TopicPage(props: Params) {
    * A topic hub is where they belong: the question outlives its deadlines in
    * exactly the way the topic outlives its markets.
    */
-  const series = allSeries.filter((s) => s.category_id === slug);
+  // A section (Politics, Economy…) has no questions of its own — they live in
+  // its subtopics (Midterms, Global elections, Trump…). Count those too, or a
+  // section page reads "no open markets" while its children are full of them
+  // (oddzy.xyz /topic/politics, 2026-10-17).
+  const descendants = new Set<string>();
+  const walk = (t: { id: string; children?: { id: string; children?: unknown[] }[] }) => {
+    descendants.add(t.id);
+    for (const c of t.children ?? []) walk(c as typeof t);
+  };
+  walk(topic as unknown as { id: string; children?: { id: string; children?: unknown[] }[] });
+  const series = allSeries.filter((s) => s.category_id != null && descendants.has(s.category_id));
 
   if (sportHub) {
     const all = await Promise.all(

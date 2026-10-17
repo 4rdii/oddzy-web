@@ -1,8 +1,8 @@
-import { fa } from "@/lib/pb";
+import { num, type PbLang } from "@/lib/pb";
 import { ringDash } from "@/components/pb/whale";
 
 /** The whale score as a ring (44px in rows, 68px in the profile sheet). */
-export function ScoreRing({ score, color, size = 44, stroke = 3.5 }: { score: number | null; color: string; size?: number; stroke?: number }) {
+export function ScoreRing({ score, color, size = 44, stroke = 3.5, lang = "fa" }: { score: number | null; color: string; size?: number; stroke?: number; lang?: PbLang }) {
   return (
     <div style={{ position: "relative", width: size, height: size, flexShrink: 0 }}>
       <svg width={size} height={size} viewBox="0 0 44 44" style={{ transform: "rotate(-90deg)", display: "block" }} aria-hidden>
@@ -21,7 +21,7 @@ export function ScoreRing({ score, color, size = 44, stroke = 3.5 }: { score: nu
           color,
         }}
       >
-        {score === null ? "—" : fa(score)}
+        {score === null ? "—" : num(lang, score)}
       </div>
     </div>
   );

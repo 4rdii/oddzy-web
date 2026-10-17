@@ -163,6 +163,15 @@ export function MiniApp({
     }
     const slug = params.get("basket");
     track("app_open", { basket: slug, src });
+    // `/app?tab=updown` (from the /updown page) opens the Up/Down tab instead
+    // of the feed. Read-then-strip, like the other params.
+    if (!slug && params.get("tab") === "updown") {
+      const tabUrl = new URL(window.location.href);
+      tabUrl.searchParams.delete("tab");
+      window.history.replaceState(null, "", `${tabUrl.pathname}${tabUrl.search}${tabUrl.hash}`);
+      setScreen({ name: "updown" });
+      return;
+    }
     if (!slug) return;
 
     const url = new URL(window.location.href);

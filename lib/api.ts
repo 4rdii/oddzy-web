@@ -959,9 +959,10 @@ export type WhaleGame = {
 /** The whales page, cached like any page fetch; `revalidate` must match the page's own. */
 export async function getWhalesToday(
   revalidate: number,
+  tz = "Asia/Tehran",
 ): Promise<{ games: WhaleGame[]; finished?: WhaleGame[]; sports?: WhaleSport[]; generated_at: string } | null> {
   try {
-    return await get<{ games: WhaleGame[]; finished?: WhaleGame[]; sports?: WhaleSport[]; generated_at: string }>("/whales/today?tz=Asia/Tehran", revalidate);
+    return await get<{ games: WhaleGame[]; finished?: WhaleGame[]; sports?: WhaleSport[]; generated_at: string }>(`/whales/today?tz=${tz}`, revalidate);
   } catch (e) {
     console.error("getWhalesToday", e);
     return null;
@@ -994,14 +995,16 @@ export const WORLD_TAG = "world";
  * Local development only: ODDZY_WORLD_FIXTURE=<path to a JSON file> serves
  * that file instead (e.g. fixtures/world.json) — nothing sets it in production.
  */
-export async function getWorld(revalidate = 60): Promise<WorldApi | null> {
-  const fixture = process.env.ODDZY_WORLD_FIXTURE;
+export async function getWorld(revalidate = 60, lang: "fa" | "en" = "fa"): Promise<WorldApi | null> {
+  // ODDZY_WORLD_FIXTURE_EN: the English-news variant for the Oddzy page.
+  const fixture = (lang === "en" && process.env.ODDZY_WORLD_FIXTURE_EN) || process.env.ODDZY_WORLD_FIXTURE;
   if (fixture) {
     const { readFile } = await import("node:fs/promises");
     return JSON.parse(await readFile(/* turbopackIgnore: true */ fixture, "utf8")) as WorldApi;
   }
   try {
-    return await get<WorldApi>("/world", revalidate, [WORLD_TAG]);
+    // Same payload either way; `?lang=en` swaps the news column to English stories.
+    return await get<WorldApi>(lang === "en" ? "/world?lang=en" : "/world", revalidate, [WORLD_TAG]);
   } catch (e) {
     console.error("getWorld", e);
     return null;

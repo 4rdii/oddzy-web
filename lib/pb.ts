@@ -101,3 +101,91 @@ export const SIDE_COLOR = {
 export function nowMs(): number {
   return Date.now();
 }
+
+/* ── Bilingual pb (Oddzy runs the PolyBaaz design in English, LTR) ──────────
+   The FA helpers above stay exactly as they are; these take a `lang` and
+   return the FA helper's output unchanged for "fa", so a component made
+   bilingual renders byte-identical Persian. English: Latin digits, "$1.2M"
+   money, and the viewer's own time zone (see useTimeZone in useNow.ts — the
+   server renders UTC, the client re-renders in the local zone after
+   hydration). */
+
+export type PbLang = "fa" | "en";
+
+/** Persian digits for fa, the number as-is (thousands-grouped when an integer ≥ 1,000) for en. */
+export function num(lang: PbLang, v: string | number): string {
+  if (lang === "fa") return fa(v);
+  return typeof v === "number" && Number.isInteger(v) && Math.abs(v) >= 1_000 ? v.toLocaleString("en-US") : String(v);
+}
+
+/** "۸۱٪" / "81%" for a whole percent 0–100 (or "—"). */
+export function pctOf(lang: PbLang, v: number | null | undefined): string {
+  if (v === null || v === undefined || !Number.isFinite(v)) return "—";
+  return lang === "fa" ? `${fa(v)}٪` : `${v}%`;
+}
+
+/** faPct for fa; "81%" for en (0–1 probability in). */
+export function probPct(lang: PbLang, p: number | null | undefined): string {
+  return lang === "fa" ? faPct(p) : pctOf(lang, pc(p));
+}
+
+/** faMoney for fa; "$1.2M" / "$170K" / "$8,500" for en. */
+export function money(lang: PbLang, n: number | null | undefined): string {
+  if (lang === "fa") return faMoney(n);
+  if (n === null || n === undefined || !Number.isFinite(n)) return "—";
+  const a = Math.abs(n);
+  if (a >= 1e6) return `$${(a / 1e6).toFixed(1).replace(/\.0$/, "")}M`;
+  if (a >= 1e4) return `$${Math.round(a / 1e3)}K`;
+  return `$${Math.round(a).toLocaleString("en-US")}`;
+}
+
+/** faVol for fa; "$170K vol" for en; "" for no volume. */
+export function volOf(lang: PbLang, n: number | null | undefined): string {
+  if (lang === "fa") return faVol(n);
+  return n ? `${money(lang, n)} vol` : "";
+}
+
+/** faTime for fa (Tehran); "9:15 PM" in `tz` for en. */
+export function timeOf(lang: PbLang, iso: string, tz?: string): string {
+  if (lang === "fa") return faTime(iso);
+  return new Date(iso).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZone: tz ?? "UTC" });
+}
+
+/** faDay for fa (Tehran); "Tuesday, Sep 29" in `tz` for en. */
+export function dayOf(lang: PbLang, iso: string, tz?: string): string {
+  if (lang === "fa") return faDay(iso);
+  return new Date(iso).toLocaleDateString("en-US", { weekday: "long", day: "numeric", month: "short", timeZone: tz ?? "UTC" });
+}
+
+/** faDayMonth for fa (Tehran); "Dec 31" in `tz` for en. */
+export function dayMonthOf(lang: PbLang, iso: string, tz?: string): string {
+  if (lang === "fa") return faDayMonth(iso);
+  return new Date(iso).toLocaleDateString("en-US", { day: "numeric", month: "short", timeZone: tz ?? "UTC" });
+}
+
+/** The calendar day of an instant as YYYY-MM-DD: Tehran for fa, `tz` for en. */
+export function dateKey(lang: PbLang, iso: string | Date, tz?: string): string {
+  if (lang === "fa") return tehranDate(iso);
+  return new Intl.DateTimeFormat("en-CA", { timeZone: tz ?? "UTC" }).format(new Date(iso));
+}
+
+/** faAgo for fa; "3 min ago" / "2 hr ago" / "4 days ago" for en. */
+export function agoOf(lang: PbLang, iso: string, now = Date.now()): string {
+  if (lang === "fa") return faAgo(iso, now);
+  const m = Math.max(0, Math.round((now - new Date(iso).getTime()) / 60000));
+  if (m < 60) return `${Math.max(1, m)} min ago`;
+  const h = Math.round(m / 60);
+  if (h < 48) return `${h} hr ago`;
+  return `${Math.round(h / 24)} days ago`;
+}
+
+/** probWord for fa; the English read of a 0–100 probability for en. */
+export function probWordOf(lang: PbLang, p: number): string {
+  if (lang === "fa") return probWord(p);
+  return p >= 95 ? "Near certain" : p >= 65 ? "Likely" : p >= 35 ? "Toss-up" : p >= 6 ? "Unlikely" : "Very unlikely";
+}
+
+/** Digits in a sentence: Persian for fa, untouched for en. */
+export function digitsOf(lang: PbLang, v: string): string {
+  return lang === "fa" ? faDigits(v) : v;
+}

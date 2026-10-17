@@ -975,3 +975,26 @@ html[data-locale="fa"] [lang="en"] .oz-prose {
 }
 .pb .pb-flash { animation: pbflash 2.4s ease-out; }
 @keyframes pbflash { 0%, 30% { background: var(--goldbg); } 100% { background: transparent; } }
+
+/* Oddzy (en) runs the PolyBaaz design in English: Latin UI face instead of
+   Vazirmatn (which the en layout does not load), and the pb gold accent on the
+   chrome of the pages that use it (SiteChrome `pb`). FA is untouched. */
+[data-locale="en"] .pb {
+  font-family: var(--font-grotesk), system-ui, sans-serif;
+}
+[data-locale="en"] [data-pb-chrome] {
+  --accent: #e8a20a;
+  --accent-ink: #1b1405;
+  --on-accent: #1b1405;
+  --page: #f6f4ef;
+}
+:root[data-locale="en"][data-theme="night"] [data-pb-chrome] {
+  --accent: #f3b53a;
+  --page: #0d0f13;
+}
+@media (prefers-color-scheme: dark) {
+  :root[data-locale="en"]:not([data-theme="day"]) [data-pb-chrome] {
+    --accent: #f3b53a;
+    --page: #0d0f13;
+  }
+}

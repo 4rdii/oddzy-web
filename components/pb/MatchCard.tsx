@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Crest } from "@/components/pb/Crest";
-import { fa, faVol } from "@/lib/pb";
+import { pctOf, volOf, type PbLang } from "@/lib/pb";
 
 export type MatchCardData = {
   href: string;
@@ -21,12 +21,12 @@ export type MatchCardData = {
  * One fixture as a card (PbMatchCard): both sides with their odds, the draw,
  * a three-segment odds bar with the favourite in gold, and volume.
  */
-export function MatchCard({ m }: { m: MatchCardData }) {
+export function MatchCard({ m, lang = "fa" }: { m: MatchCardData; lang?: PbLang }) {
   const vals = [m.h, m.d, m.a].filter((v): v is number => v !== null);
   const mx = vals.length ? Math.max(...vals) : -1;
   const c = (v: number | null) => (v !== null && v === mx ? "var(--gold)" : "var(--text2)");
   const seg = (v: number | null) => (v !== null && v === mx ? "var(--gold)" : "var(--line2)");
-  const pct = (v: number | null) => (v === null ? "—" : `${fa(v)}٪`);
+  const pct = (v: number | null) => pctOf(lang, v);
   const side = (name: string, logo: string | null | undefined, v: number | null) => (
     <div style={{ display: "flex", justifyContent: "space-between", gap: 10, alignItems: "center" }}>
       <span style={{ display: "flex", alignItems: "center", gap: 9, fontSize: 15, fontWeight: 600, lineHeight: 1.5, minWidth: 0 }}>
@@ -67,7 +67,7 @@ export function MatchCard({ m }: { m: MatchCardData }) {
           {m.time}
         </span>
         <span style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{m.meta ?? ""}</span>
-        <span style={{ marginInlineStart: "auto", color: "var(--faint)" }}>←</span>
+        <span style={{ marginInlineStart: "auto", color: "var(--faint)" }}>{lang === "fa" ? "←" : "→"}</span>
       </div>
       <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
         {side(m.home, m.homeLogo, m.h)}
@@ -79,8 +79,8 @@ export function MatchCard({ m }: { m: MatchCardData }) {
         )}
       </div>
       <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: "var(--muted)" }}>
-        <span>{m.d !== null && <>مساوی <b style={{ color: c(m.d), fontWeight: 700 }}>{pct(m.d)}</b></>}</span>
-        <span>{faVol(m.vol)}</span>
+        <span>{m.d !== null && <>{lang === "fa" ? "مساوی" : "Draw"} <b style={{ color: c(m.d), fontWeight: 700 }}>{pct(m.d)}</b></>}</span>
+        <span>{volOf(lang, m.vol)}</span>
       </div>
     </Link>
   );

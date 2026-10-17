@@ -1,4 +1,4 @@
-import { fa, faDayMonth, faDigits } from "./pb";
+import { digitsOf, fa, faDayMonth, faDigits, type PbLang } from "./pb";
 import NEIGHBORS from "./world-neighbors.json";
 
 /**
@@ -85,8 +85,10 @@ export type WM = {
   p: number | null;
   /** USD, 24h. */
   v: number;
-  /** «۳۱ دسامبر», or null when the market has no close date. */
+  /** «۳۱ دسامبر» (fa, Tehran), or null when the market has no close date. */
   close: string | null;
+  /** ISO close time: en formats it on the client in the viewer's zone. */
+  closeAt: string | null;
   /** Today's change in whole points; null/0 = no change shown. */
   d: number | null;
 };
@@ -100,6 +102,8 @@ export type WC = {
   iso2: string;
   fa: string;
   en: string;
+  /** The display name in the page's language (fa or en). */
+  name: string;
   /** Active markets. */
   n: number;
   /** USD, 24h. */
@@ -148,16 +152,17 @@ export type WorldView = {
   asOf: string | null;
 };
 
-export type Region = { k: string; l: string; c?: [number, number]; z?: number; ids?: number[] };
+export type RegionKey = "all" | "me" | "eu" | "am" | "as" | "af";
+export type Region = { k: RegionKey; c?: [number, number]; z?: number; ids?: number[] };
 
-/** The region chips: label, fly-to centre and zoom, members (atlas ids). Shared by the globe and the news feed filter. */
+/** The region chips: fly-to centre and zoom, members (atlas ids). Shared by the globe and the news feed filter. Labels: dict `world.regions`. */
 export const REGIONS: Region[] = [
-  { k: "all", l: "همهٔ جهان" },
-  { k: "me", l: "خاورمیانه", c: [46, 29], z: 2.6, ids: [364, 376, 422, 760, 368, 682, 887, 792, 818, 634, 784, 512, 400] },
-  { k: "eu", l: "اروپا و روسیه", c: [28, 50], z: 2, ids: [643, 804, 276, 250, 826, 616, 348, 642, 498, 112, 268, 51, 31] },
-  { k: "am", l: "قارهٔ آمریکا", c: [-78, 18], z: 1.25, ids: [840, 124, 484, 862, 76, 32, 170, 192, 304] },
-  { k: "as", l: "آسیا", c: [108, 28], z: 1.7, ids: [156, 158, 408, 410, 392, 586, 356, 4, 608] },
-  { k: "af", l: "آفریقا", c: [22, 6], z: 1.6, ids: [729, 231, 706, 434, 566, 180, 818] },
+  { k: "all" },
+  { k: "me", c: [46, 29], z: 2.6, ids: [364, 376, 422, 760, 368, 682, 887, 792, 818, 634, 784, 512, 400] },
+  { k: "eu", c: [28, 50], z: 2, ids: [643, 804, 276, 250, 826, 616, 348, 642, 498, 112, 268, 51, 31] },
+  { k: "am", c: [-78, 18], z: 1.25, ids: [840, 124, 484, 862, 76, 32, 170, 192, 304] },
+  { k: "as", c: [108, 28], z: 1.7, ids: [156, 158, 408, 410, 392, 586, 356, 4, 608] },
+  { k: "af", c: [22, 6], z: 1.6, ids: [729, 231, 706, 434, 566, 180, 818] },
 ];
 const pad = (n: number) => String(n).padStart(3, "0");
 /** Region key → member country keys (null = the whole world). */
@@ -183,7 +188,7 @@ export function emptyWorldView(): WorldView {
  * countries; movers are the 8 largest |change24h|. Only markets the page can
  * show are kept, which is what keeps the RSC payload small.
  */
-export function toWorldView(w: WorldApi): WorldView {
+export function toWorldView(w: WorldApi, lang: PbLang = "fa"): WorldView {
   const keyOf = (c: WorldApiCountry) => c.id ?? `x-${c.iso2}`;
   const byIso = new Map(w.countries.map((c) => [c.iso2, keyOf(c)]));
   const known = new Set(w.countries.map(keyOf));
@@ -202,11 +207,12 @@ export function toWorldView(w: WorldApi): WorldView {
       view: {
         slug: m.slug,
         // Translated titles keep Latin digits ("2027"); the page writes Persian ones everywhere.
-        q: m.titleFa ? faDigits(m.titleFa) : m.title,
+        q: lang === "fa" ? (m.titleFa ? faDigits(m.titleFa) : m.title) : m.title || m.titleFa || "",
         ids: [...ids],
         p,
         v: m.vol24h || 0,
-        close: m.closesAt ? faDayMonth(m.closesAt) : null,
+        close: m.closesAt && lang === "fa" ? faDayMonth(m.closesAt) : null,
+        closeAt: m.closesAt ?? null,
         d: d || null,
       } satisfies WM,
     };
@@ -234,14 +240,17 @@ export function toWorldView(w: WorldApi): WorldView {
         key,
         geo: c.id,
         iso2: c.iso2,
-        fa: c.fa,
+        // Oddzy never shows the Persian name; keep it out of the payload.
+        fa: lang === "fa" ? c.fa : "",
         en: c.en,
+        name: lang === "fa" ? c.fa : c.en || c.iso2,
         n: c.marketCount,
         v: c.vol24h,
         r: Math.round(c.risk),
         // "سیاست › ترامپ" → "ترامپ": chips carry the leaf, like the design's.
-        topics: [...new Set(c.topics.map((t) => (t.fa || t.en).split("›").pop()!.trim()).filter(Boolean))],
-        href: c.topicSlug ? `/topic/${c.topicSlug}` : `/world#${c.iso2}`,
+        topics: [...new Set(c.topics.map((t) => (lang === "fa" ? t.fa || t.en : t.en || "").split("›").pop()!.trim()).filter(Boolean))],
+        // Oddzy's map is its home page (/world redirects there).
+        href: c.topicSlug ? `/topic/${c.topicSlug}` : `${lang === "fa" ? "/world" : "/"}#${c.iso2}`,
         cta: c.topicSlug ? `/topic/${c.topicSlug}` : null,
         mk: mine.slice(0, MAX_PANEL).map(idx),
         links,
@@ -277,8 +286,9 @@ export function toWorldView(w: WorldApi): WorldView {
     }
     return {
       id: n.id,
-      q: faDigits(n.titleFa),
-      s: faDigits(n.summaryFa ?? ""),
+      // On en the API (GET /world?lang=en) puts the English story in the *Fa fields.
+      q: digitsOf(lang, n.titleFa),
+      s: digitsOf(lang, n.summaryFa ?? ""),
       src: n.source,
       url: n.url,
       at: n.publishedAt,
@@ -300,14 +310,16 @@ export function toWorldView(w: WorldApi): WorldView {
   };
 }
 
-/** «۱٫۳ میلیون دلار» / «۷۲۰ هزار دلار» (the design's `vol`, from USD). */
-export function wVol(usd: number): string {
+/** «۱٫۳ میلیون دلار» / «۷۲۰ هزار دلار» (the design's `vol`, from USD); "$1.3M" / "$720K" for en. */
+export function wVol(usd: number, lang: PbLang = "fa"): string {
   const k = usd / 1000;
+  if (lang === "en") return wVolS(usd, lang);
   return k >= 1000 ? `${fa((k / 1000).toFixed(1).replace(/\.0$/, ""))} میلیون دلار` : `${fa(Math.round(k))} هزار دلار`;
 }
 
-/** «۱٫۳M$» / «۷۲۰K$» (the design's `volS`, from USD). */
-export function wVolS(usd: number): string {
+/** «۱٫۳M$» / «۷۲۰K$» (the design's `volS`, from USD); "$1.3M" / "$720K" for en. */
+export function wVolS(usd: number, lang: PbLang = "fa"): string {
   const k = usd / 1000;
+  if (lang === "en") return k >= 1000 ? `$${(k / 1000).toFixed(1).replace(/\.0$/, "")}M` : `$${Math.round(k)}K`;
   return k >= 1000 ? `${fa((k / 1000).toFixed(1).replace(/\.0$/, ""))}M$` : `${fa(Math.round(k))}K$`;
 }

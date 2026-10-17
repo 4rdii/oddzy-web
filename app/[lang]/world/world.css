@@ -133,3 +133,25 @@
   .wm .legend{bottom:12px;right:12px}
   .wm .ramp{min-width:110px}
 }
+
+/* Oddzy (en): the same page left-to-right. The grid areas, flex rows and
+   inset-inline rules mirror on their own; these are the design's physical
+   left/right rules, swapped. Scoped to [dir=ltr] so PolyBaaz is untouched. */
+.wm[dir=ltr] .mv,.wm[dir=ltr] .nw,.wm[dir=ltr] [dir=auto]{text-align:left}
+.wm[dir=ltr] .rk-v{text-align:right}
+.wm[dir=ltr] .zoom{left:auto;right:12px}
+.wm[dir=ltr] .legend{right:auto;left:14px}
+.wm[dir=ltr] .sheet-x{left:auto;right:12px}
+.wm[dir=ltr] .ramp.vol{background:linear-gradient(to right,rgb(var(--wm-p0)) 0%,rgb(var(--wm-p1)) 16.667%,rgb(var(--wm-p2)) 33.333%,rgb(var(--wm-p3)) 50%,rgb(var(--wm-p4)) 66.667%,rgb(var(--wm-p5)) 83.333%,rgb(var(--wm-p6)) 100%)}
+.wm[dir=ltr] .ramp.risk{background:linear-gradient(to right,rgba(var(--wm-red),.22),rgba(var(--wm-red),1))}
+/* The Persian page leans on line-height 1.75–1.9 for its script; Latin reads tighter. */
+.wm[dir=ltr] .lede{line-height:1.65}
+.wm[dir=ltr] .nw-t,.wm[dir=ltr] .mk-q{line-height:1.45}
+.wm[dir=ltr] .p-name h2{line-height:1.2}
+@media(max-width:979px){
+  .wm[dir=ltr] .zoom{left:auto;right:10px}
+  .wm[dir=ltr] .legend{right:auto;left:12px;max-width:calc(100% - 148px)}
+  /* English legend labels are longer than the Persian ones: let them wrap beside the zoom buttons. */
+  .wm[dir=ltr] .ramp-l{white-space:normal;gap:10px;line-height:1.25}
+  .wm[dir=ltr] .ramp-l span:last-child{text-align:right}
+}

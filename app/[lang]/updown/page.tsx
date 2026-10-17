@@ -89,7 +89,9 @@ export default async function UpDownPage(props: Params) {
           initial={windows}
           initialSettled={settled}
           locale={lang}
-          tgBot={brand.tgBot}
+          // Oddzy is web-first: the CTA opens the web app on its Up/Down tab.
+          // PolyBaaz keeps its Telegram bot CTA unchanged.
+          ctaHref={lang === "fa" ? `https://t.me/${brand.tgBot}` : "/app?tab=updown"}
           copy={{
             none: t.updown.none,
             closesIn: t.updown.closesIn,

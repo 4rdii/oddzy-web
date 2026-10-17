@@ -2,7 +2,7 @@ import { geoArea, geoBounds, geoCentroid, geoDistance, geoEquirectangular, geoGr
 import type { Feature, Geometry } from "geojson";
 import { feature } from "topojson-client";
 import type { GeometryCollection, Topology } from "topojson-specification";
-import { fa } from "@/lib/pb";
+import { num, pctOf, type PbLang } from "@/lib/pb";
 import { REGIONS, REG_SET, wVol, wVolS, type WC, type WM } from "@/lib/world";
 
 /**
@@ -64,6 +64,9 @@ export type GlobeOptions = {
   isPhone: () => boolean;
   onHover: (c: WC | null) => void;
   onTap: (c: WC | null, fly: boolean) => void;
+  lang: PbLang;
+  /** Tooltip copy (dict `world`): "{v}" / "{r}" / "{n}" are replaced. */
+  labels: { tipVol: string; tipRisk: string; tipMarkets: string; tipMarket1: string; tipPin: string };
 };
 
 export type Globe = {
@@ -283,7 +286,7 @@ export async function createGlobe(o: GlobeOptions, countries: WC[], markets: WM[
     const center: [number, number] = [-G.rot[0], -G.rot[1]], top = ranked().slice(0, 5);
     const showL = new Set(top); if (focus) { showL.add(focus); focus.links.forEach((id) => byId[id] && showL.add(byId[id])); }
     if (NS) for (const c of C) if (NS.has(c.key)) showL.add(c);
-    ctx.font = `700 ${o.isPhone() ? 11 : 12}px ${fontFamily}`; ctx.textAlign = "center"; ctx.direction = "rtl";
+    ctx.font = `700 ${o.isPhone() ? 11 : 12}px ${fontFamily}`; ctx.textAlign = "center"; ctx.direction = o.lang === "fa" ? "rtl" : "ltr";
     for (const c of showL) {
       if (!c.geo) continue;
       if (geoDistance(centOf(c), center) > 1.45) continue;
@@ -294,7 +297,7 @@ export async function createGlobe(o: GlobeOptions, countries: WC[], markets: WM[
         ctx.strokeStyle = `rgba(${cRGB(c)},${(1 - ph) * .8})`; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(X, Y, 4 + ph * 22, 0, 7); ctx.stroke();
       }
       ctx.fillStyle = c === focus ? COL.hi : `rgb(${cRGB(c)})`; ctx.beginPath(); ctx.arc(X, Y, 3, 0, 7); ctx.fill();
-      const t = c.fa + "  " + (S.metric === "vol" ? wVolS(c.v) : fa(c.r) + "٪");
+      const t = c.name + "  " + (S.metric === "vol" ? wVolS(c.v, o.lang) : pctOf(o.lang, c.r));
       ctx.lineWidth = 4; ctx.strokeStyle = COL.halo; ctx.strokeText(t, X, Y - 10); ctx.fillStyle = COL.label; ctx.fillText(t, X, Y - 10);
     }
     // rim
@@ -347,7 +350,8 @@ export async function createGlobe(o: GlobeOptions, countries: WC[], markets: WM[
     const S = o.getState();
     const m = c.mk.length ? M[c.mk[0]] : null;
     const pc = m && m.p !== null ? m.p : null;
-    tip.innerHTML = `<b>${esc(c.fa)}</b><span>${S.metric === "vol" ? "حجم ۲۴س " + wVol(c.v) : "ریسک تنش " + fa(c.r) + "٪"} · ${fa(c.n)} بازار</span>${m ? `<div style="margin-top:6px;color:var(--text2);line-height:1.6">${esc(m.q)} <b style="display:inline;font-size:12px;color:${pc !== null && pc >= 50 ? "var(--gold)" : "var(--text)"}">${pc === null ? "—" : fa(pc) + "٪"}</b></div>` : ""}<div style="margin-top:6px;color:var(--gold);font-weight:700">برای سنجاق کردن کلیک کنید</div>`;
+    const L = o.labels;
+    tip.innerHTML = `<b>${esc(c.name)}</b><span>${S.metric === "vol" ? L.tipVol.replace("{v}", wVol(c.v, o.lang)) : L.tipRisk.replace("{r}", pctOf(o.lang, c.r))} · ${(c.n === 1 ? L.tipMarket1 : L.tipMarkets).replace("{n}", num(o.lang, c.n))}</span>${m ? `<div style="margin-top:6px;color:var(--text2);line-height:1.6">${esc(m.q)} <b style="display:inline;font-size:12px;color:${pc !== null && pc >= 50 ? "var(--gold)" : "var(--text)"}">${pctOf(o.lang, pc)}</b></div>` : ""}<div style="margin-top:6px;color:var(--gold);font-weight:700">${L.tipPin}</div>`;
     const tw = 240; tip.style.left = Math.min(G.W - tw - 8, x + 16) + "px"; tip.style.top = Math.min(G.H - 130, y + 14) + "px"; tip.style.opacity = "1";
   }
   const hideTip = () => { tip.style.opacity = "0"; };

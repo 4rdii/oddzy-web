@@ -4,24 +4,35 @@ import Link from "next/link";
 import { useEffect, useState, type CSSProperties } from "react";
 import type { MatchLive, SideKey, WhaleBet, WhaleGame, WhaleSport } from "@/lib/api";
 import { Crest } from "@/components/pb/Crest";
-import { useNow } from "@/components/pb/useNow";
+import { useNow, useTimeZone } from "@/components/pb/useNow";
 import { Avatar, ScoreRing } from "@/components/pb/ScoreRing";
 import { betLabel, enSideNames, entryPct, sideNames, sideOutcome, tagOf, tierOf, whaleName } from "@/components/pb/whale";
-import { fa, faAgo, faMoney, faPct, faTime, pc, SIDE_COLOR } from "@/lib/pb";
+import { agoOf, dayOf, money, num, pc, pctOf, probPct, SIDE_COLOR, timeOf, type PbLang } from "@/lib/pb";
+import type { Dict } from "@/lib/dict/en";
 
 /**
  * PB Big Games Whales — today's five most-traded matches and the biggest
  * pre-match bets on each, with every bettor's 0–100 track-record score.
  * Data: GET /whales/today (oddzy-api, whales.js).
+ *
+ * Bilingual: PolyBaaz (fa, RTL, Tehran time) and Oddzy (en, LTR, the viewer's
+ * own zone). Copy comes from the dictionary's `whales` section as `t`.
  */
+
+type T = Dict["whales"];
+
+/** "{n} bets" templates: replace each `{key}`. */
+function fill(tpl: string, vars: Record<string, string | number>): string {
+  return tpl.replace(/\{(\w+)\}/g, (m, k: string) => (k in vars ? String(vars[k]) : m));
+}
 
 type Filter = "all" | "sharp" | "contra" | "weak";
 
-const FILTERS: [Filter, string][] = [
-  ["all", "همه"],
-  ["sharp", "فقط تیزبین‌ها"],
-  ["contra", "روی کم‌شانس (زیر ۳۰٪)"],
-  ["weak", "سابقهٔ ضعیف"],
+const filtersOf = (t: T): [Filter, string][] => [
+  ["all", t.filterAll],
+  ["sharp", t.filterSharp],
+  ["contra", t.filterContra],
+  ["weak", t.filterWeak],
 ];
 
 function passes(f: Filter, b: WhaleBet): boolean {
@@ -41,6 +52,9 @@ export function WhalesPb({
   sports = [],
   generatedAt,
   dateLabel,
+  dateIso,
+  lang = "fa",
+  t,
 }: {
   games: WhaleGame[];
   /** Today's games that have ended: listed after the top 5, collapsed, with their score. */
@@ -49,7 +63,14 @@ export function WhalesPb({
   sports?: WhaleSport[];
   generatedAt: string | null;
   dateLabel: string;
+  /** The instant `dateLabel` was made from; en re-formats it in the viewer's zone. */
+  dateIso?: string;
+  lang?: PbLang;
+  t: T;
 }) {
+  const tz = useTimeZone(lang);
+  const day = lang === "en" && dateIso ? dayOf(lang, dateIso, tz) : dateLabel;
+  const fmt = { lang, tz, t };
   const [filter, setFilter] = useState<Filter>("all");
   const [open, setOpen] = useState<Record<number, boolean>>({ 0: true });
   const [how, setHow] = useState(false);
@@ -71,29 +92,29 @@ export function WhalesPb({
   const allMoney = games.reduce((a, g) => a + (g.whale_total_usdc ?? 0), 0);
 
   return (
-    <div dir="rtl" className="pb">
+    <div dir={lang === "en" ? "ltr" : "rtl"} className="pb">
       <main style={{ maxWidth: 820, margin: "0 auto", padding: "24px 16px 60px", display: "flex", flexDirection: "column", gap: 20 }}>
         <header style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12, color: "var(--muted)", flexWrap: "wrap" }}>
             <span style={{ display: "inline-flex", alignItems: "center", gap: 7, color: "var(--up)", fontWeight: 700 }}>
-              <span className="pb-pulse" /> زنده
+              <span className="pb-pulse" /> {t.live}
             </span>
             <span style={{ color: "var(--faint)" }}>·</span>
-            <span>{dateLabel}</span>
+            <span>{day}</span>
             {generatedAt && now !== null && (
               <>
                 <span style={{ color: "var(--faint)" }}>·</span>
-                <span>به‌روز شده {faAgo(generatedAt, now)}</span>
+                <span>{fill(t.updated, { ago: agoOf(lang, generatedAt, now) })}</span>
               </>
             )}
           </div>
-          <h1 style={{ margin: 0, fontSize: 30, fontWeight: 900, letterSpacing: -0.5, lineHeight: 1.35 }}>بازی‌های بزرگ امروز</h1>
+          <h1 style={{ margin: 0, fontSize: 30, fontWeight: 900, letterSpacing: -0.5, lineHeight: 1.35 }}>{t.title}</h1>
           <p style={{ margin: 0, fontSize: 15, lineHeight: 1.9, color: "var(--text2)", maxWidth: 620, textWrap: "pretty" }}>
-            پرمعامله‌ترین بازی‌های امروز و بزرگ‌ترین پیش‌بینی‌هایی که نهنگ‌ها پیش از شروع بازی ثبت کرده‌اند، همراه با امتیاز سابقهٔ واقعی هر کدام.
+            {t.intro}
           </p>
           {games.length > 0 && (
             <div style={{ fontSize: 13, color: "var(--muted)" }}>
-              {fa(games.length)} بازی · {fa(allBets)} پیش‌بینی بزرگ · {faMoney(allMoney)} پول نهنگ‌ها
+              {fill(t.summary, { games: num(lang, games.length), bets: num(lang, allBets), money: money(lang, allMoney) })}
             </div>
           )}
         </header>
@@ -122,17 +143,17 @@ export function WhalesPb({
                     color: on ? "var(--goldink)" : "var(--text2)",
                   }}
                 >
-                  {x.name_fa}
+                  {lang === "en" ? x.name : x.name_fa}
                 </button>
               );
             })}
           </div>
         )}
 
-        <ScoreLegend how={how} setHow={setHow} />
+        <ScoreLegend how={how} setHow={setHow} lang={lang} t={t} />
 
         <div className="pb-noscroll" style={{ display: "flex", gap: 8, overflowX: "auto", margin: "0 -16px", padding: "0 16px" }}>
-          {FILTERS.map(([k, label]) => (
+          {filtersOf(t).map(([k, label]) => (
             <button
               key={k}
               type="button"
@@ -164,14 +185,15 @@ export function WhalesPb({
             filter={filter}
             now={now}
             onSelect={setSel}
+            fmt={fmt}
           />
         ))}
 
         {finished.length > 0 && (
           <section style={{ display: "flex", flexDirection: "column", gap: 12, marginTop: 8 }}>
             <div style={{ display: "flex", alignItems: "baseline", gap: 10, borderBottom: "1px solid var(--line)", paddingBottom: 10 }}>
-              <h2 style={{ margin: 0, fontSize: 18, fontWeight: 800 }}>بازی‌های تمام‌شدهٔ امروز</h2>
-              <span style={{ fontSize: 12, color: "var(--muted)" }}>نتیجه و پیش‌بینی نهنگ‌ها پیش از بازی</span>
+              <h2 style={{ margin: 0, fontSize: 18, fontWeight: 800 }}>{t.finishedTitle}</h2>
+              <span style={{ fontSize: 12, color: "var(--muted)" }}>{t.finishedSub}</span>
             </div>
             {finished.map((g, gi) => (
               <GameCard
@@ -184,6 +206,7 @@ export function WhalesPb({
                 filter={filter}
                 now={now}
                 onSelect={setSel}
+                fmt={fmt}
               />
             ))}
           </section>
@@ -192,25 +215,27 @@ export function WhalesPb({
         {games.length < 5 && (
           <div style={{ border: "1px dashed var(--line2)", borderRadius: 16, padding: "18px 16px", display: "flex", flexDirection: "column", gap: 8, alignItems: "flex-start" }}>
             <div style={{ fontSize: 14, fontWeight: 700 }}>
-              {games.length === 0 ? "امروز هنوز بازی‌ای به فهرست بازی‌های بزرگ نرسیده است." : `امروز فقط ${fa(games.length)} بازی به فهرست بازی‌های بزرگ رسیده است.`}
+              {games.length === 0 ? t.emptyNone : fill(t.emptyFew, { n: num(lang, games.length) })}
             </div>
-            <div style={{ fontSize: 13, color: "var(--muted)", lineHeight: 1.8 }}>فهرست در طول روز و با بالا رفتن حجم معاملات به‌روز می‌شود.</div>
+            <div style={{ fontSize: 13, color: "var(--muted)", lineHeight: 1.8 }}>{t.emptyNote}</div>
             <Link href={`/topic/${sport === "all" || sport === "other" ? "football" : sport}`} style={{ fontSize: 13, fontWeight: 700 }}>
-              همهٔ بازی‌های {sports.find((x) => x.slug === sport)?.name_fa ?? "فوتبال"} ←
+              {fill(t.allGames, { sport: (lang === "en" ? sports.find((x) => x.slug === sport)?.name : sports.find((x) => x.slug === sport)?.name_fa) ?? t.football })}
             </Link>
           </div>
         )}
 
         <div style={{ fontSize: 11.5, color: "var(--faint)", lineHeight: 1.9 }}>
-          نهنگ یعنی حسابی در Polymarket با پیش‌بینی‌های بزرگ.
+          {t.footnote}
         </div>
       </main>
-      {sel && <WhaleSheet sel={sel} onClose={() => setSel(null)} />}
+      {sel && <WhaleSheet sel={sel} onClose={() => setSel(null)} fmt={fmt} />}
     </div>
   );
 }
 
-function ScoreLegend({ how, setHow }: { how: boolean; setHow: (v: boolean) => void }) {
+type Fmt = { lang: PbLang; tz: string; t: T };
+
+function ScoreLegend({ how, setHow, lang, t }: { how: boolean; setHow: (v: boolean) => void; lang: PbLang; t: T }) {
   const dot = (c: string, ring?: boolean): CSSProperties => ({
     width: 8,
     height: 8,
@@ -218,23 +243,23 @@ function ScoreLegend({ how, setHow }: { how: boolean; setHow: (v: boolean) => vo
     ...(ring ? { border: `1.5px solid ${c}` } : { background: c }),
   });
   const items: [string, string, string, boolean?][] = [
-    ["var(--down)", "پایین‌تر از میانگین", "۰–۳۹"],
-    ["var(--muted)", "میانگین", "۴۰–۵۹"],
-    ["var(--above)", "بالاتر از میانگین", "۶۰–۷۹"],
-    ["var(--up)", "تیزبین", "۸۰–۱۰۰"],
-    ["var(--blue)", "تازه‌وارد", "امتیاز موقت", true],
+    ["var(--down)", t.tierBelow, `${num(lang, 0)}–${num(lang, 39)}`],
+    ["var(--muted)", t.tierAverage, `${num(lang, 40)}–${num(lang, 59)}`],
+    ["var(--above)", t.tierAbove, `${num(lang, 60)}–${num(lang, 79)}`],
+    ["var(--up)", t.tierSharp, `${num(lang, 80)}–${num(lang, 100)}`],
+    ["var(--blue)", t.tierNew, t.provisional, true],
   ];
   return (
     <section style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: 16, padding: "14px 16px", display: "flex", flexDirection: "column", gap: 11 }}>
       <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-        <span style={{ fontSize: 14, fontWeight: 800 }}>امتیاز نهنگ</span>
-        <span style={{ fontSize: 12, color: "var(--muted)" }}>۰ تا ۱۰۰، بر پایهٔ سابقهٔ واقعی معاملات</span>
+        <span style={{ fontSize: 14, fontWeight: 800 }}>{t.scoreTitle}</span>
+        <span style={{ fontSize: 12, color: "var(--muted)" }}>{t.scoreScale}</span>
         <button
           type="button"
           onClick={() => setHow(!how)}
           style={{ marginInlineStart: "auto", background: "none", border: "none", color: "var(--gold)", fontSize: 12, fontWeight: 600, cursor: "pointer", padding: 0 }}
         >
-          {how ? "بستن" : "چطور حساب می‌شود؟"}
+          {how ? t.close : t.howOpen}
         </button>
       </div>
       <div style={{ display: "flex", gap: 3, height: 6 }} aria-hidden>
@@ -253,7 +278,7 @@ function ScoreLegend({ how, setHow }: { how: boolean; setHow: (v: boolean) => vo
       </div>
       {how && (
         <p style={{ margin: 0, fontSize: 13, lineHeight: 1.9, color: "var(--muted)", borderTop: "1px solid var(--line)", paddingTop: 11, textWrap: "pretty" }}>
-          امتیاز از نتیجهٔ واقعی معاملات هر حساب ساخته می‌شود: بازده نسبت به حجم در کل سابقه (۶۰٪ وزن) و در ۳۰ روز اخیر (۴۰٪ وزن)، با احتساب ضررها. حجم زیاد به‌تنهایی امتیاز بالا نمی‌آورد. حساب‌هایی با کمتر از ۱۰ هزار دلار حجم کل «تازه‌وارد» حساب می‌شوند و امتیازشان هنوز قطعی نیست. روی هر نهنگ بزنید تا جزئیات سابقه‌اش را ببینید.
+          {t.howText}
         </p>
       )}
     </section>
@@ -269,6 +294,7 @@ function GameCard({
   filter,
   now,
   onSelect,
+  fmt,
 }: {
   g: WhaleGame;
   rank: number;
@@ -279,24 +305,27 @@ function GameCard({
   filter: Filter;
   now: number | null;
   onSelect: (s: Sel) => void;
+  fmt: Fmt;
 }) {
-  const names = sideNames(g);
+  const { lang, tz, t } = fmt;
+  const en = lang === "en";
+  const names = sideNames(g, lang);
   const href = `/match/${g.slug}`;
   const sides = g.result?.sides ?? [];
   const bets = g.whales;
   const rows = bets.filter((b) => passes(filter, b));
   const hasMoney = (g.result?.result_whale_usdc ?? 0) > 0;
   const agree = g.result?.verdict === "with_market";
-  const verdict = g.result?.verdict ? (agree ? "نهنگ‌ها هم‌جهت با بازار" : "نهنگ‌ها خلاف بازار") : null;
-  const league = g.league.name_fa ?? g.league.name;
+  const verdict = g.result?.verdict ? (agree ? t.verdictWith : t.verdictAgainst) : null;
+  const league = en ? g.league.name : (g.league.name_fa ?? g.league.name);
 
   // One-line insight: where the whale money sits vs the market, plus a sharp contrarian if any.
   let insight = "";
   if (hasMoney) {
     const lead = [...sides].sort((a, b) => b.whale_usdc - a.whale_usdc)[0];
-    insight = `${fa(pc(lead.whale_share) ?? 0)}٪ پول نهنگ‌ها روی «${sideOutcome(lead.key, names)}» است؛ بازار به آن ${faPct(lead.p)} شانس می‌دهد.`;
+    insight = fill(t.insightLead, { share: pctOf(lang, pc(lead.whale_share) ?? 0), side: sideOutcome(lead.key, names, lang), p: probPct(lang, lead.p) });
     const sharp = bets.find((b) => b.stats && b.stats.tier !== "new" && (b.stats.score ?? 0) >= 80 && b.avg_price <= 0.3);
-    if (sharp) insight += ` ${whaleName(sharp)} با امتیاز ${fa(sharp.stats!.score!)}، خلاف جریان روی «${betLabel(sharp, names, enSideNames(g))}» رفته است.`;
+    if (sharp) insight += ` ${fill(t.insightSharp, { name: whaleName(sharp), score: num(lang, sharp.stats!.score!), bet: betLabel(sharp, names, enSideNames(g), lang) })}`;
   }
 
   return (
@@ -304,24 +333,24 @@ function GameCard({
       <div style={{ padding: "16px 16px 14px", display: "flex", flexDirection: "column", gap: 14 }}>
         <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
           <div style={{ fontSize: done ? 18 : 26, fontWeight: 900, color: done ? "var(--muted)" : "var(--gold)", lineHeight: 1.1, width: 22, flexShrink: 0 }}>
-            {done ? "✓" : fa(rank)}
+            {done ? "✓" : num(lang, rank)}
           </div>
           <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 3 }}>
             <div style={{ fontSize: 12, color: "var(--muted)" }}>
               {league}
-              {g.starts_at ? ` · ${faTime(g.starts_at)} به وقت تهران` : ""}
+              {g.starts_at ? ` · ${fill(t.kickoff, { time: timeOf(lang, g.starts_at, tz) })}` : ""}
             </div>
             <Link href={href} style={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: 8, fontSize: 19, fontWeight: 800, color: "var(--text)", lineHeight: 1.45 }}>
               <Crest name={names.home} src={g.teams?.home?.logo} size={26} />
               <span>{names.home}</span>
-              <span style={{ color: "var(--faint)", fontWeight: 400, fontSize: 15 }}>و</span>
+              <span style={{ color: "var(--faint)", fontWeight: 400, fontSize: 15 }}>{t.vs}</span>
               <Crest name={names.away} src={g.teams?.away?.logo} size={26} />
               <span>{names.away}</span>
             </Link>
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 2, alignItems: "flex-end", flexShrink: 0 }}>
-            <span style={{ fontSize: 11, color: "var(--muted)" }}>حجم ۲۴ ساعت</span>
-            <span style={{ fontSize: 14, fontWeight: 800 }}>{faMoney(g.volume_24h)}</span>
+            <span style={{ fontSize: 11, color: "var(--muted)" }}>{t.vol24}</span>
+            <span style={{ fontSize: 14, fontWeight: 800 }}>{money(lang, g.volume_24h)}</span>
           </div>
         </div>
         {done && (
@@ -337,10 +366,11 @@ function GameCard({
               padding: "12px 10px",
             }}
           >
-            <span style={{ fontSize: 13, fontWeight: 800, color: "var(--muted)" }}>پایان بازی</span>
+            <span style={{ fontSize: 13, fontWeight: 800, color: "var(--muted)" }}>{t.fullTime}</span>
             {g.live?.score && (
               <span dir="ltr" style={{ fontSize: 26, fontWeight: 900, fontVariantNumeric: "tabular-nums" }}>
-                {fa(g.live.score.away)} – {fa(g.live.score.home)}
+                {/* dir=ltr: away – home puts home on the right for RTL; LTR reads home – away. */}
+                {en ? `${g.live.score.home} – ${g.live.score.away}` : <>{num(lang, g.live.score.away)} – {num(lang, g.live.score.home)}</>}
               </span>
             )}
           </div>
@@ -374,9 +404,9 @@ function GameCard({
                 >
                   <span style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, fontSize: 12.5, color: "var(--muted)", minWidth: 0, maxWidth: "100%" }}>
                     <span style={{ width: 7, height: 7, borderRadius: "50%", background: col.c, flexShrink: 0 }} />
-                    <span style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{sideOutcome(s.key, names)}</span>
+                    <span style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{sideOutcome(s.key, names, lang)}</span>
                   </span>
-                  <span style={{ fontSize: 28, fontWeight: 900, lineHeight: 1.15 }}>{faPct(s.p)}</span>
+                  <span style={{ fontSize: 28, fontWeight: 900, lineHeight: 1.15 }}>{probPct(lang, s.p)}</span>
                 </Link>
               );
             })}
@@ -400,12 +430,12 @@ function GameCard({
           background: "var(--bg2)",
           color: "var(--text)",
           cursor: "pointer",
-          textAlign: "right",
+          textAlign: en ? "left" : "right",
         }}
       >
-        <span style={{ fontSize: 13.5, fontWeight: 800 }}>نهنگ‌ها</span>
+        <span style={{ fontSize: 13.5, fontWeight: 800 }}>{t.whalesLabel}</span>
         <span style={{ fontSize: 12, color: "var(--muted)", flex: 1, minWidth: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-          {g.whale_bet_count ? `${fa(g.whale_bet_count)} پیش‌بینی · ${faMoney(g.whale_total_usdc)}` : "هنوز نهنگی وارد نشده"}
+          {g.whale_bet_count ? fill(t.betsCount, { n: num(lang, g.whale_bet_count), money: money(lang, g.whale_total_usdc) }) : t.noWhalesShort}
         </span>
         {verdict && (
           <span
@@ -447,17 +477,17 @@ function GameCard({
           <div style={{ background: "var(--bg2)", borderTop: "1px solid var(--line)" }}>
             <div style={{ padding: "13px 16px", display: "flex", flexDirection: "column", gap: 10 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <span style={{ fontSize: 13, fontWeight: 800 }}>نهنگ‌ها پیش از بازی</span>
+                <span style={{ fontSize: 13, fontWeight: 800 }}>{t.preMatch}</span>
                 {g.whale_bet_count > 0 && (
                   <span style={{ fontSize: 12, color: "var(--muted)" }}>
-                    {fa(g.whale_bet_count)} پیش‌بینی · {faMoney(g.whale_total_usdc)}
+                    {fill(t.betsCount, { n: num(lang, g.whale_bet_count), money: money(lang, g.whale_total_usdc) })}
                   </span>
                 )}
               </div>
               {hasMoney && (
                 <div style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: 16, padding: 14, display: "flex", flexDirection: "column", gap: 14 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-                    <span style={{ fontSize: 15, fontWeight: 800 }}>بازار در برابر نهنگ‌ها</span>
+                    <span style={{ fontSize: 15, fontWeight: 800 }}>{t.marketVsWhales}</span>
                     {verdict && (
                       <span
                         style={{
@@ -476,12 +506,12 @@ function GameCard({
                   <div style={{ display: "flex", gap: 16, fontSize: 11.5, color: "var(--muted)", flexWrap: "wrap" }}>
                     <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
                       <span style={{ width: 18, height: 5, borderRadius: 3, background: "var(--line2)" }} />
-                      شانسی که بازار می‌دهد
+                      {t.marketOdds}
                     </span>
                     <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
                       <span style={{ width: 9, height: 9, borderRadius: 3, background: "var(--home)" }} />
                       <span style={{ width: 9, height: 9, borderRadius: 3, background: "var(--blue)", marginInlineStart: -3 }} />
-                      سهم از پول نهنگ‌ها
+                      {t.whaleShare}
                     </span>
                   </div>
                   {sides.map((s) => {
@@ -493,25 +523,25 @@ function GameCard({
                       <div key={s.key} style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                           <span style={{ width: 9, height: 9, borderRadius: "50%", background: col.c, flexShrink: 0 }} />
-                          <span style={{ fontSize: 14, fontWeight: 800, flex: 1, minWidth: 0 }}>{sideOutcome(s.key, names)}</span>
+                          <span style={{ fontSize: 14, fontWeight: 800, flex: 1, minWidth: 0 }}>{sideOutcome(s.key, names, lang)}</span>
                           <span style={{ fontSize: 11.5, fontWeight: 700, color: Math.abs(df) < 5 ? "var(--muted)" : df > 0 ? "var(--up)" : "var(--down)" }}>
-                            {Math.abs(df) < 5 ? "هم‌اندازهٔ بازار" : df > 0 ? `▲ ${fa(df)} واحد بیشتر از بازار` : `▼ ${fa(-df)} واحد کمتر از بازار`}
+                            {Math.abs(df) < 5 ? t.inLine : df > 0 ? fill(t.above, { n: num(lang, df) }) : fill(t.below, { n: num(lang, -df) })}
                           </span>
                         </div>
                         <div style={{ display: "grid", gridTemplateColumns: "54px 1fr 64px", gap: "4px 10px", alignItems: "center" }}>
-                          <span style={{ fontSize: 11.5, color: "var(--muted)" }}>بازار</span>
+                          <span style={{ fontSize: 11.5, color: "var(--muted)" }}>{t.marketLabel}</span>
                           <div style={{ height: 6, background: "var(--bg2)", borderRadius: 3, overflow: "hidden" }}>
                             <div style={{ height: "100%", width: `${mk}%`, background: "var(--line2)", borderRadius: 3 }} />
                           </div>
-                          <span style={{ fontSize: 13, fontWeight: 700, color: "var(--text2)", textAlign: "left" }}>{fa(mk)}٪</span>
-                          <span style={{ fontSize: 11.5, color: "var(--muted)" }}>نهنگ‌ها</span>
+                          <span style={{ fontSize: 13, fontWeight: 700, color: "var(--text2)", textAlign: en ? "right" : "left" }}>{pctOf(lang, mk)}</span>
+                          <span style={{ fontSize: 11.5, color: "var(--muted)" }}>{t.whalesLabel}</span>
                           <div style={{ height: 12, background: "var(--bg2)", borderRadius: 4, overflow: "hidden" }}>
                             <div style={{ height: "100%", width: `${wh}%`, background: col.c, borderRadius: 4 }} />
                           </div>
-                          <span style={{ fontSize: 15, fontWeight: 900, textAlign: "left" }}>{fa(wh)}٪</span>
+                          <span style={{ fontSize: 15, fontWeight: 900, textAlign: en ? "right" : "left" }}>{pctOf(lang, wh)}</span>
                         </div>
                         <span style={{ fontSize: 11.5, color: "var(--faint)", paddingInlineStart: 64 }}>
-                          {s.whale_usdc > 0 ? `${faMoney(s.whale_usdc)} پول نهنگ‌ها` : "بدون پول نهنگ"}
+                          {s.whale_usdc > 0 ? fill(t.sideMoney, { money: money(lang, s.whale_usdc) }) : t.noSideMoney}
                         </span>
                       </div>
                     );
@@ -524,8 +554,8 @@ function GameCard({
             </div>
 
             {rows.map((b) => {
-              const t = tierOf(b.stats);
-              const tag = tagOf(b);
+              const tier = tierOf(b.stats, lang);
+              const tag = tagOf(b, lang);
               const side = b.side_key ?? null;
               return (
                 <div
@@ -537,23 +567,23 @@ function GameCard({
                   className="pb-row"
                   style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 16px", cursor: "pointer", borderTop: "1px solid var(--line)" }}
                 >
-                  <ScoreRing score={b.stats?.score ?? null} color={t.c} />
+                  <ScoreRing score={b.stats?.score ?? null} color={tier.c} lang={lang} />
                   <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 4 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 7, flexWrap: "wrap" }}>
                       <Avatar name={whaleName(b)} src={b.profile_image} />
                       <span dir="ltr" style={{ fontSize: 14, fontWeight: 700, minWidth: 0, maxWidth: "60%", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                         {whaleName(b)}
                       </span>
-                      <span style={{ fontSize: 11, fontWeight: 700, color: t.c }}>{t.label}</span>
+                      <span style={{ fontSize: 11, fontWeight: 700, color: tier.c }}>{tier.label}</span>
                     </div>
                     <div style={{ fontSize: 12.5, color: "var(--muted)", display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
                       <span style={{ width: 7, height: 7, borderRadius: "50%", background: side ? SIDE_COLOR[side].c : "var(--faint)" }} />
-                      <span style={{ color: "var(--text)", fontWeight: 600 }}>{betLabel(b, names, enSideNames(g))}</span>
-                      <span>در قیمت {entryPct(b)}</span>
+                      <span style={{ color: "var(--text)", fontWeight: 600 }}>{betLabel(b, names, enSideNames(g), lang)}</span>
+                      <span>{fill(t.atPrice, { pct: entryPct(b, lang) })}</span>
                       {now !== null && (
                         <>
                           <span style={{ color: "var(--faint)" }}>·</span>
-                          <span>{faAgo(b.last_at, now)}</span>
+                          <span>{agoOf(lang, b.last_at, now)}</span>
                         </>
                       )}
                     </div>
@@ -562,8 +592,8 @@ function GameCard({
                     )}
                   </div>
                   <div style={{ display: "flex", flexDirection: "column", gap: 2, alignItems: "flex-end", flexShrink: 0 }}>
-                    <span style={{ fontSize: 15, fontWeight: 800 }}>{faMoney(b.amount_usdc)}</span>
-                    <span style={{ fontSize: 11, color: "var(--faint)" }}>جزئیات ‹</span>
+                    <span style={{ fontSize: 15, fontWeight: 800 }}>{money(lang, b.amount_usdc)}</span>
+                    <span style={{ fontSize: 11, color: "var(--faint)" }}>{t.details}</span>
                   </div>
                 </div>
               );
@@ -586,24 +616,24 @@ function GameCard({
                 >
                   ·
                 </div>
-                <div style={{ fontSize: 14, fontWeight: 700 }}>هنوز نهنگی وارد این بازی نشده</div>
-                <div style={{ fontSize: 12.5, color: "var(--muted)", lineHeight: 1.8 }}>پیش‌بینی‌های بزرگ به‌محض ثبت، اینجا نشان داده می‌شوند.</div>
+                <div style={{ fontSize: 14, fontWeight: 700 }}>{t.noWhalesTitle}</div>
+                <div style={{ fontSize: 12.5, color: "var(--muted)", lineHeight: 1.8 }}>{t.noWhalesBody}</div>
               </div>
             )}
             {g.error && (
               <div style={{ padding: "12px 16px 14px", fontSize: 12.5, color: "var(--muted)", borderTop: "1px solid var(--line)" }}>
-                داده‌های نهنگ‌ها برای این بازی موقتاً در دسترس نیست.
+                {t.error}
               </div>
             )}
             {bets.length > 0 && rows.length === 0 && (
               <div style={{ padding: "12px 16px 14px", fontSize: 12.5, color: "var(--muted)", borderTop: "1px solid var(--line)" }}>
-                در این فیلتر، پیش‌بینی‌ای برای این بازی نیست.
+                {t.emptyFilter}
               </div>
             )}
           </div>
           <div style={{ padding: "12px 16px 16px", borderTop: "1px solid var(--line)", display: "flex" }}>
             <Link href={href} className="pb-gold-btn" style={{ flex: 1, textAlign: "center", fontWeight: 800, fontSize: 15, padding: 13, borderRadius: 13 }}>
-              {done ? "مشاهدهٔ بازی" : "پیش‌بینی این بازی"}
+              {done ? t.viewGame : t.predictGame}
             </Link>
           </div>
         </>
@@ -612,10 +642,12 @@ function GameCard({
   );
 }
 
-function WhaleSheet({ sel, onClose }: { sel: Sel; onClose: () => void }) {
+function WhaleSheet({ sel, onClose, fmt }: { sel: Sel; onClose: () => void; fmt: Fmt }) {
   const { bet: b, game: g, names } = sel;
+  const { lang, t } = fmt;
   const s = b.stats;
-  const t = tierOf(s);
+  const tier = tierOf(s, lang);
+  const usd = (n: number | null | undefined) => money(lang, n);
   useEffect(() => {
     const k = (e: KeyboardEvent) => e.key === "Escape" && onClose();
     window.addEventListener("keydown", k);
@@ -625,18 +657,18 @@ function WhaleSheet({ sel, onClose }: { sel: Sel; onClose: () => void }) {
     v === null || v === undefined
       ? { v: "—", c: "var(--muted)" }
       : { v: `${v >= 0 ? "▲ " : "▼ "}${fmt(Math.abs(v))}`, c: v >= 0 ? "var(--up)" : "var(--down)" };
-  const pnl = signed(s?.pnl_usdc, faMoney);
-  const rov = signed(s?.all_time_roi, (n) => `${fa((n * 100).toFixed(1))}٪`);
-  const m30 = signed(s?.month_pnl_usdc, faMoney);
+  const pnl = signed(s?.pnl_usdc, usd);
+  const rov = signed(s?.all_time_roi, (n) => `${num(lang, (n * 100).toFixed(1))}${lang === "en" ? "%" : "٪"}`);
+  const m30 = signed(s?.month_pnl_usdc, usd);
   const stats = [
-    { l: "سود و زیان کل", ...pnl },
-    { l: "بازده نسبت به حجم", ...rov },
-    { l: "۳۰ روز اخیر", ...m30 },
-    { l: "حجم کل معاملات", v: faMoney(s?.volume_usdc), c: "var(--text)" },
-    { l: "بازارهای معامله‌شده", v: s?.markets_traded ? fa(s.markets_traded.toLocaleString("en-US")) : "—", c: "var(--text)" },
+    { l: t.statPnl, ...pnl },
+    { l: t.statRoi, ...rov },
+    { l: t.stat30d, ...m30 },
+    { l: t.statVolume, v: usd(s?.volume_usdc), c: "var(--text)" },
+    { l: t.statMarkets, v: s?.markets_traded ? num(lang, s.markets_traded.toLocaleString("en-US")) : "—", c: "var(--text)" },
     {
-      l: `رتبه در میان نهنگ‌های ${g.sport?.name_fa ?? "فوتبال"} امروز`,
-      v: s?.sport_rank && s.sport_pool ? `${fa(s.sport_rank)} از ${fa(s.sport_pool)}` : "—",
+      l: fill(t.statRank, { sport: (lang === "en" ? g.sport?.name : g.sport?.name_fa) ?? t.football }),
+      v: s?.sport_rank && s.sport_pool ? fill(t.rankOf, { rank: num(lang, s.sport_rank), pool: num(lang, s.sport_pool) }) : "—",
       c: s?.sport_rank ? (s.sport_rank <= 3 ? "var(--up)" : "var(--text)") : "var(--muted)",
     },
   ];
@@ -681,7 +713,7 @@ function WhaleSheet({ sel, onClose }: { sel: Sel; onClose: () => void }) {
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-          <ScoreRing score={s?.score ?? null} color={t.c} size={68} stroke={3} />
+          <ScoreRing score={s?.score ?? null} color={tier.c} size={68} stroke={3} lang={lang} />
           <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 4 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
               <Avatar name={name} src={b.profile_image} size={30} />
@@ -689,15 +721,15 @@ function WhaleSheet({ sel, onClose }: { sel: Sel; onClose: () => void }) {
                 {name}
               </span>
             </div>
-            <span style={{ alignSelf: "flex-start", fontSize: 12, fontWeight: 700, color: t.c, border: `1px solid ${t.c}`, borderRadius: 999, padding: "1px 10px" }}>{t.label}</span>
+            <span style={{ alignSelf: "flex-start", fontSize: 12, fontWeight: 700, color: tier.c, border: `1px solid ${tier.c}`, borderRadius: 999, padding: "1px 10px" }}>{tier.label}</span>
             <span style={{ fontSize: 12, color: "var(--muted)" }}>
-              {s?.tier === "new" ? "سابقهٔ کوتاه؛ امتیاز موقت است" : s?.score !== null && s ? `امتیاز ${fa(s.score!)} از ۱۰۰ بر پایهٔ سابقهٔ واقعی` : "سابقه‌ای در جدول Polymarket ندارد"}
+              {s?.tier === "new" ? t.newNote : s?.score !== null && s ? fill(t.scoreNote, { score: num(lang, s.score!) }) : t.noRecord}
             </span>
           </div>
           <button
             type="button"
             onClick={onClose}
-            aria-label="بستن"
+            aria-label={t.close}
             style={{
               alignSelf: "flex-start",
               width: 32,
@@ -724,20 +756,20 @@ function WhaleSheet({ sel, onClose }: { sel: Sel; onClose: () => void }) {
         </div>
         {b.sharp && (
           <div style={{ border: "1px solid var(--up)", background: "var(--upbg)", borderRadius: 14, padding: "12px 14px", display: "flex", flexDirection: "column", gap: 4 }}>
-            <span style={{ fontSize: 12, color: "var(--up)", fontWeight: 800 }}>تیزبین فوتبال</span>
+            <span style={{ fontSize: 12, color: "var(--up)", fontWeight: 800 }}>{t.sharpTitle}</span>
             <span style={{ fontSize: 14, fontWeight: 700, lineHeight: 1.8 }}>
-              بازده {fa(Math.round(b.sharp.roi * 100))}٪ در {fa(b.sharp.events)} بازی فوتبال
-              {b.sharp.wins !== null && b.sharp.losses !== null ? ` · ${fa(b.sharp.wins)} برد، ${fa(b.sharp.losses)} باخت` : ""}
-              {b.sharp.pnl_usdc !== null ? ` · سود ${faMoney(b.sharp.pnl_usdc)}` : ""}
+              {fill(t.sharpBody, { roi: pctOf(lang, Math.round(b.sharp.roi * 100)), n: num(lang, b.sharp.events) })}
+              {b.sharp.wins !== null && b.sharp.losses !== null ? fill(t.sharpWL, { w: num(lang, b.sharp.wins), l: num(lang, b.sharp.losses) }) : ""}
+              {b.sharp.pnl_usdc !== null ? fill(t.sharpProfit, { money: usd(b.sharp.pnl_usdc) }) : ""}
             </span>
           </div>
         )}
         <div style={{ border: "1px solid var(--goldline)", background: "var(--goldbg)", borderRadius: 14, padding: "12px 14px", display: "flex", flexDirection: "column", gap: 4 }}>
           <span style={{ fontSize: 12, color: "var(--muted)" }}>
-            در این بازی · {names.home} و {names.away}
+            {fill(t.inThisGame, { home: names.home, away: names.away })}
           </span>
           <span style={{ fontSize: 15, fontWeight: 700, lineHeight: 1.7 }}>
-            {faMoney(b.amount_usdc)} روی «{betLabel(b, names, enSideNames(g))}» در قیمت {entryPct(b)}
+            {fill(t.betLine, { money: usd(b.amount_usdc), bet: betLabel(b, names, enSideNames(g), lang), pct: entryPct(b, lang) })}
           </span>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
@@ -759,13 +791,13 @@ function WhaleSheet({ sel, onClose }: { sel: Sel; onClose: () => void }) {
               fontWeight: 700,
             }}
           >
-            <span>مشاهدهٔ پروفایل در Polymarket</span>
+            <span>{t.viewProfile}</span>
             <span dir="ltr" style={{ color: "var(--muted)", fontSize: 12 }}>
               {b.name ? `@${b.name}` : `${b.wallet.slice(0, 6)}…`} ↗
             </span>
           </a>
           <Link href={`/match/${g.slug}`} className="pb-gold-btn" style={{ textAlign: "center", fontWeight: 800, fontSize: 15, padding: 13, borderRadius: 13 }}>
-            رفتن به صفحهٔ بازی
+            {t.goToGame}
           </Link>
           <div
             style={{
@@ -781,8 +813,8 @@ function WhaleSheet({ sel, onClose }: { sel: Sel; onClose: () => void }) {
               fontWeight: 700,
             }}
           >
-            کپی این معامله‌گر{" "}
-            <span style={{ fontSize: 11, fontWeight: 700, color: "var(--blue)", background: "var(--bluebg)", borderRadius: 6, padding: "1px 7px" }}>به‌زودی</span>
+            {t.copyTrader}{" "}
+            <span style={{ fontSize: 11, fontWeight: 700, color: "var(--blue)", background: "var(--bluebg)", borderRadius: 6, padding: "1px 7px" }}>{t.soon}</span>
           </div>
         </div>
       </div>

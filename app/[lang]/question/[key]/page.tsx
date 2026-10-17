@@ -298,12 +298,23 @@ export default async function QuestionPage(props: Params) {
 
         <section className="mt-8 rounded-2xl border border-[var(--line)] bg-[var(--card)] p-5">
           <p className="text-[15px] leading-relaxed">{t.market.ctaLead}</p>
-          <a
-            href={`https://t.me/${brand.tgBot}`}
-            className="mt-4 inline-block rounded-xl bg-[var(--accent)] px-5 py-3 text-[15px] font-semibold text-[var(--on-accent)]"
-          >
-            {t.cta.openTelegram}
-          </a>
+          {/* Oddzy (en) is web-first: open the web app on this market, as the
+              market page does. PolyBaaz keeps its Telegram button. */}
+          {lang === "fa" ? (
+            <a
+              href={`https://t.me/${brand.tgBot}`}
+              className="mt-4 inline-block rounded-xl bg-[var(--accent)] px-5 py-3 text-[15px] font-semibold text-[var(--on-accent)]"
+            >
+              {t.cta.openTelegram}
+            </a>
+          ) : (
+            <Link
+              href={`/app?market=${encodeURIComponent(market.slug)}`}
+              className="mt-4 inline-block rounded-xl bg-[var(--accent)] px-5 py-3 text-[15px] font-semibold text-[var(--on-accent)]"
+            >
+              {t.cta.tradeThisMarket}
+            </Link>
+          )}
         </section>
 
         <p className="mt-6 font-mono text-[11px] text-[var(--faint)]">

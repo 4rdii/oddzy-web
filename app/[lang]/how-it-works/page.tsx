@@ -83,12 +83,16 @@ export default async function HowItWorksPage({
           >
             {t.cta.startTrading}
           </Link>
-          <a
-            href={`https://t.me/${brand.tgBot}`}
-            className="min-h-[50px] rounded-xl border border-[var(--line)] bg-[var(--btn)] px-6 py-3.5 font-semibold text-[var(--ink)]"
-          >
-            {t.cta.openTelegram}
-          </a>
+          {/* Oddzy is web-first: the web app is the only CTA. PolyBaaz keeps
+              its Telegram button as the second option. */}
+          {lang === "fa" ? (
+            <a
+              href={`https://t.me/${brand.tgBot}`}
+              className="min-h-[50px] rounded-xl border border-[var(--line)] bg-[var(--btn)] px-6 py-3.5 font-semibold text-[var(--ink)]"
+            >
+              {t.cta.openTelegram}
+            </a>
+          ) : null}
         </div>
       </div>
     </SiteChrome>

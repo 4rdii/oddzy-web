@@ -666,7 +666,8 @@ function LabelledPair({ row, sub, y }: { row: MatchRow; sub: string; y: number |
 
 
 /** «دقیقهٔ ۶۷» / «بین دو نیمه» / «پایان بازی» from Polymarket's period + clock. */
-export function periodLabel(l: MatchLive): string {
+export function periodLabel(l: MatchLive, lang: "fa" | "en" = "fa"): string {
+  if (lang === "en") return periodLabelEn(l);
   if (l.status === "ended") return "پایان بازی";
   const per = String(l.period ?? "").toUpperCase();
   if (per === "HT") return "بین دو نیمه";
@@ -677,4 +678,18 @@ export function periodLabel(l: MatchLive): string {
   if (per === "ET") return "وقت اضافه";
   if (per === "PEN") return "ضربات پنالتی";
   return "در جریان";
+}
+
+/** periodLabel in English: "67'", "Half-time", "1st half"… */
+function periodLabelEn(l: MatchLive): string {
+  if (l.status === "ended") return "Full time";
+  const per = String(l.period ?? "").toUpperCase();
+  if (per === "HT") return "Half-time";
+  const min = parseInt(String(l.elapsed ?? ""), 10);
+  if (Number.isFinite(min) && min > 0) return `${min}'`;
+  if (per === "1H") return "1st half";
+  if (per === "2H") return "2nd half";
+  if (per === "ET") return "Extra time";
+  if (per === "PEN") return "Penalties";
+  return "In play";
 }

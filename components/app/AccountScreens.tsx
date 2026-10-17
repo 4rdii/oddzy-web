@@ -1117,7 +1117,10 @@ function ReferralCard() {
   const [copied, setCopied] = useState(false);
   // Two links, one ref: the bot for Telegram users, the site for everyone else
   // (Instagram, WhatsApp, anyone without Telegram). Both credit the same referrer.
-  const [target, setTarget] = useState<"tg" | "web">("tg");
+  // Oddzy (en) is web-first, so its website link is the default and listed
+  // first; PolyBaaz (fa) keeps the bot link as the default.
+  const tabs = locale === "fa" ? (["tg", "web"] as const) : (["web", "tg"] as const);
+  const [target, setTarget] = useState<"tg" | "web">(tabs[0]);
   const w = t.app.wallet;
 
   useEffect(() => {
@@ -1169,7 +1172,7 @@ function ReferralCard() {
         role="tablist"
         className="mt-4 grid grid-cols-2 gap-1 rounded-xl border border-[var(--line)] bg-[var(--btn)] p-1"
       >
-        {(["tg", "web"] as const).map((k) => (
+        {tabs.map((k) => (
           <button
             key={k}
             type="button"

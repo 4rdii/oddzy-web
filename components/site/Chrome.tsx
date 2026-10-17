@@ -1,5 +1,6 @@
 import Image from "next/image";
 import { ActiveChipIntoView } from "@/components/site/ActiveChipIntoView";
+import { EnNav, type EnNavItem } from "@/components/site/EnNav";
 import Link from "next/link";
 import { ThemeToggle } from "./ThemeToggle";
 import { TelegramRedirect } from "./TelegramRedirect";
@@ -26,16 +27,35 @@ import type { Topic } from "@/lib/taxonomy";
 export async function SiteChrome({
   lang,
   active,
+  pb,
   children,
 }: {
   lang: Locale;
   /** PolyBaaz: the nav item to mark as the current page (its href, e.g. "/world"). */
   active?: string;
+  /**
+   * Oddzy pages built on the PolyBaaz design (the map home, /live, /big-games):
+   * the chrome takes the pb gold accent and page colour. No effect on FA, which
+   * is pb everywhere already.
+   */
+  pb?: boolean;
   children: React.ReactNode;
 }) {
   const brand = brandFor(lang);
   const t = getDict(lang);
   const fa = lang === "fa";
+  const pbChrome = fa || !!pb;
+
+  /** Oddzy's nav: politics and economy first, Sports last and secondary (see EnNav). */
+  const enNav: EnNavItem[] = [
+    { href: "/", label: t.nav.worldMap },
+    { href: "/topic/politics", label: t.nav.politics },
+    { href: "/topic/economy", label: t.nav.economy },
+    { href: "/topic/world", label: t.nav.war },
+    { href: "/baskets", label: t.nav.baskets },
+    { href: "/learn", label: t.nav.learn },
+    { href: "/live", label: t.nav.sports, secondary: true, also: ["/big-games", "/topic/football", "/match"] },
+  ];
 
   /**
    * PolyBaaz dates in the Jalali calendar (© ۱۴۰۵), so the footer year cannot be
@@ -66,7 +86,7 @@ export async function SiteChrome({
   return (
     <>
       <TelegramRedirect />
-      <div className="min-h-screen bg-[var(--page)]">
+      <div className="min-h-screen bg-[var(--page)]" data-pb-chrome={!fa && pb ? "" : undefined}>
         <header className="sticky top-0 z-40 border-b border-[var(--line)] bg-[color-mix(in_srgb,var(--page)_90%,transparent)] backdrop-blur-md">
           <div className="mx-auto flex max-w-5xl items-center justify-between gap-6 px-5 py-3.5">
             <Link href="/" className="flex items-center gap-2.5 text-[var(--ink)]">
@@ -94,20 +114,7 @@ export async function SiteChrome({
                 ))}
               </nav>
             ) : (
-              <nav
-                className="hidden items-center gap-6 sm:flex"
-                aria-label={t.nav.primary}
-              >
-                {/* Baskets sits first: it is the only nav item that leads to
-                    something buyable, and /basket is the crawlable editorial index
-                    rather than the noindex community feed — the right landing
-                    place for someone who has not chosen a basket yet. The feed and
-                    the builder are reached from there and from the home band. */}
-                <NavLink href="/baskets">{t.nav.baskets}</NavLink>
-                <NavLink href="/how-it-works">{t.nav.howItWorks}</NavLink>
-                <NavLink href="/learn">{t.nav.learn}</NavLink>
-                <NavLink href="/faq">{t.nav.faq}</NavLink>
-              </nav>
+              <EnNav items={enNav} label={t.nav.primary} />
             )}
 
             <div className="flex items-center gap-2">
@@ -119,7 +126,7 @@ export async function SiteChrome({
               <Link
                 href="/app"
                 className={
-                  fa
+                  pbChrome
                     ? "min-h-[38px] rounded-[12px] bg-[var(--accent)] px-3.5 py-2 text-[13px] font-bold text-[var(--accent-ink)]"
                     : "min-h-[38px] rounded-lg bg-[var(--ink)] px-3.5 py-2 text-[13px] font-semibold text-[var(--on-ink)]"
                 }
@@ -145,6 +152,7 @@ export async function SiteChrome({
           {fa && (
             <ActiveChipIntoView selector="nav[data-pb-chips]" />
           )}
+          {!fa && <EnNav items={enNav} label={t.nav.primary} chip />}
         </header>
 
         <main>{children}</main>
@@ -158,12 +166,13 @@ export async function SiteChrome({
               className="flex flex-wrap gap-x-5 gap-y-3"
               aria-label={t.nav.footerPrimary}
             >
+              {!fa && <NavLink href="/">{t.nav.worldMap}</NavLink>}
               <NavLink href="/how-it-works">{t.nav.howItWorks}</NavLink>
               <NavLink href="/learn">{t.nav.learn}</NavLink>
               <NavLink href="/updown">{t.nav.updown}</NavLink>
-              {lang === "fa" && <NavLink href="/big-games">بازی‌های بزرگ امروز</NavLink>}
-              {lang === "fa" && <NavLink href="/live">بازی‌های زنده</NavLink>}
-              {lang === "fa" && <NavLink href="/world">نقشهٔ جهان</NavLink>}
+              <NavLink href="/big-games">{fa ? "بازی‌های بزرگ امروز" : t.nav.bigGames}</NavLink>
+              <NavLink href="/live">{fa ? "بازی‌های زنده" : t.nav.liveGames}</NavLink>
+              {fa && <NavLink href="/world">نقشهٔ جهان</NavLink>}
               <NavLink href="/baskets">{t.nav.baskets}</NavLink>
               <NavLink href="/faq">{t.nav.faq}</NavLink>
               <NavLink href="/privacy">{t.nav.privacy}</NavLink>
@@ -190,6 +199,15 @@ export async function SiteChrome({
             )}
             <p className="mt-4 text-[13px] text-[var(--mute)]">
               © {year} {brand.name} · {t.footer.rights}
+              {/* Oddzy is web-first: the bot gets this one quiet line, nowhere else in the chrome. */}
+              {!fa && (
+                <>
+                  {" · "}
+                  <a href={`https://t.me/${brand.tgBot}`} className="text-[var(--mute)] hover:text-[var(--ink)]">
+                    {t.nav.alsoTelegram}
+                  </a>
+                </>
+              )}
             </p>
             <p className="mt-2 max-w-2xl text-[12px] leading-relaxed text-[var(--faint)]">
               {t.footer.risk}

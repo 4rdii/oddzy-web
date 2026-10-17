@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 import { getWorld } from "@/lib/api";
 import { toWorldView } from "@/lib/world";
 
@@ -8,11 +8,15 @@ import { toWorldView } from "@/lib/world";
  * client swaps it in without recomputing anything. The upstream fetch is
  * cached 60s and the response is CDN-cached for the same, so page traffic
  * never multiplies into API calls.
+ *
+ * `?lang=en` (Oddzy's map): English titles and the English news column.
+ * Anything else is the PolyBaaz (fa) view, as before.
  */
-export async function GET() {
-  const world = await getWorld(60);
+export async function GET(req: NextRequest) {
+  const lang = req.nextUrl.searchParams.get("lang") === "en" ? "en" : "fa";
+  const world = await getWorld(60, lang);
   if (!world) return NextResponse.json({ error: "upstream_unavailable" }, { status: 502 });
-  return NextResponse.json(toWorldView(world), {
+  return NextResponse.json(toWorldView(world, lang), {
     headers: { "Cache-Control": "public, s-maxage=60, stale-while-revalidate=120" },
   });
 }

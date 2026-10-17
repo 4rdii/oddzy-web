@@ -58,3 +58,18 @@ export function useNow(ms = 1000): number | null {
   const s = store(ms);
   return useSyncExternalStore(s.subscribe, s.get, serverSnapshot);
 }
+
+const subscribeNone = () => () => {};
+const localZone = () => Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
+const utcZone = () => "UTC";
+
+/**
+ * The zone to format clock times in: Tehran for PolyBaaz (the FA helpers
+ * hard-code it and ignore this), the viewer's own zone for Oddzy. The server
+ * and the hydration pass render UTC so the HTML matches; the client then
+ * re-renders once in the local zone.
+ */
+export function useTimeZone(lang: "fa" | "en"): string {
+  const tz = useSyncExternalStore(subscribeNone, localZone, utcZone);
+  return lang === "fa" ? "Asia/Tehran" : tz;
+}

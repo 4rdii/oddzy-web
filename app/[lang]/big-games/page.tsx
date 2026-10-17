@@ -3,11 +3,14 @@ import { notFound } from "next/navigation";
 import { SiteChrome } from "@/components/site/Chrome";
 import { WhalesPb } from "@/components/pb/WhalesPb";
 import { getWhalesToday } from "@/lib/api";
+import { getDict } from "@/lib/dict";
 import { isLocale } from "@/lib/i18n";
-import { faDay } from "@/lib/pb";
+import { dayOf, faDay } from "@/lib/pb";
 
 /**
- * «بازی‌های بزرگ امروز» — PolyBaaz only (design: PB Big Games Whales).
+ * «بازی‌های بزرگ امروز» / "Today's big games" (design: PB Big Games Whales).
+ * Both brands: fa on PolyBaaz (RTL, Tehran time), en on Oddzy (LTR, the
+ * viewer's own zone — the client re-formats the date and times after hydration).
  *
  * ISR window: 30 minutes, matched by the whales fetch (a route regenerates at
  * the LOWEST revalidate of any fetch it makes) — ~48 billed writes a day.
@@ -18,30 +21,40 @@ import { faDay } from "@/lib/pb";
 export const revalidate = 1800;
 
 export async function generateStaticParams() {
-  return [{ lang: "fa" }];
+  return [{ lang: "fa" }, { lang: "en" }];
 }
 
 type Params = { params: Promise<{ lang: string }> };
 
 export async function generateMetadata(props: Params): Promise<Metadata> {
   const { lang } = await props.params;
-  if (lang !== "fa") return {};
+  if (!isLocale(lang)) return {};
+  const t = getDict(lang).whales;
   return {
-    title: "بازی‌های بزرگ امروز و پیش‌بینی نهنگ‌ها",
-    description:
-      "پرمعامله‌ترین بازی‌های امروز و بزرگ‌ترین پیش‌بینی‌هایی که نهنگ‌ها پیش از شروع بازی ثبت کرده‌اند، با امتیاز سابقهٔ واقعی هر کدام و مقایسه با شانسی که بازار می‌دهد.",
+    title: t.metaTitle,
+    description: t.metaDescription,
     alternates: { canonical: "/big-games" },
   };
 }
 
 export default async function BigGamesPage(props: Params) {
   const { lang } = await props.params;
-  // Persian-only page: the design, copy and audience are PolyBaaz's.
-  if (!isLocale(lang) || lang !== "fa") notFound();
-  const data = await getWhalesToday(revalidate);
+  if (!isLocale(lang)) notFound();
+  // "Today" is Tehran's day on PolyBaaz; Oddzy has no single home zone, so UTC.
+  const data = await getWhalesToday(revalidate, lang === "fa" ? "Asia/Tehran" : "UTC");
+  const iso = new Date().toISOString();
   return (
-    <SiteChrome lang={lang}>
-      <WhalesPb games={data?.games ?? []} finished={data?.finished ?? []} sports={data?.sports ?? []} generatedAt={data?.generated_at ?? null} dateLabel={faDay(new Date().toISOString())} />
+    <SiteChrome lang={lang} pb>
+      <WhalesPb
+        games={data?.games ?? []}
+        finished={data?.finished ?? []}
+        sports={data?.sports ?? []}
+        generatedAt={data?.generated_at ?? null}
+        dateLabel={lang === "fa" ? faDay(iso) : dayOf("en", iso, "UTC")}
+        dateIso={iso}
+        lang={lang}
+        t={getDict(lang).whales}
+      />
     </SiteChrome>
   );
 }

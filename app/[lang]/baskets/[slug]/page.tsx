@@ -326,9 +326,11 @@ export default async function BasketPage(props: Params) {
             {!isRecord && (
               <BasketCtas
                 slug={slug}
-                tgBot={brand.tgBot}
+                // Oddzy is web-first: web button only. PolyBaaz keeps the
+                // secondary Telegram link.
+                tgBot={lang === "fa" ? brand.tgBot : undefined}
                 webLabel={t.basket.cta}
-                tgLabel={t.basket.ctaTelegram}
+                tgLabel={lang === "fa" ? t.basket.ctaTelegram : undefined}
               />
             )}
 
