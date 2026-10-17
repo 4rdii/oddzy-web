@@ -201,7 +201,8 @@ export const SUB_SECTION: Record<string, SecKey> = {
   "yemen-red-sea": "war", turkey: "war", "pakistan-afghanistan": "war", ukraine: "war", "nato-russia": "war",
   "china-taiwan": "war", venezuela: "war", "world-conflicts": "war",
   politics: "pol", midterms: "pol", "midterms-balance": "pol", "midterms-gop-seats": "pol", "midterms-house": "pol",
-  "midterms-senate": "pol", trump: "pol", "global-elections": "pol",
+  "midterms-senate": "pol", "midterms-races": "pol", trump: "pol", "global-elections": "pol", europe: "pol",
+  "latin-america": "pol", "asia-pacific": "pol", canada: "pol", africa: "war", "economy-central-banks": "eco",
   economy: "eco", "economy-fed": "eco", "economy-inflation": "eco", "economy-oil": "eco", "economy-tradewar": "eco",
   "economy-stocks": "eco", "economy-spx": "eco", "economy-gold": "eco", "economy-ipo": "eco",
 };

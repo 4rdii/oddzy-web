@@ -13,7 +13,6 @@ import {
   getTopics,
   getDesk,
 } from "@/lib/api";
-import { SUB_SECTION } from "@/lib/od";
 import { OdSectionScreen, OdSubtopicScreen, isSectionSlug } from "@/components/od/OdTopicScreens";
 import { findPath } from "@/lib/taxonomy";
 import { publishedTopicSlugs } from "@/lib/topic-slugs";
@@ -165,7 +164,9 @@ export default async function TopicPage(props: Params) {
   // oddzy.xyz: Politics / Economy / War & Geopolitics and their desks are the
   // redesign's section hubs and subtopic pages, built on /desk. A desk the
   // feed has no live markets for falls through to the classic topic page.
-  if (lang === "en" && SUB_SECTION[slug]) {
+  // Any topic /desk files under a section qualifies, so a desk added to the
+  // bot's sources.json gets the new page with no change here.
+  if (lang === "en") {
     const desk = await getDesk(revalidate);
     if (desk && isSectionSlug(slug)) return <OdSectionScreen desk={desk} slug={slug} />;
     if (desk?.subs.some((x) => x.slug === slug)) return <OdSubtopicScreen desk={desk} slug={slug} />;
@@ -530,3 +531,4 @@ export default async function TopicPage(props: Params) {
     </SiteChrome>
   );
 }
+
