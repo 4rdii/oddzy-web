@@ -1,7 +1,7 @@
 import "server-only";
 
 import type { FamView } from "@/components/od/parts";
-import { ago, codes, marketUrl, sparkPath, type Desk, type DeskMarket, type DeskNews, type OdRow, type SecKey } from "./od";
+import { ago, codes, marketUrl, pct, sparkPath, type Desk, type DeskMarket, type DeskNews, type OdRow, type SecKey } from "./od";
 
 /**
  * View-model builders over GET /desk, shared by the oddzy.xyz home, section
@@ -121,6 +121,8 @@ export function newsItems(ix: DeskIndex, now: number, filter?: (n: DeskNews, ms:
 
 export type Lead = {
   head: string;
+  /** True when `head` is news[0]'s headline; false when it was written from the odds. */
+  headIsStory: boolean;
   /** Section and subtopic names for the kicker. */
   secName: string;
   subName: string;
@@ -153,24 +155,81 @@ export function pickLead(ix: DeskIndex, now: number, where: { sec?: SecKey; sub?
   cands.sort((a, b) => b.vol - a.vol);
   if (!cands.length) return null;
 
+  // A story heads the lead only when its HEADLINE is about the market: the
+  // wire's links are loose (a Brazil deforestation story linked to "Will
+  // Trump meet Bolsonaro?" through one word of its summary, 2026-10-17).
+  const topicOf = (c: Cand) => {
+    const ms = c.ids.map((id) => ix.byId.get(id)).filter((m): m is DeskMarket => !!m);
+    const f = c.fam ? ix.desk.families.find((x) => x.key === c.fam) : null;
+    return topicWords([f?.title ?? "", ...ms.map((m) => m.title)].join(" "), countryWords);
+  };
+  const countryWords = countryWordSet(ix);
+  const storiesFor = (c: Cand) => {
+    const words = topicOf(c);
+    return [...new Set(c.ids.flatMap((id) => linked.get(id) ?? []))]
+      .filter((n) => shared(topicWords(n.titleFa, countryWords), words) >= 2)
+      .sort((x, y) => y.publishedAt.localeCompare(x.publishedAt));
+  };
   // Prefer a story the wire covers, among the 40 biggest; a quiet day falls back to the biggest.
-  const withNews = cands.slice(0, 40).find((c) => c.ids.some((id) => linked.has(id)));
-  const c = withNews ?? cands[0];
+  let c = cands[0];
+  let stories: DeskNews[] = [];
+  for (const x of cands.slice(0, 40)) {
+    const st = storiesFor(x);
+    if (st.length) {
+      c = x;
+      stories = st;
+      break;
+    }
+  }
   const ms = c.ids.map((id) => ix.byId.get(id)!).filter(Boolean);
   const key = [...ms].sort((a, b) => b.vol24h - a.vol24h)[0];
-  const stories = [...new Set(c.ids.flatMap((id) => linked.get(id) ?? []))].sort((a, b) => b.publishedAt.localeCompare(a.publishedAt));
   const fam = c.fam ? famView(ix, c.fam) : null;
   const sec = ix.desk.sections.find((s) => s.key === key.sec);
   const ids = [...new Set(ms.flatMap((m) => m.countryIds))];
   return {
-    head: stories[0]?.titleFa ?? key.title,
+    head: stories[0]?.titleFa ?? marketHeadline(fam, key),
+    headIsStory: stories.length > 0,
     secName: sec?.name ?? "",
     subName: ix.subName(key.sub),
     fam,
     key: { ...mini(key), tot: key.volTotal, spark: key.spark },
-    news: stories.slice(0, 2).map((n, i) => ({ src: n.source, ago: ago(n.publishedAt, now), q: n.titleFa, k: `${i}` })),
+    news: stories.slice(0, 3).map((n, i) => ({ src: n.source, ago: ago(n.publishedAt, now), q: n.titleFa, k: `${i}` })),
     ids,
   };
+}
+
+/** The lead's headline from its own odds, when no story is about it. */
+function marketHeadline(fam: FamView | null, key: DeskMarket): string {
+  const q = (s: string) => s.replace(/\?$/, "");
+  if (fam?.t === "race") {
+    const [a] = [...fam.stops].sort((x, y) => y.p - x.p);
+    return `${q(fam.title)} — traders make ${a.lab} the favourite at ${pct(a.p)}%.`;
+  }
+  return `${q(key.title)}? Traders say ${pct(key.yes)}%.`;
+}
+
+const STOP = new Set(
+  "will the and for with from that this have has had its into over after before by of in on at to a an or be is are was were as than then what which who when where how not no yes end out up new says said say amid against between during under about more most less least first last next year month week day today key sees looms".split(" "),
+);
+const LEADERS = ["trump", "putin", "zelensky", "zelenskyy", "netanyahu", "khamenei", "erdogan", "modi", "xi", "jinping", "maduro", "macron", "starmer", "merz", "vance", "rubio", "us", "u.s"];
+function countryWordSet(ix: DeskIndex): Set<string> {
+  return new Set([...ix.desk.countries.flatMap((c) => c.en.toLowerCase().split(/\s+/)), ...LEADERS]);
+}
+/** Topic words: no stopwords, numbers, months, countries or leaders (they say where, not what). */
+function topicWords(s: string, countries: Set<string>): Set<string> {
+  return new Set(
+    s
+      .toLowerCase()
+      .replace(/[^a-z0-9\s-]/g, " ")
+      .split(/[\s-]+/)
+      .map((w) => w.replace(/ies$/, "y").replace(/s$/, ""))
+      .filter((w) => w.length >= 3 && !/^\d+$/.test(w) && !STOP.has(w) && !countries.has(w) && !/^(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)/.test(w)),
+  );
+}
+function shared(a: Set<string>, b: Set<string>): number {
+  let n = 0;
+  for (const w of a) if (b.has(w)) n++;
+  return n;
 }
 
 /** Daily dates for a spark that ends today. */

@@ -181,9 +181,9 @@ export function OdHome({
             <h2 className="serif" style={{ margin: 0, fontWeight: 500, fontSize: "clamp(28px,2.6vw,38px)", lineHeight: 1.1, letterSpacing: "-.012em", textWrap: "pretty" }}>
               {lead.head}
             </h2>
-            {lead.news.length > 1 && (
+            {lead.news.length > (lead.headIsStory ? 1 : 0) && (
               <div style={{ display: "grid", gap: 6 }}>
-                {lead.news.slice(1).map((n) => (
+                {lead.news.slice(lead.headIsStory ? 1 : 0).map((n) => (
                   <span key={n.k} style={{ display: "flex", gap: 10, fontSize: 13.5, lineHeight: 1.4, color: "var(--od-ink2)" }}>
                     <span className="mono" style={{ flex: "none", fontWeight: 600, fontSize: 11, lineHeight: 1.6, color: "var(--od-ink3)", width: 80 }}>
                       {n.src}

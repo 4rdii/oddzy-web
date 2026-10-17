@@ -102,9 +102,9 @@ export async function OdSectionScreen({ desk, slug }: { desk: Desk; slug: string
               <h2 className="serif" style={{ margin: 0, fontWeight: 500, fontSize: "clamp(28px,3vw,42px)", lineHeight: 1.08, letterSpacing: "-.012em", textWrap: "pretty", maxWidth: "22ch" }}>
                 {lead.head}
               </h2>
-              {lead.news.length > 1 && (
+              {lead.news.length > (lead.headIsStory ? 1 : 0) && (
                 <div style={{ display: "grid", gap: 6 }}>
-                  {lead.news.slice(1).map((n) => (
+                  {lead.news.slice(lead.headIsStory ? 1 : 0).map((n) => (
                     <div key={n.k} style={{ display: "flex", gap: 10, fontSize: 13.5, lineHeight: 1.4, color: "var(--od-ink2)" }}>
                       <span className="mono" style={{ flex: "none", width: 84, fontWeight: 600, fontSize: 11, lineHeight: 1.6, color: "var(--od-ink3)" }}>
                         {n.src}
