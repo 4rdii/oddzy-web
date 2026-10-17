@@ -60,13 +60,23 @@ export async function generateMetadata({
       template: `%s · ${brand.name}`,
     },
     description: t.home.metaDescription,
+    // Per-brand icons and share card. The app shipped with the create-next-app
+    // favicon (the Vercel triangle) on both sites and no og:image at all.
+    icons: {
+      icon: [
+        { url: `/brand/${lang}/icon-32.png`, sizes: "32x32", type: "image/png" },
+        { url: `/brand/${lang}/icon-192.png`, sizes: "192x192", type: "image/png" },
+      ],
+      apple: [{ url: `/brand/${lang}/apple-touch-icon.png`, sizes: "180x180" }],
+    },
     openGraph: {
       type: "website",
       siteName: brand.name,
       url: brand.siteUrl,
       locale: lang === "fa" ? "fa_IR" : "en_US",
+      images: [{ url: `/brand/${lang}/og.png`, width: 1200, height: 630, alt: brand.name }],
     },
-    twitter: { card: "summary_large_image" },
+    twitter: { card: "summary_large_image", images: [`/brand/${lang}/og.png`] },
     robots: { index: true, follow: true },
     alternates: { canonical: brand.siteUrl },
     // Search Console ownership. Per-brand because they are separate properties
