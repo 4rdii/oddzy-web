@@ -1,7 +1,7 @@
 import Image from "next/image";
 import { ActiveChipIntoView } from "@/components/site/ActiveChipIntoView";
-import { EnNav, type EnNavItem } from "@/components/site/EnNav";
 import Link from "next/link";
+import { OdChrome } from "@/components/od/OdChrome";
 import { ThemeToggle } from "./ThemeToggle";
 import { TelegramRedirect } from "./TelegramRedirect";
 import { brandFor, type Locale } from "@/lib/i18n";
@@ -28,6 +28,7 @@ export async function SiteChrome({
   lang,
   active,
   pb,
+  od,
   children,
 }: {
   lang: Locale;
@@ -39,23 +40,14 @@ export async function SiteChrome({
    * is pb everywhere already.
    */
   pb?: boolean;
+  /** Oddzy: the nav item to mark when the path alone can't tell (a market page → its section). */
+  od?: string;
   children: React.ReactNode;
 }) {
   const brand = brandFor(lang);
   const t = getDict(lang);
   const fa = lang === "fa";
   const pbChrome = fa || !!pb;
-
-  /** Oddzy's nav: politics and economy first, Sports last and secondary (see EnNav). */
-  const enNav: EnNavItem[] = [
-    { href: "/", label: t.nav.worldMap },
-    { href: "/topic/politics", label: t.nav.politics },
-    { href: "/topic/economy", label: t.nav.economy },
-    { href: "/topic/world", label: t.nav.war },
-    { href: "/baskets", label: t.nav.baskets },
-    { href: "/learn", label: t.nav.learn },
-    { href: "/live", label: t.nav.sports, secondary: true, also: ["/big-games", "/topic/football", "/match"] },
-  ];
 
   /**
    * PolyBaaz dates in the Jalali calendar (© ۱۴۰۵), so the footer year cannot be
@@ -82,6 +74,18 @@ export async function SiteChrome({
   const topics = flattenTopics(tree)
     .filter((x) => published.has(x.id))
     .slice(0, FOOTER_TOPIC_LIMIT);
+
+  // Oddzy: the redesign's chrome (OdChrome) on every English page.
+  if (!fa) {
+    return (
+      <>
+        <TelegramRedirect />
+        <OdChrome active={od} topics={topics.map((x) => ({ id: x.id, name: x.name }))}>
+          {children}
+        </OdChrome>
+      </>
+    );
+  }
 
   return (
     <>
@@ -113,9 +117,7 @@ export async function SiteChrome({
                   </PbNavLink>
                 ))}
               </nav>
-            ) : (
-              <EnNav items={enNav} label={t.nav.primary} />
-            )}
+            ) : null}
 
             <div className="flex items-center gap-2">
               <ThemeToggle labels={t.theme} />
@@ -152,7 +154,6 @@ export async function SiteChrome({
           {fa && (
             <ActiveChipIntoView selector="nav[data-pb-chips]" />
           )}
-          {!fa && <EnNav items={enNav} label={t.nav.primary} chip />}
         </header>
 
         <main>{children}</main>

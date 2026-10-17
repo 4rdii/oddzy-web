@@ -10,7 +10,7 @@ import { fa, faDay, faMoney, faTime, nowMs, tehranDate } from "@/lib/pb";
 import { localized } from "@/lib/format";
 import { brandFor, isLocale } from "@/lib/i18n";
 import { getDict } from "@/lib/dict";
-import { WorldScreen } from "./world/WorldScreen";
+import { OdHomeScreen } from "@/components/od/OdHomeScreen";
 
 export async function generateMetadata({
   params,
@@ -60,7 +60,7 @@ export default async function HomePage({
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(orgJsonLd) }} />
-      <WorldScreen lang={lang} revalidate={revalidate} />
+      <OdHomeScreen revalidate={revalidate} />
     </>
   );
 }

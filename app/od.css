@@ -1,0 +1,585 @@
+/*
+ * Oddzy (oddzy.xyz) redesign — tokens and layout. Design: "Oddzy Redesign"
+ * (Claude Design). Everything is scoped under .od and prefixed --od-/od- so
+ * neither PolyBaaz (.pb) nor the older English pages see any of it.
+ *
+ * Dark is the resting theme (ThemeScript defaults English to "night");
+ * [data-theme="day"] is the design's light theme.
+ */
+
+.od {
+  --od-bg: #0a0d0c;
+  --od-panel: #111614;
+  --od-panel2: #18201d;
+  --od-line: rgba(233, 239, 235, 0.12);
+  --od-line2: rgba(233, 239, 235, 0.06);
+  --od-ink: #e9efeb;
+  --od-ink2: #a9b4ae;
+  --od-ink3: #7c8882;
+  --od-up: #3ddc97;
+  --od-down: #ff6b6b;
+  --od-brand: #22c58b;
+  --od-brandInk: #04150e;
+  --od-accent: #f5b84a;
+  --od-wire: #050706;
+  --od-wireInk: #cfd8d3;
+  --od-chip: rgba(233, 239, 235, 0.07);
+  --od-upBg: rgba(61, 220, 151, 0.13);
+  --od-downBg: rgba(255, 107, 107, 0.13);
+  --od-glass: rgba(17, 22, 20, 0.86);
+  --od-serif: var(--font-newsreader), Georgia, serif;
+  --od-sans: var(--font-schibsted), system-ui, sans-serif;
+  --od-mono: var(--font-jbmono), ui-monospace, monospace;
+
+  background: var(--od-bg);
+  color: var(--od-ink);
+  font-family: var(--od-sans);
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+  /* The extension hero's globe bleeds past the column on purpose. */
+  overflow-x: clip;
+}
+:root[data-theme="day"] .od {
+  --od-bg: #f3f1ea;
+  --od-panel: #fbfaf6;
+  --od-panel2: #ebe8de;
+  --od-line: rgba(18, 22, 20, 0.13);
+  --od-line2: rgba(18, 22, 20, 0.07);
+  --od-ink: #121614;
+  --od-ink2: #434c46;
+  --od-ink3: #626b65;
+  --od-up: #0a8a57;
+  --od-down: #c42f3c;
+  --od-brand: #14b37d;
+  --od-brandInk: #04150e;
+  --od-accent: #9a6512;
+  --od-wire: #121614;
+  --od-wireInk: #e9efeb;
+  --od-chip: rgba(18, 22, 20, 0.06);
+  --od-upBg: rgba(10, 138, 87, 0.11);
+  --od-downBg: rgba(196, 47, 60, 0.1);
+  --od-glass: rgba(251, 250, 246, 0.86);
+}
+:root[data-locale="en"] body:has(.od) {
+  background: var(--od-bg, #0a0d0c);
+}
+:root[data-locale="en"][data-theme="day"] body:has(.od) {
+  background: #f3f1ea;
+}
+.od a {
+  color: inherit;
+  text-decoration: none;
+}
+.od a:hover {
+  color: var(--od-brand);
+}
+.od button {
+  font-family: inherit;
+}
+.od .noscroll {
+  scrollbar-width: none;
+}
+.od .noscroll::-webkit-scrollbar {
+  display: none;
+}
+.od summary::-webkit-details-marker {
+  display: none;
+}
+.od details[open] summary .od-plus {
+  transform: rotate(45deg);
+}
+.od .od-plus {
+  transition: transform 0.15s;
+}
+
+/* Type. */
+.od .serif {
+  font-family: var(--od-serif);
+}
+.od .mono {
+  font-family: var(--od-mono);
+}
+.od .kicker {
+  font: 600 11px/1.2 var(--od-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--od-ink3);
+}
+.od .meta {
+  font: 500 11px var(--od-mono);
+  color: var(--od-ink3);
+}
+.od .sechead {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+  border-top: 3px solid var(--od-ink);
+  padding-top: 14px;
+}
+.od .sechead h2 {
+  margin: 0;
+  font: 500 28px/1.1 var(--od-serif);
+}
+.od .clamp2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.od-main {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 0 clamp(16px, 3vw, 32px);
+}
+
+@keyframes odtick {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+@keyframes odpulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.25;
+  }
+}
+@keyframes odskel {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* ---------------------------------------------------------------- header */
+.od-header {
+  position: sticky;
+  top: 0;
+  z-index: 60;
+  background: var(--od-bg);
+  border-bottom: 1px solid var(--od-line);
+}
+.od-wire {
+  background: var(--od-wire);
+  color: var(--od-wireInk);
+  display: flex;
+  align-items: center;
+  height: 30px;
+  font: 500 11.5px/1 var(--od-mono);
+  overflow: hidden;
+}
+.od-wire-tape {
+  display: flex;
+  width: max-content;
+  height: 100%;
+  animation: odtick 90s linear infinite;
+}
+.od-wire-tape:hover {
+  animation-play-state: paused;
+}
+@media (prefers-reduced-motion: reduce) {
+  .od-wire-tape {
+    animation: none;
+  }
+}
+.od-wire .od-traded {
+  display: none;
+}
+@media (min-width: 1100px) {
+  .od-wire .od-traded {
+    display: inline;
+  }
+}
+.od-bar {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 0 clamp(16px, 3vw, 32px);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  column-gap: 24px;
+  min-height: 60px;
+}
+.od-nav {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex: 1 1 100%;
+  order: 3;
+  overflow-x: auto;
+  margin-inline: -8px;
+  min-width: 0;
+}
+.od-nav a {
+  flex: none;
+  padding: 0 10px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  font-size: 14.5px;
+  font-weight: 500;
+  color: var(--od-ink2);
+  white-space: nowrap;
+}
+.od-nav a[aria-current="page"] {
+  font-weight: 700;
+  color: var(--od-ink);
+  box-shadow: inset 0 -2px 0 var(--od-brand);
+}
+.od-nav a.sec {
+  font-size: 13px;
+  color: var(--od-ink3);
+}
+.od-nav .div {
+  width: 1px;
+  height: 18px;
+  background: var(--od-line);
+  margin-inline: 8px;
+  flex: none;
+}
+@media (min-width: 900px) {
+  .od-nav {
+    flex: 1 1 0;
+    order: 1;
+  }
+  .od-nav a {
+    height: 60px;
+  }
+}
+
+/* ---------------------------------------------------------------- home */
+.od-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: clamp(16px, 2vw, 28px);
+  padding: 24px 0 8px;
+  align-items: start;
+}
+.od-globebox {
+  position: relative;
+  height: 420px;
+  border-radius: 18px;
+  border: 1px solid var(--od-line);
+  background: radial-gradient(120% 90% at 50% 45%, var(--od-panel) 0%, var(--od-bg) 75%);
+  overflow: hidden;
+}
+.od-card-overlay {
+  display: none;
+}
+.od-legend {
+  display: none;
+}
+.od-movers-list {
+  display: grid;
+  gap: 8px;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(272px, 1fr);
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+.od-lower {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: clamp(20px, 3vw, 40px);
+  padding-top: 40px;
+  align-items: start;
+}
+.od-wire-row {
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr);
+  gap: 6px 16px;
+  padding: 16px 12px;
+  margin-inline: -12px;
+  border-bottom: 1px solid var(--od-line2);
+  border-radius: 10px;
+}
+.od-wire-row .od-pill {
+  grid-column: 2;
+}
+.od-ext-band {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+}
+@media (min-width: 760px) {
+  .od-hero {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr);
+  }
+  .od-hero .od-movers {
+    grid-column: 1 / -1;
+  }
+  .od-globebox {
+    height: 600px;
+  }
+  .od-lower {
+    grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  }
+  .od-wire-row {
+    grid-template-columns: 44px minmax(0, 1fr);
+  }
+}
+@media (min-width: 980px) {
+  .od-ext-band {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr);
+  }
+}
+@media (min-width: 1240px) {
+  .od-hero {
+    grid-template-columns: minmax(0, 390px) minmax(0, 1fr) minmax(0, 300px);
+  }
+  .od-hero .od-movers {
+    grid-column: auto;
+  }
+  .od-globebox {
+    height: 640px;
+  }
+  .od-card-overlay {
+    display: block;
+  }
+  .od-card-below {
+    display: none;
+  }
+  .od-legend {
+    display: flex;
+  }
+  .od-movers-list {
+    grid-auto-flow: row;
+    grid-auto-columns: auto;
+    overflow-x: visible;
+  }
+  .od-lower {
+    grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr);
+  }
+  .od-wire-row {
+    grid-template-columns: 48px minmax(0, 1fr) minmax(0, 240px);
+  }
+  .od-wire-row .od-pill {
+    grid-column: auto;
+  }
+}
+
+/* ---------------------------------------------------------------- section / subtopic */
+.od-lead {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: clamp(20px, 3vw, 40px);
+  padding-top: 28px;
+  align-items: start;
+}
+.od-fam2 {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+  align-items: stretch;
+}
+.od-low {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: clamp(20px, 3vw, 40px);
+  padding-top: 48px;
+  align-items: start;
+}
+.od-sub-top {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: clamp(20px, 3vw, 40px);
+  padding: 28px 0 0;
+  align-items: stretch;
+}
+.od-sub-map {
+  min-height: 300px;
+}
+.od-sub-mid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: clamp(20px, 3vw, 40px);
+  padding-top: 40px;
+  align-items: start;
+}
+@media (min-width: 760px) {
+  .od-sub-map {
+    min-height: 380px;
+  }
+}
+@media (min-width: 900px) {
+  .od-fam2 {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+}
+@media (min-width: 1100px) {
+  .od-sub-top {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 560px);
+  }
+  .od-sub-map {
+    min-height: 420px;
+  }
+  .od-sub-mid {
+    grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+  }
+}
+@media (min-width: 1180px) {
+  .od-lead {
+    grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+  }
+  .od-low {
+    grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr);
+  }
+}
+
+/* The question table: one column + YES on a phone, the full row from 760px. */
+.od-qrow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 56px;
+  gap: 12px;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--od-line2);
+}
+.od-qrow.head {
+  padding: 8px 0;
+  border-bottom: 1px solid var(--od-line);
+  font: 600 10.5px var(--od-mono);
+  letter-spacing: 0.06em;
+  color: var(--od-ink3);
+}
+.od-qrow .desk {
+  display: none;
+}
+.od-qrow .mob {
+  display: block;
+}
+@media (min-width: 760px) {
+  .od-qrow {
+    grid-template-columns: minmax(0, 1fr) 64px 56px 44px 64px 76px 68px;
+  }
+  .od-qrow .desk {
+    display: flex;
+    justify-content: flex-end;
+  }
+  .od-qrow .mob {
+    display: none;
+  }
+}
+
+/* ---------------------------------------------------------------- question */
+.od-q {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: clamp(20px, 3vw, 44px);
+  padding-top: 14px;
+  align-items: start;
+}
+.od-q-side {
+  display: none;
+}
+.od-q-bar {
+  position: fixed;
+  inset-inline: 0;
+  bottom: 0;
+  z-index: 50;
+  background: var(--od-glass);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-top: 1px solid var(--od-line);
+  padding: 10px 16px calc(10px + env(safe-area-inset-bottom));
+  display: grid;
+  grid-template-columns: 1fr 1fr 1.3fr;
+  gap: 8px;
+}
+.od-q-pad {
+  padding-bottom: 90px;
+}
+.od-q-news {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 4px 16px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--od-line2);
+}
+@media (min-width: 760px) {
+  .od-q-news {
+    grid-template-columns: 130px minmax(0, 1fr);
+  }
+}
+@media (min-width: 980px) {
+  .od-q {
+    grid-template-columns: minmax(0, 1fr) 360px;
+  }
+  .od-q-side {
+    display: grid;
+  }
+  .od-q-bar {
+    display: none;
+  }
+  .od-q-pad {
+    padding-bottom: 0;
+  }
+}
+
+/* ---------------------------------------------------------------- extension */
+.od-ext-hero {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: clamp(24px, 4vw, 56px);
+  align-items: center;
+  padding: clamp(28px, 5vw, 64px) 0 clamp(28px, 4vw, 48px);
+}
+.od-ext-2 {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: clamp(20px, 3vw, 40px);
+  padding-top: 56px;
+  align-items: start;
+}
+.od-ext-cta {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 24px;
+  align-items: center;
+}
+@media (min-width: 900px) {
+  .od-ext-2 {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 2.2fr);
+  }
+  .od-ext-cta {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+}
+@media (min-width: 1100px) {
+  .od-ext-hero {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr);
+  }
+}
+.od-install-desk {
+  display: grid;
+}
+.od-install-mob {
+  display: none;
+}
+@media (max-width: 759px) {
+  .od-install-desk {
+    display: none;
+  }
+  .od-install-mob {
+    display: grid;
+  }
+}
+@media (hover: none) and (pointer: coarse) {
+  .od-install-desk {
+    display: none;
+  }
+  .od-install-mob {
+    display: grid;
+  }
+}

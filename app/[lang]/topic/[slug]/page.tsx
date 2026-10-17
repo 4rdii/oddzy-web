@@ -11,7 +11,10 @@ import {
   getQuestionSeriesIndex,
   getSportsHubs,
   getTopics,
+  getDesk,
 } from "@/lib/api";
+import { SUB_SECTION } from "@/lib/od";
+import { OdSectionScreen, OdSubtopicScreen, isSectionSlug } from "@/components/od/OdTopicScreens";
 import { findPath } from "@/lib/taxonomy";
 import { publishedTopicSlugs } from "@/lib/topic-slugs";
 import { isLocale, LOCALES } from "@/lib/i18n";
@@ -158,6 +161,15 @@ export default async function TopicPage(props: Params) {
 
   const topic = findPath(await getTopics(), slug)?.at(-1);
   if (!topic) return <NoMarket lang={lang} />;
+
+  // oddzy.xyz: Politics / Economy / War & Geopolitics and their desks are the
+  // redesign's section hubs and subtopic pages, built on /desk. A desk the
+  // feed has no live markets for falls through to the classic topic page.
+  if (lang === "en" && SUB_SECTION[slug]) {
+    const desk = await getDesk(revalidate);
+    if (desk && isSectionSlug(slug)) return <OdSectionScreen desk={desk} slug={slug} />;
+    if (desk?.subs.some((x) => x.slug === slug)) return <OdSubtopicScreen desk={desk} slug={slug} />;
+  }
 
   const t = getDict(lang);
   const name = localized(lang, topic.name, topic.name_fa);

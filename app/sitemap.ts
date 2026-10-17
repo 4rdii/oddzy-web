@@ -114,6 +114,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${siteUrl}/learn`, priority: 0.9 },
     { url: `${siteUrl}/faq`, priority: 0.7 },
     { url: `${siteUrl}/privacy`, priority: 0.3 },
+    // Market Finder's pitch page exists on oddzy.xyz only.
+    ...(locale === "en" ? [{ url: `${siteUrl}/extension`, priority: 0.7 }] : []),
     // Listed even though its contents expire every 15 minutes: the PAGE is
     // permanent and describes a standing product, the way a topic hub outlives
     // the markets under it. The windows themselves are never listed.

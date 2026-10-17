@@ -9,6 +9,8 @@ import { getDict } from "@/lib/dict";
 import { compactUsd, deadlineDate, localized, pct } from "@/lib/format";
 import { PriceHistory } from "@/components/site/PriceHistory";
 import { RelatedGuides } from "@/components/site/RelatedGuides";
+import { OdQuestionScreen } from "@/components/od/OdQuestionScreen";
+import { SUB_SECTION } from "@/lib/od";
 
 /**
  * One market, as a public page.
@@ -160,6 +162,16 @@ export default async function MarketPage(props: Params) {
     },
     inLanguage: brand.htmlLang,
   };
+
+  if (lang === "en") {
+    const sec = market.category ? SUB_SECTION[market.category.id] : undefined;
+    return (
+      <SiteChrome lang={lang} od={sec}>
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+        <OdQuestionScreen market={market} history={history} series={series} slug={slug} />
+      </SiteChrome>
+    );
+  }
 
   return (
     <SiteChrome lang={lang}>

@@ -2,6 +2,7 @@ import "server-only";
 
 import type { Topic } from "./taxonomy";
 import type { WorldApi } from "./world";
+import type { Desk } from "./od";
 
 /**
  * Server-side client for the Oddzy market-data API (app.oddzy.xyz/api).
@@ -1007,6 +1008,34 @@ export async function getWorld(revalidate = 60, lang: "fa" | "en" = "fa"): Promi
     return await get<WorldApi>(lang === "en" ? "/world?lang=en" : "/world", revalidate, [WORLD_TAG]);
   } catch (e) {
     console.error("getWorld", e);
+    return null;
+  }
+}
+
+// ---------------------------------------------------------------- desk (oddzy.xyz)
+
+export const DESK_TAG = "desk";
+
+/**
+ * The oddzy.xyz newsroom (GET /desk): Politics, Economy and War & Geopolitics
+ * with their subtopics, every live market in them with a 30-day sparkline,
+ * the families they form, and /world's countries and English wire.
+ *
+ * ~700KB, cached upstream 5 min. `revalidate` must be at least the caller's
+ * own ISR window (see the note on getMarkets).
+ *
+ * Local development only: ODDZY_DESK_FIXTURE=<path> serves that file instead.
+ */
+export async function getDesk(revalidate = 300): Promise<Desk | null> {
+  const fixture = process.env.ODDZY_DESK_FIXTURE;
+  if (fixture) {
+    const { readFile } = await import("node:fs/promises");
+    return JSON.parse(await readFile(/* turbopackIgnore: true */ fixture, "utf8")) as Desk;
+  }
+  try {
+    return await get<Desk>("/desk", revalidate, [DESK_TAG]);
+  } catch (e) {
+    console.error("getDesk", e);
     return null;
   }
 }

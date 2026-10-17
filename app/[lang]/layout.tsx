@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { Space_Grotesk, IBM_Plex_Mono, Vazirmatn } from "next/font/google";
+import { Space_Grotesk, IBM_Plex_Mono, Vazirmatn, Newsreader, Schibsted_Grotesk, JetBrains_Mono } from "next/font/google";
 import "../globals.css";
+import "../od.css";
 import { ThemeScript } from "@/components/ThemeScript";
 import { SiteAnalytics } from "@/components/SiteAnalytics";
 import { brandFor, isLocale, LOCALES } from "@/lib/i18n";
@@ -36,6 +37,29 @@ const vazirmatn = Vazirmatn({
   subsets: ["arabic", "latin"],
   // 900: the PolyBaaz redesign's figures and headings (handoff: Vazirmatn 400–900).
   weight: ["400", "500", "600", "700", "800", "900"],
+  display: "swap",
+});
+
+/**
+ * Oddzy's redesign (app/od.css): Newsreader headlines, Schibsted Grotesk
+ * text, JetBrains Mono figures. English only.
+ */
+const newsreader = Newsreader({
+  variable: "--font-newsreader",
+  subsets: ["latin"],
+  weight: ["400", "500", "600"],
+  display: "swap",
+});
+const schibsted = Schibsted_Grotesk({
+  variable: "--font-schibsted",
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800"],
+  display: "swap",
+});
+const jbMono = JetBrains_Mono({
+  variable: "--font-jbmono",
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
   display: "swap",
 });
 
@@ -105,17 +129,20 @@ export default async function LangLayout({
   const fontVars =
     lang === "fa"
       ? vazirmatn.variable
-      : `${grotesk.variable} ${plexMono.variable}`;
+      : `${grotesk.variable} ${plexMono.variable} ${newsreader.variable} ${schibsted.variable} ${jbMono.variable}`;
 
   return (
     <html
       lang={brand.htmlLang}
       dir={brand.dir}
       data-locale={lang}
+      // ThemeScript stamps data-theme before hydration.
+      suppressHydrationWarning
       className={`${fontVars} h-full`}
     >
       <head>
-        <ThemeScript defaultTheme={lang === "fa" ? "night" : undefined} />
+        {/* Both brands rest on dark: PolyBaaz always has, and the Oddzy redesign is dark-first. */}
+        <ThemeScript defaultTheme="night" />
       </head>
       <body className="min-h-full">
         {children}
