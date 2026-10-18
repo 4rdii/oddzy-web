@@ -6,6 +6,7 @@ import type { GlobeC, Lead, MiniMarket, NewsItem } from "@/lib/desk";
 import { agoShort, chg, chgBg, chgCol, fmtV, pct, type SecKey } from "@/lib/od";
 import { OdGlobe, type OdGlobeHandle } from "./OdGlobe";
 import { BrowserMock, InstallCta, type FinderRow } from "./OdExtension";
+import { PolyStrip } from "./parts";
 import type { GlobeCountry } from "./odGlobe";
 
 /**
@@ -156,7 +157,7 @@ export function OdHome({
             [
               [totals.vol, "24h volume"],
               [String(totals.countries), "countries"],
-              [totals.markets, "live markets"],
+              [totals.markets, "live Polymarket markets"],
             ] as const
           ).map(([v, k]) => (
             <span key={k} style={{ whiteSpace: "nowrap" }}>
@@ -168,6 +169,8 @@ export function OdHome({
           ))}
         </div>
       </div>
+
+      <PolyStrip />
 
       <section aria-label="Today" className="od-hero">
         {lead && (

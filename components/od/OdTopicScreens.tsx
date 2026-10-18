@@ -7,7 +7,7 @@ import { nowMs } from "@/lib/pb";
 import { OdChart } from "./OdChart";
 import { OdMiniGlobe } from "./OdMiniGlobe";
 import { OdTable } from "./OdTable";
-import { OdFamily, SecHead, Spark, TradeBtn } from "./parts";
+import { OdFamily, PolyBadge, SecHead, Spark, TradeBtn } from "./parts";
 import type { GlobeCountry } from "./odGlobe";
 
 /**
@@ -73,11 +73,12 @@ export async function OdSectionScreen({ desk, slug }: { desk: Desk; slug: string
                 {S.name}
               </h1>
               <p style={{ margin: 0, fontSize: 17, lineHeight: 1.5, color: "var(--od-ink2)", textWrap: "pretty" }}>{S.dek}</p>
+              <PolyBadge label="Live Polymarket markets · trade directly on Polymarket" style={{ justifySelf: "start" }} />
             </div>
             <div style={{ display: "flex", gap: 28 }}>
               {(
                 [
-                  [String(S.markets), "live markets"],
+                  [String(S.markets), "Polymarket markets"],
                   [fmtV(S.vol24h), "24h volume"],
                   [String(cv.size), "countries"],
                 ] as const
@@ -375,6 +376,7 @@ export async function OdSubtopicScreen({ desk, slug }: { desk: Desk; slug: strin
               {T.name}
             </h1>
             <p style={{ margin: 0, fontSize: 17, lineHeight: 1.5, color: "var(--od-ink2)", maxWidth: "52ch" }}>{dek}</p>
+            <PolyBadge label="Live Polymarket markets · trade directly on Polymarket" style={{ justifySelf: "start" }} />
             <div style={{ display: "grid", gridTemplateColumns: "repeat(4,minmax(0,1fr))", gap: 1, background: "var(--od-line)", border: "1px solid var(--od-line)", borderRadius: 12, overflow: "hidden", marginTop: 6 }}>
               {stats.map(([k, v, col]) => (
                 <div key={k} style={{ display: "grid", gap: 3, padding: "12px 14px", background: "var(--od-panel)", minWidth: 0 }}>

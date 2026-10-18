@@ -166,3 +166,48 @@ export function appTradeUrl(slug: string, side?: "yes" | "no", amount?: number):
   if (amount) q.set("amount", String(amount));
   return `/app?${q}`;
 }
+
+/**
+ * Says plainly what Oddzy is: every market is a live Polymarket market, and
+ * trades are placed on Polymarket from the user's own wallet. The redesign
+ * shipped without it anywhere but the footer's fine print (2026-10-18).
+ */
+export function PolyBadge({ label = "Live on Polymarket", style }: { label?: string; style?: React.CSSProperties }) {
+  return (
+    <span
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 6,
+        height: 26,
+        padding: "0 10px",
+        borderRadius: 999,
+        border: "1px solid var(--od-line)",
+        background: "var(--od-chip)",
+        fontSize: 12,
+        fontWeight: 700,
+        color: "var(--od-ink2)",
+        whiteSpace: "nowrap",
+        ...style,
+      }}
+    >
+      <span aria-hidden style={{ width: 7, height: 7, borderRadius: "50%", background: "#2e5cff" }} />
+      {label}
+    </span>
+  );
+}
+
+export function PolyStrip() {
+  return (
+    <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "8px 12px", padding: "12px 0", borderBottom: "1px solid var(--od-line2)", fontSize: 13.5, lineHeight: 1.45, color: "var(--od-ink2)" }}>
+      <PolyBadge />
+      <span>
+        Every market here is a live <b style={{ color: "var(--od-ink)" }}>Polymarket</b> market. Your trades are placed directly on Polymarket from your own
+        wallet — Oddzy never holds your funds.{" "}
+        <a href="/how-it-works" style={{ color: "var(--od-brand)", fontWeight: 700 }}>
+          How it works →
+        </a>
+      </span>
+    </div>
+  );
+}

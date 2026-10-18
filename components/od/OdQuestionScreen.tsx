@@ -3,7 +3,7 @@ import type { Market, PricePoint, QuestionSeries } from "@/lib/api";
 import { chg, chgCol, fmtV, marketUrl, pct, SEC_SLUG, SUB_SECTION, word } from "@/lib/od";
 import { OdChart } from "./OdChart";
 import { CountryChips, InTheNews, RelatedProvider, RelatedQuestions, TradeBox } from "./OdQuestionParts";
-import { OdFamily, type FamView } from "./parts";
+import { OdFamily, PolyBadge, type FamView } from "./parts";
 
 /**
  * oddzy.xyz question page (design: "Oddzy Question"): the question, its odds
@@ -98,7 +98,10 @@ export function OdQuestionScreen({ market, history, series, slug }: { market: Ma
               <h1 className="serif" style={{ margin: 0, fontWeight: 500, fontSize: "clamp(30px,4vw,52px)", lineHeight: 1.05, letterSpacing: "-.02em", textWrap: "pretty" }}>
                 {market.title}
               </h1>
-              <CountryChips />
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
+                <PolyBadge label="Polymarket market" />
+                <CountryChips />
+              </div>
             </div>
             {resolved ? (
               <div style={{ padding: 18, borderRadius: 16, border: "1px solid var(--od-line)", background: "var(--od-panel)", display: "grid", gap: 6 }}>
@@ -147,7 +150,7 @@ export function OdQuestionScreen({ market, history, series, slug }: { market: Ma
                 </p>
               )}
               <a href={market.url} rel="nofollow noopener" target="_blank" style={{ fontSize: 12.5, color: "var(--od-ink3)" }}>
-                Source market on Polymarket ↗
+                View this market on Polymarket ↗
               </a>
             </div>
             <InTheNews />

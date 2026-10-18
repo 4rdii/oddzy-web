@@ -71,7 +71,7 @@ export default async function ExtensionPage({ params }: { params: Promise<{ lang
               You read the news. Oddzy tells you what the market thinks will happen next.
             </h1>
             <p style={{ margin: 0, fontSize: 18, lineHeight: 1.5, color: "var(--od-ink2)", maxWidth: "46ch" }}>
-              Click Market Finder on any news article and see the Oddzy markets that answer it, with live odds.
+              Click Market Finder on any news article and see the Polymarket markets that answer it, with live odds.
             </p>
             <InstallCta howHref="#how" />
           </div>

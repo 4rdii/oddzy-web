@@ -195,7 +195,7 @@ export function TradeBox({ slug, yes }: { slug: string; yes: number }) {
           Trade {sideName} on Oddzy →
         </Link>
         <span style={{ fontSize: 12, lineHeight: 1.5, color: "var(--od-ink3)" }}>
-          Opens this market in the Oddzy web app. Prices come from Polymarket and can move before you confirm. Price shown is the latest midpoint.
+          Your order is placed directly on Polymarket, from your own wallet, in the Oddzy web app. Oddzy never holds your funds. Prices are Polymarket’s and can move before you confirm.
         </span>
       </aside>
       <div className="od-q-bar">

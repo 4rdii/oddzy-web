@@ -49,7 +49,7 @@ export function OdWire() {
         <span style={{ whiteSpace: "nowrap", minWidth: 62 }}>{clock ? `${clock} UTC` : ""}</span>
         {data && (
           <span className="od-traded" style={{ color: "#8d9993", whiteSpace: "nowrap" }}>
-            {data.traded} traded · 24h
+            {data.traded} traded on Polymarket · 24h
           </span>
         )}
       </div>
