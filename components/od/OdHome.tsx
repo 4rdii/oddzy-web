@@ -63,6 +63,10 @@ export function OdHome({
   const [hover, setHover] = useState<string | null>(null);
   const [sel, setSel] = useState<string | null>(null);
   const [openNews, setOpenNews] = useState<string | null>(null);
+  // The card opens on the biggest country so the globe never looks empty, but
+  // once someone closes it, it stays closed until they pick a country again —
+  // it used to fall straight back to Iran with no way to dismiss it.
+  const [dismissed, setDismissed] = useState(false);
   const [phone, setPhone] = useState(false);
   const globe = useRef<OdGlobeHandle>(null);
   const box = useRef<HTMLDivElement>(null);
@@ -108,7 +112,7 @@ export function OdHome({
   };
 
   const N = openNews ? news.find((n) => n.k === openNews) ?? null : null;
-  const cid = sel ?? hover ?? (byId.has("364") ? "364" : sorted[0]?.id);
+  const cid = sel ?? hover ?? (dismissed ? undefined : byId.has("364") ? "364" : sorted[0]?.id);
   const c = cid ? byId.get(cid) : undefined;
   const focus = N ? N.ids.filter((id) => byId.has(id)) : sel && c ? [sel, ...c.links.slice(0, 5)] : [];
 
@@ -137,7 +141,10 @@ export function OdHome({
       link={c.url ?? undefined}
       linkLabel={`All ${c.name} markets →`}
       hint={sel ? "" : phone ? "Tap a country to pin it" : "Hover a country · click to pin"}
-      onClose={sel ? () => setSel(null) : undefined}
+      onClose={() => {
+        setSel(null);
+        setDismissed(true);
+      }}
     />
   ) : null;
 
