@@ -11,14 +11,14 @@
   "dependencies": {
     "@mdx-js/loader": "^3.1.1",
     "@mdx-js/react": "^3.1.1",
-    "@next/mdx": "^16.2.11",
+    "@next/mdx": "^16.4.2",
     "@privy-io/react-auth": "^3.35.2",
     "@types/mdx": "^2.0.14",
     "@vercel/analytics": "^2.0.1",
     "d3": "7.9.0",
     "github-slugger": "^2.0.0",
     "gray-matter": "^4.0.3",
-    "next": "16.2.11",
+    "next": "^16.4.2",
     "qrcode": "^1.5.4",
     "react": "19.2.4",
     "react-dom": "19.2.4",
@@ -26,6 +26,7 @@
     "remark-frontmatter": "^5.0.0",
     "remark-gfm": "^4.0.1",
     "server-only": "^0.0.1",
+    "sharp": "^0.35.5",
     "topojson-client": "3.1.0"
   },
   "devDependencies": {
@@ -38,7 +39,7 @@
     "@types/topojson-client": "^3.1.5",
     "@types/topojson-specification": "^1.0.5",
     "eslint": "^9",
-    "eslint-config-next": "16.2.11",
+    "eslint-config-next": "^16.4.2",
     "tailwindcss": "^4",
     "typescript": "^5"
   }
