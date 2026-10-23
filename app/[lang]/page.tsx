@@ -73,6 +73,8 @@ async function PolybaazHome() {
   const brand = brandFor("fa");
   const CATS: [string, string, string][] = [
     ["football", "فوتبال", "var(--gold)"],
+    // NBA games, lines and futures (topic "nba" includes its children).
+    ["nba", "بسکتبال", "#e07a2e"],
     ["iran", "ایران", "var(--up)"],
     ["economy", "اقتصاد", "var(--blue)"],
     ["crypto", "کریپتو", "var(--home)"],
