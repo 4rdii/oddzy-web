@@ -183,7 +183,9 @@ export default async function MatchPage(props: Params) {
     const opts = options;
     const sideOf = (i: number) => {
       const o = opts.filter((x) => x.label !== "Draw")[i];
-      const team = i === 0 ? board.teams?.home : board.teams?.away;
+      // Match the crest by name: US leagues title "Away vs Home", so option order isn't home/away.
+      const teams = [board.teams?.home, board.teams?.away];
+      const team = teams.find((t) => t && o?.label && t.name.toLowerCase() === o.label.toLowerCase()) ?? teams[i];
       const name = o?.label_fa ?? team?.name_fa ?? o?.label ?? team?.name ?? null;
       return name ? { name, logo: team?.logo ?? null } : null;
     };

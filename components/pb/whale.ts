@@ -112,3 +112,10 @@ export function enSideNames(g: Pick<WhaleGame, "result" | "teams">): Partial<Rec
   const by = new Map((g.result?.sides ?? []).map((s) => [s.key, s.label]));
   return { home: by.get("home") ?? g.teams?.home?.name, away: by.get("away") ?? g.teams?.away?.name };
 }
+
+/** The crest for a side, matched by team name: US leagues list "Away vs Home", so index order can't be trusted. */
+export function sideLogo(g: Pick<WhaleGame, "result" | "teams">, key: "home" | "away"): string | null {
+  const name = enSideNames(g)[key]?.toLowerCase();
+  const teams = [g.teams?.home, g.teams?.away];
+  return (teams.find((t) => t && t.name.toLowerCase() === name) ?? g.teams?.[key])?.logo ?? null;
+}

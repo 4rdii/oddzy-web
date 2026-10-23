@@ -6,7 +6,7 @@ import type { MatchLive, SideKey, WhaleBet, WhaleGame, WhaleSport } from "@/lib/
 import { Crest } from "@/components/pb/Crest";
 import { useNow, useTimeZone } from "@/components/pb/useNow";
 import { Avatar, ScoreRing } from "@/components/pb/ScoreRing";
-import { betLabel, enSideNames, entryPct, sideNames, sideOutcome, tagOf, tierOf, whaleName } from "@/components/pb/whale";
+import { betLabel, enSideNames, entryPct, sideLogo, sideNames, sideOutcome, tagOf, tierOf, whaleName } from "@/components/pb/whale";
 import { agoOf, dayOf, money, num, pc, pctOf, probPct, SIDE_COLOR, timeOf, type PbLang } from "@/lib/pb";
 import type { Dict } from "@/lib/dict/en";
 
@@ -341,10 +341,10 @@ function GameCard({
               {g.starts_at ? ` · ${fill(t.kickoff, { time: timeOf(lang, g.starts_at, tz) })}` : ""}
             </div>
             <Link href={href} style={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: 8, fontSize: 19, fontWeight: 800, color: "var(--text)", lineHeight: 1.45 }}>
-              <Crest name={names.home} src={g.teams?.home?.logo} size={26} />
+              <Crest name={names.home} src={sideLogo(g, "home")} size={26} />
               <span>{names.home}</span>
               <span style={{ color: "var(--faint)", fontWeight: 400, fontSize: 15 }}>{t.vs}</span>
-              <Crest name={names.away} src={g.teams?.away?.logo} size={26} />
+              <Crest name={names.away} src={sideLogo(g, "away")} size={26} />
               <span>{names.away}</span>
             </Link>
           </div>
