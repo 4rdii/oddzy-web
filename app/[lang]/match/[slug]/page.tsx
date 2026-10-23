@@ -76,9 +76,16 @@ function boardGroups(lang: Locale, t: Dict, board: EventBoard): BoardGroup[] {
   // A fight's result is ONE market whose YES is the first-named fighter, so
   // its row reads "<fighter> 43% / <fighter> 57%", not "Yes / No".
   const h2h = board.result?.type === "head_to_head" ? board.result.options : null;
+  // Basketball counts points, not goals; and its "other" bucket is almost all
+  // player lines (points / rebounds / assists).
+  const nba = board.event.topic?.id?.startsWith("nba") ?? false;
+  const NBA_LABELS: Record<string, { fa: string; en: string }> = {
+    total: { fa: "امتیازها", en: "Points" },
+    other: { fa: "بازیکنان و سایر", en: "Players & more" },
+  };
   return board.groups.map((g) => ({
     key: g.key,
-    label: t.match.groups[g.key] ?? g.label,
+    label: (nba && NBA_LABELS[g.key]?.[lang === "fa" ? "fa" : "en"]) || (t.match.groups[g.key] ?? g.label),
     markets: g.markets.map((m) => {
       // "Norway vs. Denmark: O/U 2.5" → "O/U 2.5": the page already says which
       // match. The FA title's prefix is spelled several ways, so it is cut at

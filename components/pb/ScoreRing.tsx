@@ -37,7 +37,7 @@ const PROXIED = /^https:\/\/polymarket-upload\.s3\.us-east-2\.amazonaws\.com\//;
 export function Avatar({ name, src: raw, size = 22 }: { name: string; src: string | null; size?: number }) {
   // Only hosts next.config allows can go through the optimizer; anything else
   // gets the generated avatar rather than a hotlink.
-  const src = raw && PROXIED.test(raw) ? `/_next/image?url=${encodeURIComponent(raw)}&w=64&q=75` : null;
+  const src = raw && PROXIED.test(raw) ? `/api/img?u=${encodeURIComponent(raw)}` : null;
   let h = 0;
   for (const c of name) h = (h * 31 + c.charCodeAt(0)) % 360;
   return (

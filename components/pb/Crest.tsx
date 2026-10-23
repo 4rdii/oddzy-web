@@ -1,15 +1,14 @@
 "use client";
 
-import Image from "next/image";
 import { useState } from "react";
 import { hueOf } from "@/lib/pb";
 
 /**
  * Team or league logo, with a monogram fallback (PbCrest in the handoff).
  *
- * `src` is Polymarket's logo URL; next/image fetches it once server-side and
- * serves it from our own domain (see images.remotePatterns), so an Iranian
- * visitor never has to reach a foreign image host. No `src`, or a failed load,
+ * `src` is Polymarket's logo URL, served through /api/img: from our own domain
+ * (an Iranian visitor never has to reach a foreign image host), CDN-cached,
+ * and outside Vercel's image-optimizer quota, which ran out on 2026-10-23. No `src`, or a failed load,
  * falls back to the first letter on a colour hashed from the name.
  */
 export function Crest({ name, src, size = 24 }: { name: string; src?: string | null; size?: number }) {
@@ -18,12 +17,14 @@ export function Crest({ name, src, size = 24 }: { name: string; src?: string | n
   if (src && !failed) {
     return (
       <span style={{ ...box, display: "inline-flex", position: "relative" }}>
-        <Image
-          src={src}
+        {/* eslint-disable-next-line @next/next/no-img-element -- /api/img is the optimizer substitute */}
+        <img
+          src={`/api/img?u=${encodeURIComponent(src)}`}
           alt=""
           width={size}
           height={size}
-          sizes={`${size}px`}
+          loading="lazy"
+          decoding="async"
           onError={() => setFailed(true)}
           style={{ width: "100%", height: "100%", objectFit: "contain" }}
         />
