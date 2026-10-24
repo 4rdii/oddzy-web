@@ -114,7 +114,9 @@ export default async function BasketPage(props: Params) {
    * Gating on `settled` alone would show a buy button on a dead basket.
    */
   const isRecord = basket.archived || settled;
-  const decidedLegs = basket.legs.filter((l) => legState(l) !== "pending");
+  // A void leg was refunded, not called — it counts on neither side of "X of N".
+  const decidedLegs = basket.legs.filter((l) => legState(l) === "won" || legState(l) === "lost");
+  const allDone = basket.legs.every((l) => legState(l) !== "pending");
   const wonLegs = basket.legs.filter((l) => legState(l) === "won").length;
 
   // Per-leg colours for the weight bar, in the handoff's order.
@@ -272,7 +274,7 @@ export default async function BasketPage(props: Params) {
                     .replace("{n}", String(decidedLegs.length))}
                 </p>
                 <p className="mt-3 text-[13px] leading-relaxed text-[var(--mute)]">
-                  {decidedLegs.length === basket.legs.length
+                  {allDone
                     ? t.basket.settled
                     : t.basket.resultPending}
                 </p>
