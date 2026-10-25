@@ -1,7 +1,7 @@
 "use client";
 
 import { forwardRef, useEffect, useImperativeHandle, useRef } from "react";
-import type { GlobeCountry, OdGlobeEngine } from "./odGlobe";
+import type { GlobeCountry, GlobePin, OdGlobeEngine } from "./odGlobe";
 
 export type OdGlobeHandle = { zoomBy: (k: number) => void };
 
@@ -19,15 +19,19 @@ export const OdGlobe = forwardRef<
     focus?: string[];
     mini?: boolean;
     zoom?: number;
+    /** OSINT pins; null/absent = layer off. */
+    pins?: GlobePin[] | null;
+    pin?: string | null;
     onHover?: (id: string | null) => void;
     onSelect?: (id: string | null) => void;
+    onPin?: (id: string) => void;
   }
->(function OdGlobe({ countries, metric = "vol", region = "all", focus = [], mini = false, zoom = 1, onHover, onSelect }, ref) {
+>(function OdGlobe({ countries, metric = "vol", region = "all", focus = [], mini = false, zoom = 1, pins = null, pin = null, onHover, onSelect, onPin }, ref) {
   const host = useRef<HTMLDivElement>(null);
   const eng = useRef<OdGlobeEngine | null>(null);
-  const cb = useRef({ onHover, onSelect });
-  cb.current = { onHover, onSelect };
-  const props = { metric, region, focus, mini, zoom };
+  const cb = useRef({ onHover, onSelect, onPin });
+  cb.current = { onHover, onSelect, onPin };
+  const props = { metric, region, focus, mini, zoom, pins, pin };
   const propsRef = useRef(props);
   propsRef.current = props;
 
@@ -38,7 +42,7 @@ export const OdGlobe = forwardRef<
     import("./odGlobe").then(({ OdGlobeEngine }) => {
       if (dead || !host.current) return;
       eng.current = new OdGlobeEngine(host.current, propsRef.current, countries, (type, id) =>
-        type === "hover" ? cb.current.onHover?.(id) : cb.current.onSelect?.(id),
+        type === "hover" ? cb.current.onHover?.(id) : type === "pin" ? id && cb.current.onPin?.(id) : cb.current.onSelect?.(id),
       );
     });
     return () => {
@@ -57,7 +61,7 @@ export const OdGlobe = forwardRef<
   const focusKey = focus.join(",");
   useEffect(() => {
     eng.current?.update(propsRef.current);
-  }, [metric, region, focusKey, mini, zoom]);
+  }, [metric, region, focusKey, mini, zoom, pins, pin]);
 
   return <div ref={host} aria-hidden style={{ position: "absolute", inset: 0 }} />;
 });

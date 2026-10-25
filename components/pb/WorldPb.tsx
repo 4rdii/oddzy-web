@@ -6,7 +6,7 @@ import { useNow, useTimeZone } from "@/components/pb/useNow";
 import type { Globe, GlobeState } from "@/components/pb/worldGlobe";
 import type { Dict } from "@/lib/dict/en";
 import { agoOf, dayMonthOf, num, pctOf, probWordOf, type PbLang } from "@/lib/pb";
-import { REGIONS, REG_SET, wVol, wVolS, type RegionKey, type WC, type WM, type WN, type WorldView } from "@/lib/world";
+import { PIN_RGB, REGIONS, REG_SET, wVol, wVolS, type RegionKey, type WC, type WE, type WM, type WN, type WorldView } from "@/lib/world";
 
 /**
  * PB World Map — «نقشهٔ جهان» (design: PB World Map.html; handoff
@@ -184,6 +184,65 @@ function NewsDetail({
   );
 }
 
+/** An OSINT pin's card: what, where, how many sources, and the markets it bears on. */
+function EventDetail({
+  e,
+  now,
+  view,
+  byKey,
+  onClose,
+  onCountry,
+  l,
+}: {
+  e: WE;
+  now: number;
+  view: WorldView;
+  byKey: Map<string, WC>;
+  onClose: () => void;
+  onCountry: (ev: MouseEvent, key: string) => void;
+  l: L;
+}) {
+  const { lang, t } = l;
+  const cs = e.ids.filter((k) => byKey.has(k));
+  const where = cs.length ? cs.map((k) => byKey.get(k)!.name).join(t.listSep) : e.place;
+  return (
+    <>
+      <div className="p-top">
+        <div className="p-name">
+          <small>
+            <i style={{ display: "inline-block", width: 8, height: 8, borderRadius: 8, marginInlineEnd: 6, background: `rgb(${PIN_RGB[e.kind]})` }} />
+            {t.osintKinds[e.kind]}
+            {e.n > 1 ? ` · ${fill(t.osintSources, { n: num(lang, e.n) })}` : ""}
+            {e.at ? ` · ${agoOf(lang, e.at, now)}` : ""}
+          </small>
+          <h2 style={{ fontSize: 19, lineHeight: lang === "fa" ? 1.65 : 1.35, fontWeight: 800 }}>
+            {lang === "fa" || !e.q ? `${t.osintKinds[e.kind]} · ${where}` : e.q}
+          </h2>
+        </div>
+        <button className="pin" aria-label={t.close} onClick={onClose}>✕</button>
+      </div>
+      {/* Headlines are English (GDELT / USGS / GDACS); on PolyBaaz they sit under the Persian heading. */}
+      {lang === "fa" && e.q && <p dir="ltr" style={{ margin: 0, fontSize: 13, lineHeight: 1.6, color: "var(--text2)", textAlign: "left" }}>{e.q}</p>}
+      <p dir="auto" style={{ margin: 0, fontSize: 12, color: "var(--faint)" }}>{e.place}</p>
+      {cs.length > 0 && (
+        <div className="chips">
+          {cs.map((k) => <button key={k} data-c={k} onClick={(ev) => onCountry(ev, k)}>{byKey.get(k)!.name}</button>)}
+        </div>
+      )}
+      {e.mk.length > 0 ? (
+        <div>
+          <div className="sec">{t.relatedTitle} <span>{fill(e.mk.length === 1 ? t.nMarket1 : t.nMarkets, { n: num(lang, e.mk.length) })}</span></div>
+          {e.mk.map((i) => <MarketRow key={view.markets[i].slug} m={view.markets[i]} self={e.ids} byKey={byKey} l={l} />)}
+        </div>
+      ) : (
+        <p style={{ margin: 0, fontSize: 12.5, color: "var(--text2)" }}>{t.osintNoMarkets}</p>
+      )}
+      <a href={e.url} target="_blank" rel="noopener nofollow" style={{ fontSize: 12.5, fontWeight: 700 }}>{fill(t.osintReadSource, { s: e.src })}</a>
+      <p style={{ margin: 0, fontSize: 11, lineHeight: 1.7, color: "var(--faint)" }}>{t.osintNote}</p>
+    </>
+  );
+}
+
 function NewsFeed({
   view,
   byKey,
@@ -258,6 +317,14 @@ export function WorldPb({ initial, renderedAt, lang = "fa", t }: { initial: Worl
   const [region, setRegionK] = useState<RegionKey>("all");
   const [selKey, setSelKey] = useState<string | null>(null);
   const [newsId, setNewsId] = useState<string | null>(null);
+  const [pinId, setPinId] = useState<string | null>(null);
+  // The OSINT layer: on by default, the reader's choice remembered per device.
+  const [osintOn, setOsintOn] = useState(true);
+  useEffect(() => {
+    // Read after hydration (localStorage is client-only); setState here only syncs a stored preference.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (localStorage.getItem("pb-osint") === "0") setOsintOn(false);
+  }, []);
   const [previewKey, setPreviewKey] = useState<string | null>(() => (initial.countries.find((c) => c.geo === "364") ?? initial.countries[0])?.key ?? null);
   const [showAll, setShowAll] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -269,6 +336,7 @@ export function WorldPb({ initial, renderedAt, lang = "fa", t }: { initial: Worl
   const preview = previewKey ? byKey.get(previewKey) ?? null : null;
   // A refresh can drop the open story; the panel then falls back to the country.
   const story = newsId ? view.news.find((n) => n.id === newsId) ?? null : null;
+  const event = pinId && osintOn ? view.events.find((e) => e.id === pinId) ?? null : null;
   const metricVal = useCallback((c: WC) => (metric === "vol" ? c.v : c.r), [metric]);
   const ranked = useMemo(() => [...view.countries].sort((a, b) => metricVal(b) - metricVal(a)), [view, metricVal]);
 
@@ -276,17 +344,19 @@ export function WorldPb({ initial, renderedAt, lang = "fa", t }: { initial: Worl
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const tipRef = useRef<HTMLDivElement>(null);
   const globeRef = useRef<Globe | null>(null);
-  const storyIds = story?.ids ?? null;
-  const stateRef = useRef<GlobeState>({ metric, region, sel, news: storyIds });
+  const storyIds = story?.ids ?? event?.ids ?? null;
+  const pins = osintOn ? view.events : null;
+  const stateRef = useRef<GlobeState>({ metric, region, sel, news: storyIds, pins, pin: event?.id ?? null });
   const viewRef = useRef(view);
   useEffect(() => {
-    stateRef.current = { metric, region, sel, news: storyIds };
-  }, [metric, region, sel, storyIds]);
+    stateRef.current = { metric, region, sel, news: storyIds, pins, pin: event?.id ?? null };
+  }, [metric, region, sel, storyIds, pins, event]);
 
   const sheetOpenedAt = useRef(0);
   const select = useCallback((c: WC | null, fly = true) => {
     setSelKey(c?.key ?? null);
     setNewsId(null);
+    setPinId(null);
     if (c) setPreviewKey(c.key);
     if (c && fly) globeRef.current?.flyToCountry(c);
     if (c && isPhone()) {
@@ -305,6 +375,7 @@ export function WorldPb({ initial, renderedAt, lang = "fa", t }: { initial: Worl
   // A story takes over the panel (or the sheet on phone); the globe fits its countries.
   const openNews = useCallback((n: WN) => {
     setNewsId(n.id);
+    setPinId(null);
     setSelKey(null);
     globeRef.current?.flyToNews(n.ids);
     if (isPhone()) {
@@ -314,6 +385,31 @@ export function WorldPb({ initial, renderedAt, lang = "fa", t }: { initial: Worl
       window.scrollTo({ top: wrapRef.current!.getBoundingClientRect().top + scrollY - 70, behavior: "smooth" });
     }
   }, []);
+  // A pin works like a story: it takes the panel (or the sheet) and the globe flies to it.
+  const openPin = useCallback((e: WE) => {
+    setPinId(e.id);
+    setNewsId(null);
+    setSelKey(null);
+    globeRef.current?.flyToPin(e);
+    if (isPhone()) {
+      sheetOpenedAt.current = performance.now();
+      setSheetOpen(true);
+    }
+  }, []);
+  const openPinRef = useRef(openPin);
+  useEffect(() => {
+    openPinRef.current = openPin;
+  }, [openPin]);
+  const toggleOsint = () => {
+    const next = !osintOn;
+    setOsintOn(next);
+    if (!next) setPinId(null);
+    try {
+      localStorage.setItem("pb-osint", next ? "1" : "0");
+    } catch {
+      /* private mode */
+    }
+  };
   // The globe calls back from its own event handlers; keep it pointed at the latest closures.
   const selectRef = useRef(select);
   const byKeyRef = useRef(byKey);
@@ -340,6 +436,8 @@ export function WorldPb({ initial, renderedAt, lang = "fa", t }: { initial: Worl
               if (c && !stateRef.current.sel && !stateRef.current.news) setPreviewKey(c.key);
             },
             onTap: (c, fly) => selectRef.current(c, fly),
+            onPin: (e) => openPinRef.current(e),
+            pinLabel: (e) => `${t.osintKinds[e.kind]}${e.q ? ` · ${e.q}` : ` · ${e.place}`}`,
             lang,
             labels: { tipVol: t.tipVol, tipRisk: t.tipRisk, tipMarkets: t.tipMarkets, tipMarket1: t.tipMarket1, tipPin: t.tipPin },
           },
@@ -430,8 +528,10 @@ export function WorldPb({ initial, renderedAt, lang = "fa", t }: { initial: Worl
   const mcol = metric === "vol" ? "var(--gold)" : "var(--down)";
   const movers = view.movers.map((i) => view.markets[i]);
   const updated = view.asOf ? agoOf(lang, view.asOf, now ?? renderedAt) : "—";
-  const storyEl = story && (
-    <NewsDetail n={story} now={now ?? renderedAt} view={view} byKey={byKey} onClose={() => select(null, false)} onCountry={pickCountry} l={l} />
+  const storyEl = event ? (
+    <EventDetail e={event} now={now ?? renderedAt} view={view} byKey={byKey} onClose={() => select(null, false)} onCountry={pickCountry} l={l} />
+  ) : (
+    story && <NewsDetail n={story} now={now ?? renderedAt} view={view} byKey={byKey} onClose={() => select(null, false)} onCountry={pickCountry} l={l} />
   );
 
   return (
@@ -496,6 +596,15 @@ export function WorldPb({ initial, renderedAt, lang = "fa", t }: { initial: Worl
                   </button>
                 ))}
               </div>
+              <button
+                className={`osint-btn${osintOn ? " on" : ""}`}
+                aria-pressed={osintOn}
+                aria-label={t.osintBtnAria}
+                title={t.osintBtnAria}
+                onClick={toggleOsint}
+              >
+                📍 {t.osintBtn}{osintOn && view.events.length > 0 ? ` · ${num(lang, view.events.length)}` : ""}
+              </button>
               <div className="regions">
                 {REGIONS.map(({ k }) => (
                   <button key={k} data-r={k} className={region === k ? "on" : undefined} onClick={() => setRegion(k)}>{t.regions[k]}</button>

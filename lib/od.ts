@@ -81,6 +81,9 @@ export type DeskNews = {
   marketIds: string[];
 };
 
+/** An OSINT pin (same shape as /world's; see oddzy-api osint.js). */
+export type DeskEvent = import("@/lib/world").WorldApiEvent;
+
 export type Desk = {
   sections: DeskSection[];
   subs: DeskSub[];
@@ -88,6 +91,8 @@ export type Desk = {
   families: DeskFamily[];
   countries: DeskCountry[];
   news: DeskNews[];
+  /** Absent on payloads from before the OSINT layer. */
+  events?: DeskEvent[];
   totals: { countries: number; markets: number; vol24h: number };
   as_of: string;
 };

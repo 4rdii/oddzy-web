@@ -696,6 +696,21 @@ export const en = {
     tipMarket1: "{n} market",
     tipMarkets: "{n} markets",
     tipPin: "Click to pin",
+    /** OSINT layer (oddzy-api osint.js). */
+    osintBtn: "Events",
+    osintBtnAria: "Show or hide OSINT event pins",
+    osintKinds: {
+      strike: "Strike / explosion",
+      clash: "Armed clash",
+      unrest: "Protest / unrest",
+      heat: "Satellite heat detection",
+      quake: "Earthquake",
+      disaster: "Disaster alert",
+    } as Record<"strike" | "clash" | "unrest" | "heat" | "quake" | "disaster", string>,
+    osintSources: "{n} sources",
+    osintReadSource: "Source: {s} ↗",
+    osintNote: "Auto-collected from public reports (GDELT, NASA FIRMS, USGS, GDACS). Unverified — check the source.",
+    osintNoMarkets: "No market is tied to this event yet.",
     regions: {
       all: "Whole world",
       me: "Middle East",

@@ -63,6 +63,52 @@ export function mini(m: DeskMarket): MiniMarket {
   return { id: m.id, slug: m.slug, q: m.title, p: m.yes, chg: m.chg, vol: m.vol24h, close: m.close, url: marketUrl(m.slug), codes: codes(m.iso2), sp: sparkPath(m.spark) };
 }
 
+/** An OSINT pin as the home globe and its card use it. */
+export type OsintPin = {
+  id: string;
+  kind: import("@/lib/world").OsintKind;
+  lat: number;
+  lon: number;
+  q: string | null;
+  place: string;
+  src: string;
+  url: string;
+  /** Independent sources behind a GDELT cluster. */
+  n: number;
+  ago: string | null;
+  /** Country ids (ISO numeric), for the globe's focus. */
+  ids: string[];
+  countries: string;
+  mk: MiniMarket[];
+};
+
+/** Pins for the home globe, capped like PolyBaaz's (lib/world MAX_EVENTS). */
+export function osintPins(ix: DeskIndex, now: number): OsintPin[] {
+  const cname = new Map(ix.desk.countries.filter((c) => c.id).map((c) => [c.id as string, c.en]));
+  return (ix.desk.events ?? [])
+    .filter((e) => Number.isFinite(e.lat) && Number.isFinite(e.lon))
+    .slice(0, 120)
+    .map((e) => ({
+      id: e.id,
+      kind: e.kind,
+      lat: e.lat,
+      lon: e.lon,
+      q: e.title,
+      place: e.place,
+      src: e.source,
+      url: e.url,
+      n: e.sources,
+      ago: e.at ? ago(e.at, now) : null,
+      ids: e.countryIds,
+      countries: e.countryIds.map((id) => cname.get(id)).filter(Boolean).join(", "),
+      mk: e.marketIds
+        .map((id) => ix.byId.get(id))
+        .filter((m): m is DeskMarket => !!m)
+        .slice(0, 4)
+        .map(mini),
+    }));
+}
+
 /** The story's market that moved most today (the wire's pill). */
 export function newsMarkets(ix: DeskIndex, n: DeskNews): DeskMarket[] {
   return n.marketIds.map((id) => ix.byId.get(id)).filter((m): m is DeskMarket => !!m);

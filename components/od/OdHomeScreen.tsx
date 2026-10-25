@@ -1,6 +1,6 @@
 import { SiteChrome } from "@/components/site/Chrome";
 import { getDesk } from "@/lib/api";
-import { finderRows, globeCountries, indexDesk, mini, newsItems, pickLead } from "@/lib/desk";
+import { finderRows, globeCountries, indexDesk, mini, newsItems, osintPins, pickLead } from "@/lib/desk";
 import { nowMs } from "@/lib/pb";
 import { fmtV, marketUrl, topicUrl } from "@/lib/od";
 import { OdHome, type DeskCard } from "./OdHome";
@@ -28,6 +28,7 @@ export async function OdHomeScreen({ revalidate }: { revalidate: number }) {
   const lead = pickLead(ix, now);
   const countries = globeCountries(ix);
   const news = newsItems(ix, now);
+  const pins = osintPins(ix, now);
   const movers = [...desk.markets]
     .filter((m) => m.chg !== null && m.vol24h >= 10_000)
     .sort((a, b) => Math.abs(b.chg ?? 0) - Math.abs(a.chg ?? 0))
@@ -66,6 +67,7 @@ export async function OdHomeScreen({ revalidate }: { revalidate: number }) {
         lead={lead}
         countries={countries}
         news={news}
+        pins={pins}
         movers={movers}
         desks={desks}
         finder={finderRows(ix)}

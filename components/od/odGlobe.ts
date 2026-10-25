@@ -2,7 +2,7 @@ import { geoBounds, geoCentroid, geoDistance, geoEquirectangular, geoGraticule10
 import type { Feature, Geometry } from "geojson";
 import { feature } from "topojson-client";
 import type { GeometryCollection, Topology } from "topojson-specification";
-import { REGIONS } from "@/lib/world";
+import { PIN_RGB, REGIONS, type OsintKind } from "@/lib/world";
 
 /**
  * The redesign's dotted globe (od-globe.js), ported to a class driven by
@@ -30,12 +30,19 @@ export type GlobeCountry = {
   reg?: string;
 };
 
+/** An OSINT pin on the globe (see lib/desk osintPins). */
+export type GlobePin = { id: string; kind: OsintKind; lat: number; lon: number; label: string };
+
 export type GlobeProps = {
   metric: "vol" | "risk";
   region: string;
   focus: string[];
   mini: boolean;
   zoom: number;
+  /** OSINT layer; null/absent = off. */
+  pins?: GlobePin[] | null;
+  /** The open pin's id. */
+  pin?: string | null;
 };
 
 type Dot = { l: number; cp: number; sp: number; c: GlobeCountry | null; small?: number };
@@ -129,7 +136,7 @@ export class OdGlobeEngine {
     private host: HTMLElement,
     private props: GlobeProps,
     countries: GlobeCountry[],
-    private onEvent: (type: "hover" | "select", id: string | null) => void,
+    private onEvent: (type: "hover" | "select" | "pin", id: string | null) => void,
   ) {
     const cv = (this.cv = document.createElement("canvas"));
     Object.assign(cv.style, { position: "absolute", inset: "0", width: "100%", height: "100%", touchAction: "pan-y", cursor: "grab" });
@@ -190,6 +197,10 @@ export class OdGlobeEngine {
     if (!this.w) return;
     if (prev.region !== next.region) this.applyRegion();
     if (prev.focus.join() !== next.focus.join()) this.applyFocus(false);
+    if (next.pin && next.pin !== prev.pin) {
+      const p = next.pins?.find((x) => x.id === next.pin);
+      if (p) this.flyTo([p.lon, p.lat], Math.max(this.G.zoom, 2.4));
+    }
   }
 
   zoomBy(k: number) {
@@ -292,7 +303,7 @@ export class OdGlobeEngine {
       G.rot = [a.from[0] + (a.to[0] - a.from[0]) * e, a.from[1] + (a.to[1] - a.from[1]) * e];
       G.zoom = a.fz + (a.tz - a.fz) * e;
       if (t >= 1) G.anim = null;
-    } else if (!G.dragging && !this.focusIds.length && now - G.lastInput > 5000) G.rot[0] += 0.04;
+    } else if (!G.dragging && !this.focusIds.length && !this.props.pin && now - G.lastInput > 5000) G.rot[0] += 0.04;
     this.draw(now);
   }
 
@@ -427,11 +438,59 @@ export class OdGlobeEngine {
       ctx.fillStyle = COL.label;
       ctx.fillText(t, X, Y - 10);
     }
+    // OSINT pins: front hemisphere only; the open one drawn last, with a pulse.
+    this.pinHits = [];
+    const pins = this.props.pins;
+    if (pins?.length) {
+      const openId = this.props.pin ?? null;
+      const ordered = openId ? [...pins.filter((p) => p.id !== openId), ...pins.filter((p) => p.id === openId)] : pins;
+      for (const p of ordered) {
+        if (geoDistance([p.lon, p.lat], center) > 1.5) continue;
+        const pt = proj([p.lon, p.lat]);
+        if (!pt) continue;
+        const on = p.id === openId, pr = PIN_RGB[p.kind];
+        const r = (on ? 7 : 5) * Math.min(1.25, 0.85 + G.zoom * 0.08), [X, Y] = pt, hy = Y - r * 1.9;
+        if (on) {
+          const ph = (now / 1400) % 1;
+          ctx.strokeStyle = `rgba(${pr},${(1 - ph) * 0.9})`;
+          ctx.lineWidth = 1.6;
+          ctx.beginPath();
+          ctx.arc(X, Y, 3 + ph * 18, 0, 7);
+          ctx.stroke();
+        }
+        ctx.beginPath();
+        ctx.moveTo(X, Y);
+        ctx.bezierCurveTo(X - r * 0.55, Y - r * 0.85, X - r, hy + r * 0.55, X - r, hy);
+        ctx.arc(X, hy, r, Math.PI, 0);
+        ctx.bezierCurveTo(X + r, hy + r * 0.55, X + r * 0.55, Y - r * 0.85, X, Y);
+        ctx.closePath();
+        ctx.fillStyle = `rgba(${pr},${openId && !on ? 0.55 : 1})`;
+        ctx.fill();
+        ctx.lineWidth = on ? 1.8 : 1.2;
+        ctx.strokeStyle = COL.halo;
+        ctx.stroke();
+        ctx.fillStyle = COL.s0;
+        ctx.beginPath();
+        ctx.arc(X, hy, r * 0.38, 0, 7);
+        ctx.fill();
+        this.pinHits.push({ p, x: X, y: hy, r: r + 5 });
+      }
+    }
     ctx.strokeStyle = COL.rim;
     ctx.lineWidth = 1;
     ctx.beginPath();
     ctx.arc(cx, cy, R, 0, 7);
     ctx.stroke();
+  }
+
+  /** Last frame's drawn pins, for pointer picks (topmost last). */
+  private pinHits: { p: GlobePin; x: number; y: number; r: number }[] = [];
+  private pickPin(x: number, y: number): GlobePin | null {
+    for (let i = this.pinHits.length - 1; i >= 0; i--) {
+      const h = this.pinHits[i];
+      if (Math.hypot(x - h.x, y - h.y) <= h.r) return h.p;
+    }
+    return null;
   }
 
   private pick(x: number, y: number): GlobeCountry | null {
@@ -472,6 +531,12 @@ export class OdGlobeEngine {
         return;
       }
       if (e.pointerType === "mouse") {
+        const pp = this.pickPin(e.offsetX, e.offsetY);
+        cv.title = pp ? pp.label : "";
+        if (pp) {
+          cv.style.cursor = "pointer";
+          return;
+        }
         const c = this.pick(e.offsetX, e.offsetY);
         cv.style.cursor = c ? "pointer" : "grab";
         if (c !== this.hover) {
@@ -482,8 +547,12 @@ export class OdGlobeEngine {
     });
     const end = (e: PointerEvent) => {
       if (start && !start.moved && e.type === "pointerup") {
-        const c = this.pick(e.offsetX, e.offsetY);
-        this.onEvent("select", c ? c.id : null);
+        const pp = this.pickPin(e.offsetX, e.offsetY);
+        if (pp) this.onEvent("pin", pp.id);
+        else {
+          const c = this.pick(e.offsetX, e.offsetY);
+          this.onEvent("select", c ? c.id : null);
+        }
       }
       start = null;
       G.dragging = false;

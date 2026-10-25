@@ -3,7 +3,7 @@ import type { Feature, Geometry } from "geojson";
 import { feature } from "topojson-client";
 import type { GeometryCollection, Topology } from "topojson-specification";
 import { num, pctOf, type PbLang } from "@/lib/pb";
-import { REGIONS, REG_SET, wVol, wVolS, type WC, type WM } from "@/lib/world";
+import { PIN_RGB, REGIONS, REG_SET, wVol, wVolS, type WC, type WE, type WM } from "@/lib/world";
 
 /**
  * The «نقشهٔ جهان» globe, ported line for line from the design file
@@ -21,8 +21,12 @@ import { REGIONS, REG_SET, wVol, wVolS, type WC, type WM } from "@/lib/world";
  * reads it through `getState` every frame and reports hover / taps back.
  */
 
-/** `news`: the open story's country keys (WN.ids), or null when no story is open. */
-export type GlobeState = { metric: "vol" | "risk"; region: string; sel: WC | null; news: string[] | null };
+/**
+ * `news`: the open story's country keys (WN.ids), or null when no story is open.
+ * `pins`: the OSINT layer, null when switched off; `pin`: the open pin's id.
+ */
+export type GlobeState = { metric: "vol" | "risk"; region: string; sel: WC | null; news: string[] | null; pins: WE[] | null; pin: string | null };
+
 
 
 /** Manual centroids for labels and fly-to (handoff §5: keep them). */
@@ -64,6 +68,10 @@ export type GlobeOptions = {
   isPhone: () => boolean;
   onHover: (c: WC | null) => void;
   onTap: (c: WC | null, fly: boolean) => void;
+  /** A tap on an OSINT pin (wins over the country under it). */
+  onPin: (e: WE) => void;
+  /** Hover text for a pin: its kind label and headline. */
+  pinLabel: (e: WE) => string;
   lang: PbLang;
   /** Tooltip copy (dict `world`): "{v}" / "{r}" / "{n}" are replaced. */
   labels: { tipVol: string; tipRisk: string; tipMarkets: string; tipMarket1: string; tipPin: string };
@@ -75,6 +83,8 @@ export type Globe = {
   flyToRegion: (k: string) => void;
   /** Fly to fit a story's countries (keys). */
   flyToNews: (keys: string[]) => void;
+  /** Fly to an OSINT pin. */
+  flyToPin: (e: WE) => void;
   zoomBy: (f: number) => void;
   resetIdle: () => void;
   readColors: () => void;
@@ -300,8 +310,43 @@ export async function createGlobe(o: GlobeOptions, countries: WC[], markets: WM[
       const t = c.name + "  " + (S.metric === "vol" ? wVolS(c.v, o.lang) : pctOf(o.lang, c.r));
       ctx.lineWidth = 4; ctx.strokeStyle = COL.halo; ctx.strokeText(t, X, Y - 10); ctx.fillStyle = COL.label; ctx.fillText(t, X, Y - 10);
     }
+    // OSINT pins: front hemisphere only, the open one last (on top) with a pulse.
+    pinHits = [];
+    if (S.pins) {
+      const ordered = S.pin ? [...S.pins.filter((e) => e.id !== S.pin), ...S.pins.filter((e) => e.id === S.pin)] : S.pins;
+      for (const e of ordered) {
+        if (geoDistance([e.lon, e.lat], center) > 1.5) continue;
+        const pt = proj([e.lon, e.lat]); if (!pt) continue;
+        const on = e.id === S.pin, rgb = PIN_RGB[e.kind] ?? COL.gold;
+        const r = (on ? 7 : 5) * Math.min(1.25, 0.85 + G.zoom * 0.08), [X, Y] = pt, hy = Y - r * 1.9;
+        if (on) {
+          const ph = (now / 1400) % 1;
+          ctx.strokeStyle = `rgba(${rgb},${(1 - ph) * 0.9})`; ctx.lineWidth = 1.6; ctx.beginPath(); ctx.arc(X, Y, 3 + ph * 18, 0, 7); ctx.stroke();
+        }
+        ctx.beginPath();
+        ctx.moveTo(X, Y);
+        ctx.bezierCurveTo(X - r * 0.55, Y - r * 0.85, X - r, hy + r * 0.55, X - r, hy);
+        ctx.arc(X, hy, r, Math.PI, 0);
+        ctx.bezierCurveTo(X + r, hy + r * 0.55, X + r * 0.55, Y - r * 0.85, X, Y);
+        ctx.closePath();
+        ctx.fillStyle = `rgba(${rgb},${S.pin && !on ? 0.55 : 1})`; ctx.fill();
+        ctx.lineWidth = on ? 1.8 : 1.2; ctx.strokeStyle = COL.halo; ctx.stroke();
+        ctx.fillStyle = COL.s0; ctx.beginPath(); ctx.arc(X, hy, r * 0.38, 0, 7); ctx.fill();
+        pinHits.push({ e, x: X, y: hy, r: r + 5 });
+      }
+    }
     // rim
     ctx.strokeStyle = COL.rim; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(cx, cy, R, 0, 7); ctx.stroke();
+  }
+
+  /** Last frame's drawn pins, for pointer picks (topmost last). */
+  let pinHits: { e: WE; x: number; y: number; r: number }[] = [];
+  function pickPin(x: number, y: number): WE | null {
+    for (let i = pinHits.length - 1; i >= 0; i--) {
+      const h = pinHits[i];
+      if (Math.hypot(x - h.x, y - h.y) <= h.r) return h.e;
+    }
+    return null;
   }
 
   /* ---------- interaction ---------- */
@@ -331,6 +376,13 @@ export async function createGlobe(o: GlobeOptions, countries: WC[], markets: WM[
       hideTip(); return;
     }
     if (e.pointerType === "mouse") {
+      const pe = pickPin(e.offsetX, e.offsetY);
+      if (pe) {
+        cv.classList.add("hit");
+        tip.innerHTML = `<b>${esc(o.pinLabel(pe))}</b>`;
+        const tw = 240; tip.style.left = Math.min(G.W - tw - 8, e.offsetX + 16) + "px"; tip.style.top = Math.min(G.H - 130, e.offsetY + 14) + "px"; tip.style.opacity = "1";
+        return;
+      }
       const c = pick(e.offsetX, e.offsetY);
       cv.classList.toggle("hit", !!c);
       if (c !== hover) { hover = c; o.onHover(c); }
@@ -339,7 +391,11 @@ export async function createGlobe(o: GlobeOptions, countries: WC[], markets: WM[
   };
   const onEnd = (e: PointerEvent) => {
     ptrs.delete(e.pointerId);
-    if (start && !start.moved && e.type === "pointerup") { const c = pick(e.offsetX, e.offsetY); o.onTap(c || null, !!c && o.isPhone()); }
+    if (start && !start.moved && e.type === "pointerup") {
+      const pe = pickPin(e.offsetX, e.offsetY);
+      if (pe) o.onPin(pe);
+      else { const c = pick(e.offsetX, e.offsetY); o.onTap(c || null, !!c && o.isPhone()); }
+    }
     if (ptrs.size < 2) pinch = null;
     if (!ptrs.size) { start = null; G.dragging = false; cv.classList.remove("drag"); }
   };
@@ -397,6 +453,9 @@ export async function createGlobe(o: GlobeOptions, countries: WC[], markets: WM[
       const ctr = geoCentroid({ type: "MultiPoint", coordinates: cents }) as [number, number];
       const sp = Math.max(...cents.map((c) => geoDistance(c, ctr)));
       flyTo(ctr, cs.length === 1 ? 1.8 : sp < .15 ? 3.2 : sp < .35 ? 2.2 : sp < .7 ? 1.4 : 1);
+    },
+    flyToPin(e) {
+      flyTo([e.lon, e.lat], Math.max(G.zoom, 2.4));
     },
     zoomBy(f) {
       flyTo([-G.rot[0], -G.rot[1]], f > 1 ? Math.min(10, G.zoom * f) : Math.max(.85, G.zoom * f));

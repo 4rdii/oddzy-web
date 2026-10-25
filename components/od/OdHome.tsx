@@ -2,12 +2,22 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { GlobeC, Lead, MiniMarket, NewsItem } from "@/lib/desk";
+import type { GlobeC, Lead, MiniMarket, NewsItem, OsintPin } from "@/lib/desk";
+import { PIN_RGB, type OsintKind } from "@/lib/world";
 import { agoShort, chg, chgBg, chgCol, fmtV, pct, type SecKey } from "@/lib/od";
 import { OdGlobe, type OdGlobeHandle } from "./OdGlobe";
 import { BrowserMock, InstallCta, type FinderRow } from "./OdExtension";
 import { PolyStrip } from "./parts";
-import type { GlobeCountry } from "./odGlobe";
+import type { GlobeCountry, GlobePin } from "./odGlobe";
+
+const PIN_KIND: Record<OsintKind, string> = {
+  strike: "Strike / explosion",
+  clash: "Armed clash",
+  unrest: "Protest / unrest",
+  heat: "Satellite heat detection",
+  quake: "Earthquake",
+  disaster: "Disaster alert",
+};
 
 /**
  * The oddzy.xyz home (design: "Oddzy Home"): lead story, the globe with its
@@ -43,6 +53,7 @@ export function OdHome({
   lead,
   countries,
   news,
+  pins,
   movers,
   desks,
   finder,
@@ -54,6 +65,8 @@ export function OdHome({
   lead: Lead | null;
   countries: GlobeC[];
   news: NewsItem[];
+  /** OSINT pins (oddzy-api osint.js). */
+  pins: OsintPin[];
   movers: MiniMarket[];
   desks: DeskCard[];
   finder: FinderRow[];
@@ -63,6 +76,14 @@ export function OdHome({
   const [hover, setHover] = useState<string | null>(null);
   const [sel, setSel] = useState<string | null>(null);
   const [openNews, setOpenNews] = useState<string | null>(null);
+  const [openPin, setOpenPin] = useState<string | null>(null);
+  // The OSINT layer: on by default, the reader's choice remembered per device.
+  const [osintOn, setOsintOn] = useState(true);
+  useEffect(() => {
+    // Read after hydration (localStorage is client-only); this only syncs a stored preference.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (localStorage.getItem("od-osint") === "0") setOsintOn(false);
+  }, []);
   // The card opens on the biggest country so the globe never looks empty, but
   // once someone closes it, it stays closed until they pick a country again —
   // it used to fall straight back to Iran with no way to dismiss it.
@@ -90,6 +111,7 @@ export function OdHome({
     else {
       setSel(null);
       setOpenNews(null);
+      setOpenPin(null);
       setRegion("all");
     }
   }
@@ -103,20 +125,56 @@ export function OdHome({
   const pickCountry = (id: string) => {
     setSel(id);
     setOpenNews(null);
+    setOpenPin(null);
     toGlobe();
   };
   const toggleNews = (k: string) => {
     setOpenNews((cur) => (cur === k ? null : k));
+    setOpenPin(null);
     setSel(null);
     toGlobe();
   };
+  const pickPin = (id: string) => {
+    setOpenPin(id);
+    setOpenNews(null);
+    setSel(null);
+  };
+  const toggleOsint = () => {
+    const next = !osintOn;
+    setOsintOn(next);
+    if (!next) setOpenPin(null);
+    try {
+      localStorage.setItem("od-osint", next ? "1" : "0");
+    } catch {
+      /* private mode */
+    }
+  };
+  const globePins = useMemo<GlobePin[] | null>(
+    () => (osintOn ? pins.map((p) => ({ id: p.id, kind: p.kind, lat: p.lat, lon: p.lon, label: `${PIN_KIND[p.kind]}${p.q ? ` · ${p.q}` : ` · ${p.place}`}` })) : null),
+    [osintOn, pins],
+  );
 
   const N = openNews ? news.find((n) => n.k === openNews) ?? null : null;
+  const P = openPin && osintOn ? pins.find((p) => p.id === openPin) ?? null : null;
   const cid = sel ?? hover ?? (dismissed ? undefined : byId.has("364") ? "364" : sorted[0]?.id);
   const c = cid ? byId.get(cid) : undefined;
-  const focus = N ? N.ids.filter((id) => byId.has(id)) : sel && c ? [sel, ...c.links.slice(0, 5)] : [];
+  const focus = P ? P.ids.filter((id) => byId.has(id)) : N ? N.ids.filter((id) => byId.has(id)) : sel && c ? [sel, ...c.links.slice(0, 5)] : [];
 
-  const card = N ? (
+  const card = P ? (
+    <CountryCard
+      kicker={`${PIN_KIND[P.kind]}${P.n > 1 ? ` · ${P.n} sources` : ""}${P.ago ? ` · ${P.ago}` : ""}`}
+      kickerDot={`rgb(${PIN_RGB[P.kind]})`}
+      title={P.q ?? `${PIN_KIND[P.kind]} · ${P.countries || P.place}`}
+      titleSize={17}
+      summary={`${P.place}${P.mk.length ? "" : " · No market is tied to this event yet."}`}
+      markets={P.mk}
+      link={P.url}
+      linkLabel={`Source: ${P.src} ↗`}
+      external
+      hint="Unverified · GDELT / NASA / USGS / GDACS"
+      onClose={() => setOpenPin(null)}
+    />
+  ) : N ? (
     <CountryCard
       kicker={`${N.src} · ${N.ago}`}
       title={N.q}
@@ -230,7 +288,18 @@ export function OdHome({
 
         <div style={{ minWidth: 0, display: "grid", gap: 12 }}>
           <div ref={box} id="globe" className="od-globebox">
-            <OdGlobe ref={globe} countries={globeList} metric={metric} region={region} focus={focus} onHover={setHover} onSelect={(id) => (id ? pickCountry(id) : setSel(null))} />
+            <OdGlobe
+              ref={globe}
+              countries={globeList}
+              metric={metric}
+              region={region}
+              focus={focus}
+              pins={globePins}
+              pin={P?.id ?? null}
+              onHover={setHover}
+              onSelect={(id) => (id ? pickCountry(id) : setSel(null))}
+              onPin={pickPin}
+            />
             <div style={{ position: "absolute", insetInline: 14, top: 14, display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center", pointerEvents: "none" }}>
               <div style={{ display: "flex", padding: 3, borderRadius: 10, background: "var(--od-glass)", border: "1px solid var(--od-line)", pointerEvents: "auto", backdropFilter: "blur(8px)" }}>
                 {(
@@ -249,6 +318,29 @@ export function OdHome({
                   </button>
                 ))}
               </div>
+              <button
+                type="button"
+                onClick={toggleOsint}
+                aria-pressed={osintOn}
+                title="Show or hide OSINT event pins"
+                style={{
+                  flex: "none",
+                  height: 30,
+                  padding: "0 11px",
+                  borderRadius: 999,
+                  border: `1px solid ${osintOn ? "rgba(232,64,72,.6)" : "var(--od-line)"}`,
+                  background: osintOn ? "rgba(232,64,72,.14)" : "var(--od-glass)",
+                  color: osintOn ? "var(--od-ink)" : "var(--od-ink2)",
+                  fontSize: 12.5,
+                  fontWeight: 700,
+                  whiteSpace: "nowrap",
+                  cursor: "pointer",
+                  pointerEvents: "auto",
+                  backdropFilter: "blur(8px)",
+                }}
+              >
+                📍 Events{osintOn && pins.length ? ` · ${pins.length}` : ""}
+              </button>
               <div className="noscroll" style={{ display: "flex", gap: 6, overflowX: "auto", pointerEvents: "auto", maxWidth: "100%" }}>
                 {REGS.map(([k, label]) => (
                   <button
@@ -580,6 +672,7 @@ function LeadCard({ lead }: { lead: Lead }) {
 
 function CountryCard({
   kicker,
+  kickerDot,
   title,
   titleSize = 24,
   stats,
@@ -592,6 +685,8 @@ function CountryCard({
   onClose,
 }: {
   kicker: string;
+  /** A coloured dot before the kicker (OSINT pin kind). */
+  kickerDot?: string;
   title: string;
   titleSize?: number;
   stats?: [string, string][];
@@ -608,6 +703,7 @@ function CountryCard({
       <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
         <div style={{ flex: 1, minWidth: 0, display: "grid", gap: 3 }}>
           <span className="mono" style={{ fontWeight: 600, fontSize: 10.5, letterSpacing: ".06em", textTransform: "uppercase", color: "var(--od-ink3)" }}>
+            {kickerDot && <i style={{ display: "inline-block", width: 7, height: 7, borderRadius: 7, marginInlineEnd: 6, background: kickerDot }} />}
             {kicker}
           </span>
           <span className="serif" style={{ fontWeight: 500, fontSize: titleSize, lineHeight: 1.2, color: "var(--od-ink)" }}>

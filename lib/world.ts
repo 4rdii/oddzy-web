@@ -62,11 +62,41 @@ export type WorldApiNews = {
   marketIds: string[];
 };
 
+/** An OSINT pin (oddzy-api osint.js): GDELT / FIRMS / USGS / GDACS. */
+export type OsintKind = "strike" | "clash" | "unrest" | "heat" | "quake" | "disaster";
+/** Pin colour per OSINT kind (rgb triplets, same in both themes; both sites' globes). */
+export const PIN_RGB: Record<OsintKind, string> = {
+  strike: "232,64,72",
+  clash: "246,128,48",
+  unrest: "236,190,40",
+  heat: "255,96,20",
+  quake: "160,120,255",
+  disaster: "70,160,255",
+};
+export type WorldApiEvent = {
+  id: string;
+  kind: OsintKind;
+  lat: number;
+  lon: number;
+  /** English headline; null when the source gave none (FA shows kind + place). */
+  title: string | null;
+  place: string;
+  iso2: string[];
+  countryIds: string[];
+  /** Independent articles behind a GDELT cluster; 1 for the others. */
+  sources: number;
+  source: string;
+  url: string;
+  at: string | null;
+  marketIds: string[];
+};
+
 export type WorldApi = {
   countries: WorldApiCountry[];
   markets: WorldApiMarket[];
   /** Newest first, at most 20. */
   news?: WorldApiNews[];
+  events?: WorldApiEvent[];
   totals: { countries: number; markets: number; vol24h: number };
   scanned?: number;
   tagged?: number;
@@ -141,11 +171,33 @@ export type WN = {
   mk: number[];
 };
 
+/** An OSINT pin as the globe and its card show it. */
+export type WE = {
+  id: string;
+  kind: OsintKind;
+  lat: number;
+  lon: number;
+  /** English headline or null. */
+  q: string | null;
+  place: string;
+  src: string;
+  url: string;
+  at: string | null;
+  /** Independent sources (GDELT clusters). */
+  n: number;
+  /** Country keys (see WC.key) present on this page. */
+  ids: string[];
+  /** Indices into WorldView.markets. */
+  mk: number[];
+};
+
 export type WorldView = {
   countries: WC[];
   markets: WM[];
   /** Newest first. */
   news: WN[];
+  /** OSINT pins; empty when the feed is down. */
+  events: WE[];
   /** Indices into markets: the 8 biggest absolute movers today. */
   movers: number[];
   totals: { countries: number; markets: number; vol24h: number };
@@ -172,6 +224,8 @@ export const REG_SET: Record<string, Set<string> | null> = Object.fromEntries(
 
 const MAX_PANEL = 6;
 const MAX_MOVERS = 8;
+/** Pins on the globe: past ~120 they stop being readable at world zoom. */
+const MAX_EVENTS = 120;
 /** Thin markets swing on a single trade; keep them out of the movers strip.
  *  1k let $1.5k-a-day markets lead with ±10pt moves that read as fake (2026-10-13). */
 const MOVER_MIN_VOL = 10_000;
@@ -179,7 +233,7 @@ const MOVER_MIN_VOL = 10_000;
 const neighbors = NEIGHBORS as Record<string, string[]>;
 
 export function emptyWorldView(): WorldView {
-  return { countries: [], markets: [], news: [], movers: [], totals: { countries: 0, markets: 0, vol24h: 0 }, asOf: null };
+  return { countries: [], markets: [], news: [], events: [], movers: [], totals: { countries: 0, markets: 0, vol24h: 0 }, asOf: null };
 }
 
 /**
@@ -300,10 +354,41 @@ export function toWorldView(w: WorldApi, lang: PbLang = "fa"): WorldView {
     };
   });
 
+  const keysOf = (iso2: string[], countryIds: string[]) => {
+    const ids = new Set<string>();
+    for (const id of countryIds ?? []) if (id && known.has(id)) ids.add(id);
+    for (const iso of iso2 ?? []) {
+      const k = byIso.get(iso);
+      if (k) ids.add(k);
+    }
+    return [...ids];
+  };
+  const events: WE[] = (w.events ?? [])
+    .filter((e) => Number.isFinite(e.lat) && Number.isFinite(e.lon))
+    .slice(0, MAX_EVENTS)
+    .map((e) => ({
+      id: e.id,
+      kind: e.kind,
+      lat: e.lat,
+      lon: e.lon,
+      q: e.title,
+      place: e.place,
+      src: e.source,
+      url: e.url,
+      at: e.at,
+      n: e.sources,
+      ids: keysOf(e.iso2, e.countryIds),
+      mk: [...new Set(e.marketIds ?? [])].flatMap((id) => {
+        const x = byMarketId.get(id);
+        return x ? [idx(x)] : [];
+      }),
+    }));
+
   return {
     countries,
     markets,
     news,
+    events,
     movers,
     totals: w.totals,
     asOf: w.as_of ?? null,
