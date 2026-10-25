@@ -5,7 +5,7 @@ import { NoMarket, noMarketMetadata } from "@/components/site/NoMarket";
 import { SiteChrome } from "@/components/site/Chrome";
 import { QuestionPb } from "@/components/pb/QuestionPb";
 import { faDay, faTime } from "@/lib/pb";
-import { getMarketDetail, getQuestionSeries, getQuestionSeriesIndex } from "@/lib/api";
+import { getMarketDetail, getQuestionSeries, getQuestionSeriesIndex, getQuestionSeriesIndexOrNull } from "@/lib/api";
 import { brandFor, isLocale, LOCALES } from "@/lib/i18n";
 import { getDict } from "@/lib/dict";
 import { compactUsd, deadlineDate, localized, pct } from "@/lib/format";
@@ -60,7 +60,10 @@ export async function generateMetadata(props: Params): Promise<Metadata> {
   };
   // Ladders and multi-outcome questions are indexed only when they cleared
   // the publishing gate (/markets/series); the rest render as noindex.
-  const published = (await getQuestionSeriesIndex()).some((s) => s.key === key);
+  // Unknown (API blink) counts as published: a wrong noindex would sit in the
+  // cache for the whole revalidate window, a wrong index costs nothing.
+  const index = await getQuestionSeriesIndexOrNull();
+  const published = index === null || index.some((s) => s.key === key);
   const robots = published ? { index: true, follow: true } : { index: false, follow: true };
   if (series.outcomes) {
     const o = series.outcomes;

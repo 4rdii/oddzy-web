@@ -461,13 +461,22 @@ export async function getMarketDetail(slug: string): Promise<MarketDetail | null
  * which is not a per-request concern — and SiteChrome reads it on every page.
  */
 export async function getIndexableMarkets(): Promise<IndexableMarket[]> {
+  return (await getIndexableMarketsOrNull()) ?? [];
+}
+
+/**
+ * Null when the API could not be read — which a page's robots decision must
+ * tell apart from "not published". Reading a blink as an empty list rendered
+ * published pages noindex for a whole revalidate window while the sitemap still
+ * listed them (ops "noindex but in sitemap", 2026-10-25).
+ */
+export async function getIndexableMarketsOrNull(): Promise<IndexableMarket[] | null> {
   try {
     const data = await get<{ markets: IndexableMarket[] }>("/markets/indexable", CATALOG_TTL);
     return data.markets;
   } catch {
-    // A build must not fail because the API blinked; an empty list just means
-    // no new market pages this build, and the existing ones stay published.
-    return [];
+    // A build must not fail because the API blinked.
+    return null;
   }
 }
 
@@ -554,13 +563,18 @@ export type QuestionSeries = {
  * accumulates them.
  */
 export async function getQuestionSeriesIndex(): Promise<SeriesSummary[]> {
+  return (await getQuestionSeriesIndexOrNull()) ?? [];
+}
+
+/** Null when the API could not be read; see getIndexableMarketsOrNull. */
+export async function getQuestionSeriesIndexOrNull(): Promise<SeriesSummary[] | null> {
   try {
     // CATALOG_TTL: read by SiteChrome on every page, via publishedTopicSlugs.
     const data = await get<{ series: SeriesSummary[] }>("/markets/series", CATALOG_TTL);
     return data.series;
   } catch {
     // Same rule as getIndexableMarkets: a blinking API must not fail a build.
-    return [];
+    return null;
   }
 }
 
