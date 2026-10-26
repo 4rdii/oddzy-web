@@ -29,6 +29,7 @@ export const PB_GROUPS: Group[] = [
     icon: "⚽",
     items: [
       { href: "/topic/football", label: "فوتبال", desc: "لیگ‌ها و بازی‌های امروز", icon: "⚽" },
+      { href: "/topic/cups", label: "جام‌های حذفی", desc: "کوپا دل ری، جام حذفی آلمان، FA Cup و EFL Cup", icon: "🏆" },
       { href: "/topic/nba", label: "بسکتبال", desc: "بازی‌های NBA و قهرمانی", icon: "🏀" },
       { href: "/big-games", label: "بازی‌های بزرگ", desc: "مهم‌ترین بازی‌ها و شرط نهنگ‌ها", icon: "🔥" },
       { href: "/live", label: "زنده", desc: "بازی‌هایی که همین حالا در جریان‌اند", icon: "🔴" },
