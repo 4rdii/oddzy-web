@@ -163,7 +163,10 @@ export function captureFirstTouch(): void {
     try {
       const r = document.referrer ? new URL(document.referrer).hostname.replace(/^www\./, "") : "";
       // Our own sites are navigation, not a source.
-      if (r && r !== location.hostname.replace(/^www\./, "") && !/(^|\.)(oddzy\.xyz|polybaaz\.com)$/.test(r)) refHost = r.slice(0, 80);
+      // Login screens are not where anyone came from: returning from "Sign in
+      // with Google" shows accounts.google.com as the referrer.
+      const auth = /^(accounts\.google\.com|auth\.privy\.io|appleid\.apple\.com|oauth\.telegram\.org)$/.test(r);
+      if (r && !auth && r !== location.hostname.replace(/^www\./, "") && !/(^|\.)(oddzy\.xyz|polybaaz\.com)$/.test(r)) refHost = r.slice(0, 80);
     } catch {
       // ignore
     }
