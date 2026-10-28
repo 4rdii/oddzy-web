@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { TradeLink } from "@/components/trade/TradeLink";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { SiteChrome } from "@/components/site/Chrome";
@@ -329,12 +330,13 @@ export default async function MatchPage(props: Params) {
                     {t.match.backedBy.split("{volume}")[1]}
                   </p>
                   {tradeSlug && (
-                    <Link
+                    <TradeLink
                       href={`/app?market=${encodeURIComponent(tradeSlug)}`}
+                      req={{ slug: tradeSlug }}
                       className="min-h-[44px] rounded-xl bg-[var(--accent)] px-5 py-3 text-[15px] font-semibold whitespace-nowrap text-[var(--on-accent)]"
                     >
                       {t.match.tradeMatch}
-                    </Link>
+                    </TradeLink>
                   )}
                 </div>
               </>
@@ -372,12 +374,13 @@ export default async function MatchPage(props: Params) {
               <span className="ltr-num">{board.market_count}</span>
               {t.match.ctaLead.split("{count}")[1]}
             </p>
-            <Link
+            <TradeLink
               href={`/app?market=${encodeURIComponent(tradeSlug)}`}
+              req={{ slug: tradeSlug }}
               className="mt-4 inline-block rounded-xl bg-[var(--accent)] px-5 py-3 text-[15px] font-semibold text-[var(--on-accent)]"
             >
               {t.match.openApp}
-            </Link>
+            </TradeLink>
           </section>
         )}
 

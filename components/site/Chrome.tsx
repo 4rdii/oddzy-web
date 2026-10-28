@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { AccountButton } from "@/components/trade/AccountButton";
 import { ActiveChipIntoView } from "@/components/site/ActiveChipIntoView";
 import Link from "next/link";
 import { OdChrome } from "@/components/od/OdChrome";
@@ -113,20 +114,17 @@ export async function SiteChrome({
 
             <div className="flex items-center gap-2">
               <ThemeToggle labels={t.theme} />
-              {/* Links into /app rather than calling Privy directly: this
-                  chrome wraps the crawlable pages and sits outside the provider,
-                  and loading an auth SDK on the blog would be a poor trade for a
-                  button most visitors never press. /app presents the login. */}
-              <Link
-                href="/app"
+              {/* No auth SDK in the chrome: AccountButton reads the trade
+                  runtime's store (lib/trade-bus) and falls back to /app. */}
+              <AccountButton
+                lang={fa ? "fa" : "en"}
+                label={t.nav.signIn}
                 className={
                   pbChrome
                     ? "min-h-[38px] rounded-[12px] bg-[var(--accent)] px-3.5 py-2 text-[13px] font-bold text-[var(--accent-ink)]"
                     : "min-h-[38px] rounded-lg bg-[var(--ink)] px-3.5 py-2 text-[13px] font-semibold text-[var(--on-ink)]"
                 }
-              >
-                {t.nav.signIn}
-              </Link>
+              />
             </div>
           </div>
           {/* PolyBaaz under 900px: three tabs + the current group's chips (PbNav). */}

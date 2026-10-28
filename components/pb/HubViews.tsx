@@ -210,6 +210,8 @@ function LeagueInner(p: LeagueHubProps) {
                           outcome: s.label,
                           prob: Math.round((s.p ?? 0.5) * 100),
                           slug: s.slug,
+                          // A head-to-head's sides share one market: the later one is its NO.
+                          side: n.sides.findIndex((o) => o.slug === s.slug) < n.sides.indexOf(s) ? "NO" : "YES",
                         })
                       }
                       style={

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { TradeLink } from "@/components/trade/TradeLink";
 import { chg, chgCol, pct, sparkPath } from "@/lib/od";
 
 /**
@@ -138,8 +139,9 @@ export function OdFamily({ f, current, style }: { f: FamView; current?: string; 
 /** The dark "Trade →" button used on lead cards. */
 export function TradeBtn({ href, h = 42 }: { href: string; h?: number }) {
   return (
-    <Link
+    <TradeLink
       href={href}
+      req={{ slug: new URLSearchParams(href.split("?")[1] ?? "").get("market") ?? "" }}
       style={{
         flex: "none",
         height: h,
@@ -155,7 +157,7 @@ export function TradeBtn({ href, h = 42 }: { href: string; h?: number }) {
       }}
     >
       Trade<span aria-hidden>→</span>
-    </Link>
+    </TradeLink>
   );
 }
 

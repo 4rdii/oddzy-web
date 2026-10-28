@@ -196,8 +196,10 @@ export function attribution(): {
   /** The site this request comes from: decides the account's brand (fa/en). */
   site: string | null;
   first: FirstTouch | null;
+  device: "desktop" | "mobile" | null;
 } {
   return {
+    device: typeof window !== "undefined" ? deviceKind() : null,
     src: getSource(),
     visitorId: getVisitorId(),
     ref: getRef(),
@@ -206,7 +208,16 @@ export function attribution(): {
   };
 }
 
-export type WebEvent = "basket_view" | "basket_cta" | "app_open" | "login_start";
+export type WebEvent = "basket_view" | "basket_cta" | "app_open" | "login_start" | "trade_open" | "trade_placed";
+
+/** Desktop or phone, for the ops split: a fine pointer on a wide screen counts as desktop. */
+export function deviceKind(): "desktop" | "mobile" | null {
+  try {
+    return window.matchMedia("(pointer: fine) and (min-width: 900px)").matches ? "desktop" : "mobile";
+  } catch {
+    return null;
+  }
+}
 
 /** Fire-and-forget. Never throws, never awaited by callers. */
 export function track(
@@ -222,6 +233,7 @@ export function track(
     basket: props.basket ?? null,
     target: props.target ?? null,
     ref: typeof document !== "undefined" ? document.referrer.slice(0, 200) : null,
+    device: deviceKind(),
   });
   const url = `${API_BASE}/webapp/v1/event`;
   try {

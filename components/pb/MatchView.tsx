@@ -158,7 +158,8 @@ function MatchInner(p: MatchViewProps) {
     if (!x || closed) return;
     // A fight's second side is the NO of the same market; the sheet opens that
     // market either way, with the side's own odds.
-    open({ title: `${p.title}: ${x.label}؟`, sub, outcome: x.label, prob: x.pct, slug: x.o.slug });
+    // A head-to-head is one market: its second side is that market's NO.
+    open({ title: `${p.title}: ${x.label}؟`, sub, outcome: x.label, prob: x.pct, slug: x.o.slug, side: p.resultType === "head_to_head" && i > 0 ? "NO" : "YES" });
   };
 
   const cur = p.groups.find((g) => g.key === tab) ?? p.groups[0];
@@ -566,7 +567,7 @@ function MatchInner(p: MatchViewProps) {
                 ضریب <b style={{ color: "var(--text)" }}>×{fa(mult.toFixed(2))}</b>
               </span>
             </div>
-            <PredictCtas slug={sel.o.slug} />
+            <PredictCtas slug={sel.o.slug} side={p.resultType === "head_to_head" && pick > 0 ? "NO" : "YES"} amount={amt} title={`${p.title}: ${sel.label}؟`} label={sel.label} />
           </aside>
         )}
       </main>
@@ -655,7 +656,7 @@ function LabelledPair({ row, sub, y }: { row: MatchRow; sub: string; y: number |
       <button
         type="button"
         className="pb-no"
-        onClick={() => open({ title: row.q, sub, slug: row.slug, outcome: row.no, prob: 100 - yy })}
+        onClick={() => open({ title: row.q, sub, slug: row.slug, outcome: row.no, prob: 100 - yy, side: "NO" })}
         style={{ ...base, border: "1px solid var(--line)", background: "var(--bg2)", color: "var(--text2)" }}
       >
         {row.no} {y === null ? "" : `${fa(100 - yy)}٪`}

@@ -1,5 +1,6 @@
 "use client";
 
+import { tradeClick } from "@/lib/trade-bus";
 import Link from "next/link";
 import { createContext, useContext, useEffect, useState } from "react";
 import type { MiniMarket } from "@/lib/desk";
@@ -191,7 +192,8 @@ export function TradeBox({ slug, yes }: { slug: string; yes: number }) {
             </b>
           </span>
         </div>
-        <Link href={href} style={{ height: 50, borderRadius: 12, background: "var(--od-brand)", color: "var(--od-brandInk)", fontWeight: 800, fontSize: 16, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+        <Link href={href}
+        onClick={(e) => tradeClick(e, { kind: "trade", req: { slug, side: side === "yes" ? "YES" : "NO", amount: amt } })} style={{ height: 50, borderRadius: 12, background: "var(--od-brand)", color: "var(--od-brandInk)", fontWeight: 800, fontSize: 16, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
           Trade {sideName} on Oddzy →
         </Link>
         <span style={{ fontSize: 12, lineHeight: 1.5, color: "var(--od-ink3)" }}>

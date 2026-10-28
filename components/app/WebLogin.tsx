@@ -35,7 +35,8 @@ type Phase = "login" | "wallet" | "granting" | "registering" | "ready" | "error"
  * that makes Privy unusable inside Telegram Desktop's WebKitGTK view. A timeout
  * gives a readable message instead of a spinner that never resolves.
  */
-export function WebLogin({ onReady }: { onReady: () => void }) {
+/** `compact`: inside the website's trade modal rather than full-screen /app. */
+export function WebLogin({ onReady, compact = false }: { onReady: () => void; compact?: boolean }) {
   const { t, tf } = useLocale();
   const { ready, authenticated, login, logout, user } = usePrivy();
   const { wallets } = useWallets();
@@ -116,12 +117,12 @@ export function WebLogin({ onReady }: { onReady: () => void }) {
   }, [ready, authenticated, address, addSigners, removeSigners, onReady, fail, t, tf]);
 
   if (!ready) {
-    return <Centered>{t.app.login.loading}</Centered>;
+    return <Centered compact={compact}>{t.app.login.loading}</Centered>;
   }
 
   if (!authenticated) {
     return (
-      <Centered>
+      <Centered compact={compact}>
         <h1 className="text-[22px] font-bold tracking-[-0.02em]">{t.app.login.title}</h1>
         <p className="mt-2 max-w-xs text-[14px] leading-relaxed text-[var(--mute)]">
           {t.app.login.lead}
@@ -142,7 +143,7 @@ export function WebLogin({ onReady }: { onReady: () => void }) {
 
   if (shown === "error") {
     return (
-      <Centered>
+      <Centered compact={compact}>
         <p className="max-w-xs text-[14px] leading-relaxed text-[var(--down)]">{error}</p>
         <button
           type="button"
@@ -167,7 +168,7 @@ export function WebLogin({ onReady }: { onReady: () => void }) {
   }
 
   return (
-    <Centered>
+    <Centered compact={compact}>
       <div className="h-8 w-8 animate-spin rounded-full border-2 border-[var(--line)] border-t-[var(--accent)]" />
       <p className="mt-4 text-[14px] text-[var(--mute)]">
         {shown === "wallet"
@@ -187,9 +188,9 @@ export function WebLogin({ onReady }: { onReady: () => void }) {
   );
 }
 
-function Centered({ children }: { children: React.ReactNode }) {
+function Centered({ children, compact = false }: { children: React.ReactNode; compact?: boolean }) {
   return (
-    <div className="flex min-h-[70vh] flex-col items-center justify-center px-6 text-center">
+    <div className={`flex ${compact ? "min-h-[300px]" : "min-h-[70vh]"} flex-col items-center justify-center px-6 text-center`}>
       {children}
     </div>
   );

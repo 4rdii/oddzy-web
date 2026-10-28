@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { TradeLink } from "@/components/trade/TradeLink";
 import type { Metadata } from "next";
 import { notFound, permanentRedirect } from "next/navigation";
 import { NoMarket, noMarketMetadata } from "@/components/site/NoMarket";
@@ -311,12 +312,13 @@ export default async function QuestionPage(props: Params) {
               {t.cta.openTelegram}
             </a>
           ) : (
-            <Link
+            <TradeLink
               href={`/app?market=${encodeURIComponent(market.slug)}`}
+              req={{ slug: market.slug }}
               className="mt-4 inline-block rounded-xl bg-[var(--accent)] px-5 py-3 text-[15px] font-semibold text-[var(--on-accent)]"
             >
               {t.cta.tradeThisMarket}
-            </Link>
+            </TradeLink>
           )}
         </section>
 

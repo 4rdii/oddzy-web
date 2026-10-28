@@ -165,6 +165,16 @@ export function MiniApp({
     track("app_open", { basket: slug, src });
     // `/app?tab=updown` (from the /updown page) opens the Up/Down tab instead
     // of the feed. Read-then-strip, like the other params.
+    // `/app?tab=wallet|positions` (from the website's account panel).
+    const deepTab = params.get("tab");
+    if (!slug && (deepTab === "wallet" || deepTab === "positions")) {
+      const tabUrl = new URL(window.location.href);
+      tabUrl.searchParams.delete("tab");
+      window.history.replaceState(null, "", `${tabUrl.pathname}${tabUrl.search}${tabUrl.hash}`);
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- one-shot deep link, like ?tab=updown below
+      setScreen(deepTab === "wallet" ? { name: "wallet" } : { name: "positions" });
+      return;
+    }
     if (!slug && params.get("tab") === "updown") {
       const tabUrl = new URL(window.location.href);
       tabUrl.searchParams.delete("tab");

@@ -180,6 +180,7 @@ function HomeInner({ hero, ticks, cats, whales, basket }: { hero: HomeHero | nul
                             outcome: s.label,
                             prob: pc(s.p) ?? 50,
                             slug: s.slug,
+                            side: hero.sides.findIndex((o) => o.slug === s.slug) < hero.sides.indexOf(s) ? "NO" : "YES",
                           })
                         }
                         style={
@@ -304,7 +305,7 @@ function HomeInner({ hero, ticks, cats, whales, basket }: { hero: HomeHero | nul
                       </button>
                       <button
                         type="button"
-                        onClick={() => open({ title: m.q, sub, outcome: "خیر", prob: 100 - y, slug: m.slug })}
+                        onClick={() => open({ title: m.q, sub, outcome: "خیر", prob: 100 - y, slug: m.slug, side: "NO" })}
                         style={{ padding: 9, borderRadius: 11, border: "1px solid transparent", background: "var(--downbg)", color: "var(--down)", fontWeight: 800, fontSize: 13.5, cursor: "pointer" }}
                       >
                         خیر {fa(100 - y)}٪

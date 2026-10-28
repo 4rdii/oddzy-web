@@ -1,5 +1,6 @@
 "use client";
 
+import { tradeClick, type TradeSide } from "@/lib/trade-bus";
 import Link from "next/link";
 import { createContext, useCallback, useContext, useEffect, useState, type CSSProperties, type ReactNode } from "react";
 import { BRANDS } from "@/lib/i18n";
@@ -25,6 +26,8 @@ export type PredictPick = {
   prob: number;
   /** The market to open in the app. */
   slug: string;
+  /** Which side of that market this pick buys; YES unless it is the "no" button or a head-to-head's second side. */
+  side?: TradeSide;
 };
 
 const PredictCtx = createContext<(p: PredictPick) => void>(() => {});
@@ -83,7 +86,7 @@ const TG_ICON = (
 );
 
 /** Gold "predict on the web" + the small Telegram pill under it. */
-export function PredictCtas({ slug }: { slug: string }) {
+export function PredictCtas({ slug, side, amount, title, label }: { slug: string; side?: TradeSide; amount?: number; title?: string; label?: string }) {
   const pill: CSSProperties = {
     alignSelf: "center",
     display: "inline-flex",
@@ -102,6 +105,7 @@ export function PredictCtas({ slug }: { slug: string }) {
     <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
       <Link
         href={`/app?market=${encodeURIComponent(slug)}`}
+        onClick={(e) => tradeClick(e, { kind: "trade", req: { slug, side, amount, title, label } })}
         className="pb-gold-btn"
         style={{
           display: "block",
@@ -248,7 +252,7 @@ function PredictSheet({ pick, onClose }: { pick: PredictPick; onClose: () => voi
             </span>
           </div>
         </div>
-        <PredictCtas slug={pick.slug} />
+        <PredictCtas slug={pick.slug} side={pick.side} amount={amt} title={pick.title} label={pick.outcome} />
         <div style={{ fontSize: 11, color: "var(--faint)", textAlign: "center", lineHeight: 1.8 }}>
           قیمت نهایی، قیمت لحظهٔ ثبت سفارش است. پیش‌بینی با ریسک از دست دادن سرمایه همراه است.
         </div>
@@ -316,7 +320,7 @@ export function YesNo({
         بله{showPct && p !== null ? ` ${fa(y)}٪` : ""}
       </PredictButton>
       <PredictButton
-        pick={{ title, sub, slug, outcome: out("خیر"), prob: 100 - y }}
+        pick={{ title, sub, slug, outcome: out("خیر"), prob: 100 - y, side: "NO" }}
         className="pb-no"
         style={{ ...base, border: "1px solid var(--line)", background: "var(--bg2)", color: "var(--text2)" }}
       >

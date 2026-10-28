@@ -6,6 +6,7 @@ import "../od.css";
 import { ThemeScript } from "@/components/ThemeScript";
 import { SiteAnalytics } from "@/components/SiteAnalytics";
 import { FirstTouch } from "@/components/site/FirstTouch";
+import { TradeHost } from "@/components/trade/TradeHost";
 import { brandFor, isLocale, LOCALES } from "@/lib/i18n";
 import { getDict } from "@/lib/dict";
 
@@ -147,6 +148,7 @@ export default async function LangLayout({
       </head>
       <body className="min-h-full">
         <FirstTouch />
+        <TradeHost lang={lang} />
         {children}
         <SiteAnalytics />
       </body>

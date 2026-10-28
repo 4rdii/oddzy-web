@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { AccountButton } from "@/components/trade/AccountButton";
 import Link from "next/link";
 import { OdNav, OdThemeButton, OdWire } from "./OdHeaderParts";
 
@@ -30,8 +31,9 @@ export function OdChrome({
           <OdNav active={active} />
           <div style={{ display: "flex", alignItems: "center", gap: 8, flex: "none", marginInlineStart: "auto", order: 2 }}>
             <OdThemeButton />
-            <Link
-              href="/app"
+            <AccountButton
+              lang="en"
+              label="Sign in"
               style={{
                 height: 36,
                 padding: "0 16px",
@@ -44,9 +46,7 @@ export function OdChrome({
                 alignItems: "center",
                 whiteSpace: "nowrap",
               }}
-            >
-              Sign in
-            </Link>
+            />
           </div>
         </div>
       </header>
