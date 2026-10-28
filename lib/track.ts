@@ -142,13 +142,65 @@ function getRef(): string | null {
   }
 }
 
+const FIRST_KEY = "oz_first";
+
+/** Where this visitor first arrived from, stored on their first page view. */
+export type FirstTouch = { site: string; landing: string; refHost: string | null; src: string | null; at: number };
+
+/**
+ * Record the visitor's FIRST touch: which of our sites, which page, the
+ * external referrer and any ?src= campaign code. Called on every page load
+ * (components/site/FirstTouch) but written only once per browser, so a
+ * Google visitor who reads three pages and then signs up on /app is still
+ * attributed to Google — before this, only basket pages and /app captured
+ * anything, and 62 of 99 web sign-ups had no source (2026-10-28).
+ */
+export function captureFirstTouch(): void {
+  if (typeof window === "undefined") return;
+  try {
+    if (localStorage.getItem(FIRST_KEY)) return;
+    let refHost: string | null = null;
+    try {
+      const r = document.referrer ? new URL(document.referrer).hostname.replace(/^www\./, "") : "";
+      // Our own sites are navigation, not a source.
+      if (r && r !== location.hostname.replace(/^www\./, "") && !/(^|\.)(oddzy\.xyz|polybaaz\.com)$/.test(r)) refHost = r.slice(0, 80);
+    } catch {
+      // ignore
+    }
+    const raw = new URLSearchParams(location.search).get("src");
+    const src = raw && SRC_RE.test(raw.toLowerCase()) ? raw.toLowerCase() : null;
+    const first: FirstTouch = { site: location.hostname.replace(/^www\./, ""), landing: location.pathname.slice(0, 120), refHost, src, at: Date.now() };
+    localStorage.setItem(FIRST_KEY, JSON.stringify(first));
+  } catch {
+    // storage blocked: nothing to remember
+  }
+}
+
+function getFirstTouch(): FirstTouch | null {
+  try {
+    const raw = localStorage.getItem(FIRST_KEY);
+    return raw ? (JSON.parse(raw) as FirstTouch) : null;
+  } catch {
+    return null;
+  }
+}
+
 /** The fields the server joins on; spread into any authenticated POST body. */
 export function attribution(): {
   src: string | null;
   visitorId: string | null;
   ref: string | null;
+  /** The site this request comes from: decides the account's brand (fa/en). */
+  site: string | null;
+  first: FirstTouch | null;
 } {
-  return { src: getSource(), visitorId: getVisitorId(), ref: getRef() };
+  return {
+    src: getSource(),
+    visitorId: getVisitorId(),
+    ref: getRef(),
+    site: typeof location !== "undefined" ? location.hostname.replace(/^www\./, "") : null,
+    first: getFirstTouch(),
+  };
 }
 
 export type WebEvent = "basket_view" | "basket_cta" | "app_open" | "login_start";
