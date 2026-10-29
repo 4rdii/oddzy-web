@@ -1,6 +1,6 @@
 "use client";
 
-import { heavyRoute } from "@/lib/trade-bus";
+import { heavyRoute } from "@/lib/routes";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState, useSyncExternalStore } from "react";

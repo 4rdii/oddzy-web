@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { heavyRoute } from "@/lib/trade-bus";
+import { heavyRoute } from "@/lib/routes";
 import { AccountButton } from "@/components/trade/AccountButton";
 import { ActiveChipIntoView } from "@/components/site/ActiveChipIntoView";
 import Link from "next/link";
