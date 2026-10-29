@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import { SignInLink } from "@/components/trade/SignInLink";
 import { notFound } from "next/navigation";
 import { SiteChrome } from "@/components/site/Chrome";
 import { brandFor, isLocale } from "@/lib/i18n";
@@ -77,12 +77,9 @@ export default async function HowItWorksPage({
         </div>
 
         <div className="mt-8 flex flex-wrap gap-3">
-          <Link
-            href="/app"
-            className="min-h-[50px] rounded-xl bg-[var(--ink)] px-6 py-3.5 font-semibold text-[var(--on-ink)]"
-          >
+          <SignInLink className="min-h-[50px] rounded-xl bg-[var(--ink)] px-6 py-3.5 font-semibold text-[var(--on-ink)]">
             {t.cta.startTrading}
-          </Link>
+          </SignInLink>
           {/* Oddzy is web-first: the web app is the only CTA. PolyBaaz keeps
               its Telegram button as the second option. */}
           {lang === "fa" ? (

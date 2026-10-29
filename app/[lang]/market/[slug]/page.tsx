@@ -280,7 +280,7 @@ export default async function MarketPage(props: Params) {
               generic feed had to find it again from scratch. */}
           <TradeLink
             href={`/app?market=${encodeURIComponent(slug)}`}
-            req={{ slug }}
+            req={{ slug, title }}
             className="mt-4 inline-block rounded-xl bg-[var(--accent)] px-5 py-3 text-[15px] font-semibold text-[var(--on-accent)]"
           >
             {t.cta.tradeThisMarket}

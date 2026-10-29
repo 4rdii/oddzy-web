@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState, type MouseEvent } from "react";
 import { useNow, useTimeZone } from "@/components/pb/useNow";
+import { tradeClick } from "@/lib/trade-bus";
 import type { Globe, GlobeState } from "@/components/pb/worldGlobe";
 import type { Dict } from "@/lib/dict/en";
 import { agoOf, dayMonthOf, num, pctOf, probWordOf, type PbLang } from "@/lib/pb";
@@ -64,8 +65,9 @@ function MarketRow({ m, self, byKey, l }: { m: WM; self: string | string[]; byKe
             </>
           )}
         </span>
-        <a className="yes" href={href}>{t.yes}</a>
-        <a className="no" href={href}>{t.no}</a>
+        {/* Straight into the trade pop-up (lib/trade-bus); the market page stays the fallback. */}
+        <a className="yes" href={href} onClick={(e) => tradeClick(e, { kind: "trade", req: { slug: m.slug, side: "YES", title: m.q, label: t.yes } })}>{t.yes}</a>
+        <a className="no" href={href} onClick={(e) => tradeClick(e, { kind: "trade", req: { slug: m.slug, side: "NO", title: m.q, label: t.no } })}>{t.no}</a>
       </div>
     </div>
   );

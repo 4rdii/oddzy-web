@@ -314,7 +314,7 @@ export default async function QuestionPage(props: Params) {
           ) : (
             <TradeLink
               href={`/app?market=${encodeURIComponent(market.slug)}`}
-              req={{ slug: market.slug }}
+              req={{ slug: market.slug, title }}
               className="mt-4 inline-block rounded-xl bg-[var(--accent)] px-5 py-3 text-[15px] font-semibold text-[var(--on-accent)]"
             >
               {t.cta.tradeThisMarket}

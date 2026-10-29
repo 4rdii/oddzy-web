@@ -1,5 +1,6 @@
 "use client";
 
+import { SignInLink } from "@/components/trade/SignInLink";
 import Link from "next/link";
 import { useEffect, useState, type CSSProperties } from "react";
 import { BRANDS } from "@/lib/i18n";
@@ -39,13 +40,12 @@ const TG_ICON = (
 function Ctas({ big }: { big?: boolean }) {
   return (
     <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 12, justifyContent: big ? "center" : undefined }}>
-      <Link
-        href="/app"
+      <SignInLink
         className="pb-gold-btn"
         style={{ fontWeight: 900, fontSize: 16, padding: big ? "14px 26px" : "15px 28px", borderRadius: 15, boxShadow: big ? undefined : "0 12px 30px -14px var(--gold)" }}
       >
         شروع پیش‌بینی در وب
-      </Link>
+      </SignInLink>
       <a
         href={botLink(undefined, BRANDS.fa.tgBot)}
         style={{

@@ -6,6 +6,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, 
 import { LocaleProvider, useLocale } from "@/components/app/LocaleProvider";
 import { PRIVY_ENABLED, PrivyRoot } from "@/components/app/PrivyRoot";
 import { WebLogin } from "@/components/app/WebLogin";
+import { PositionsScreen, WalletScreen } from "@/components/app/AccountScreens";
 import type { Market } from "@/lib/api";
 import { ApiCallError, authedGet, authedPost } from "@/lib/client-api";
 // The plain dictionary modules, not lib/dict (server-only): this file is a
@@ -93,6 +94,8 @@ const money = (v: number | null | undefined, fa: boolean) => {
   const s = v.toFixed(2);
   return fa ? `${s.replace(/\d/g, (d) => "۰۱۲۳۴۵۶۷۸۹"[+d]).replace(".", "٫")} دلار` : `$${s}`;
 };
+const faDigits = (s: string) => s.replace(/\d/g, (d) => "۰۱۲۳۴۵۶۷۸۹"[+d]).replace(".", "٫");
+const qty = (v: number, fa: boolean) => (fa ? faDigits(v.toFixed(2)) : v.toFixed(2));
 const cents = (p: number, fa: boolean) => {
   const c = Math.round(p * 100);
   return fa ? `${String(c).replace(/\d/g, (d) => "۰۱۲۳۴۵۶۷۸۹"[+d])}٪` : `${c}¢`;
@@ -100,7 +103,8 @@ const cents = (p: number, fa: boolean) => {
 
 // ---------------------------------------------------------------- controller
 
-type View = { kind: "signin" } | { kind: "account" } | { kind: "trade"; req: TradeRequest };
+type Tab = "positions" | "wallet";
+type View = { kind: "signin" } | { kind: "drawer"; tab: Tab } | { kind: "trade"; req: TradeRequest };
 
 function Controller({ pending, clear }: { pending: TradeMsg | null; clear: () => void }) {
   const { t, locale, rtl } = useLocale();
@@ -139,14 +143,36 @@ function Controller({ pending, clear }: { pending: TradeMsg | null; clear: () =>
   useEffect(() => {
     if (!pending) return;
     // eslint-disable-next-line react-hooks/set-state-in-effect -- a message from a page button opens the modal
-    setView(pending.kind === "trade" ? { kind: "trade", req: pending.req } : { kind: pending.kind });
+    setView(pending.kind === "trade" ? { kind: "trade", req: pending.req } : pending.kind === "account" ? { kind: "drawer", tab: "positions" } : { kind: "signin" });
     clear();
   }, [pending, clear]);
 
   if (!view) return null;
   const close = () => setView(null);
   const needLogin = account === "needed" || (ready && !authenticated);
-  const title = view.kind === "account" ? t.app.trade.account : view.kind === "signin" ? t.app.trade.signInTitle : t.app.trade.signInTitle;
+  const title = view.kind === "drawer" ? t.app.trade.account : t.app.trade.signInTitle;
+  const signOut = () => {
+    void logout().finally(() => {
+      setMe({ state: "out" });
+      setAccount("needed");
+      close();
+    });
+  };
+  // The portfolio drawer: the app's own Positions / Wallet screens, on the page.
+  if (view.kind === "drawer" && ready && authenticated && account === "ok") {
+    return (
+      <Drawer
+        tab={view.tab}
+        setTab={(tab) => setView({ kind: "drawer", tab })}
+        balance={balance}
+        rtl={rtl}
+        fa={fa}
+        onClose={close}
+        onSignOut={signOut}
+        onOpenMarket={(slug) => setView({ kind: "trade", req: { slug } })}
+      />
+    );
+  }
 
   let body: ReactNode;
   if (!ready || (authenticated && account === "unknown")) {
@@ -166,21 +192,18 @@ function Controller({ pending, clear }: { pending: TradeMsg | null; clear: () =>
       </>
     );
   } else if (view.kind === "trade") {
-    body = <TradePanel req={view.req} balance={balance} pal={pal} onPlaced={refreshMe} onClose={close} />;
-  } else {
     body = (
-      <AccountPanel
+      <TradePanel
+        req={view.req}
         balance={balance}
         pal={pal}
-        onSignOut={() => {
-          void logout().finally(() => {
-            setMe({ state: "out" });
-            setAccount("needed");
-            close();
-          });
-        }}
+        onPlaced={refreshMe}
+        onClose={close}
+        onDrawer={(tab) => setView({ kind: "drawer", tab })}
       />
     );
+  } else {
+    body = <Spinner pal={pal} text={t.app.login.loading} />;
   }
 
   return (
@@ -243,7 +266,7 @@ const btn = (pal: Pal, primary: boolean, disabled = false): CSSProperties => ({
 
 const PRESETS = [5, 10, 25, 50, 100];
 
-function TradePanel({ req, balance, pal, onPlaced, onClose }: { req: TradeRequest; balance: number | null; pal: Pal; onPlaced: () => Promise<void>; onClose: () => void }) {
+function TradePanel({ req, balance, pal, onPlaced, onClose, onDrawer }: { req: TradeRequest; balance: number | null; pal: Pal; onPlaced: () => Promise<void>; onClose: () => void; onDrawer: (tab: Tab) => void }) {
   const { t, tf, locale } = useLocale();
   const fa = locale === "fa";
   const [market, setMarket] = useState<Market | null | "missing">(null);
@@ -313,10 +336,10 @@ function TradePanel({ req, balance, pal, onPlaced, onClose }: { req: TradeReques
           <Row k={t.app.receipt.side} v={labelOf(side)} />
           <Row k={t.app.trade.cost} v={money(receipt.cost, fa)} />
           <Row k={t.app.trade.avgPrice} v={cents(receipt.avg, fa)} />
-          <Row k={t.app.trade.shares} v={receipt.shares.toFixed(2)} />
+          <Row k={t.app.trade.shares} v={qty(receipt.shares, fa)} />
           <Row k={t.app.trade.payout} v={money(receipt.shares, fa)} strong color={pal.up} />
         </div>
-        <Link href="/app" style={btn(pal, false)}>{t.app.trade.viewPositions}</Link>
+        <button type="button" style={btn(pal, false)} onClick={() => onDrawer("positions")}>{t.app.trade.viewPositions}</button>
         <button type="button" style={btn(pal, true)} onClick={onClose}>{t.app.trade.done}</button>
       </div>
     );
@@ -395,14 +418,15 @@ function TradePanel({ req, balance, pal, onPlaced, onClose }: { req: TradeReques
       </label>
       <div style={{ background: pal.card, borderRadius: 14, padding: 14, display: "grid", gap: 8, fontSize: 14 }}>
         <Row k={t.app.trade.livePrice} v={quote == null ? `${cents(snapshot, fa)} …` : cents(quote, fa)} />
-        <Row k={t.app.trade.shares} v={shares.toFixed(2)} />
-        <Row k={t.app.trade.payout} v={`${money(shares, fa)}${shares > amount ? `  (+${money(shares - amount, fa)})` : ""}`} strong color={pal.up} />
+        <Row k={t.app.trade.shares} v={qty(shares, fa)} />
+        <Row k={t.app.trade.payout} v={money(shares, fa)} strong color={pal.up} />
+        {shares > amount && <Row k={t.app.trade.profit} v={`+${money(shares - amount, fa)}`} color={pal.up} />}
         {balance != null && <Row k={t.app.trade.balance} v={money(balance, fa)} color={tooLow ? pal.down : undefined} />}
       </div>
       {tooLow ? (
         <>
           <p style={{ margin: 0, fontSize: 13, color: pal.down }}>{t.app.trade.tooLow}</p>
-          <Link href="/app" style={btn(pal, true)}>{t.app.trade.deposit}</Link>
+          <button type="button" style={btn(pal, true)} onClick={() => onDrawer("wallet")}>{t.app.trade.deposit}</button>
         </>
       ) : (
         <button type="button" disabled={busy || amount <= 0} onClick={place} style={btn(pal, true, busy || amount <= 0)}>
@@ -419,29 +443,90 @@ function Row({ k, v, strong, color }: { k: string; v: string; strong?: boolean; 
   return (
     <div style={{ display: "flex", justifyContent: "space-between", gap: 12 }}>
       <span style={{ opacity: 0.7 }}>{k}</span>
-      <span style={{ fontWeight: strong ? 800 : 600, color, direction: "ltr", unicodeBidi: "isolate" }}>{v}</span>
+      <span dir="auto" style={{ fontWeight: strong ? 800 : 600, color, unicodeBidi: "isolate" }}>{v}</span>
     </div>
   );
 }
 
-// ---------------------------------------------------------------- account
+// ---------------------------------------------------------------- portfolio drawer
 
-function AccountPanel({ balance, pal, onSignOut }: { balance: number | null; pal: Pal; onSignOut: () => void }) {
-  const { t, locale } = useLocale();
-  const fa = locale === "fa";
+/**
+ * Positions and Wallet (deposit, withdraw, activity, invite) on the page,
+ * sliding in from the side — the same screens /app shows, so the two can
+ * never disagree. Styled by the app's global CSS variables (--page, --ink…),
+ * which every page carries.
+ */
+function Drawer({
+  tab,
+  setTab,
+  balance,
+  rtl,
+  fa,
+  onClose,
+  onSignOut,
+  onOpenMarket,
+}: {
+  tab: Tab;
+  setTab: (t: Tab) => void;
+  balance: number | null;
+  rtl: boolean;
+  fa: boolean;
+  onClose: () => void;
+  onSignOut: () => void;
+  onOpenMarket: (slug: string) => void;
+}) {
+  const { t } = useLocale();
+  useEffect(() => {
+    const k = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    window.addEventListener("keydown", k);
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      window.removeEventListener("keydown", k);
+      document.body.style.overflow = prev;
+    };
+  }, [onClose]);
+  const tabBtn = (k: Tab, label: string) => (
+    <button
+      type="button"
+      onClick={() => setTab(k)}
+      style={{ flex: 1, padding: "10px 8px", borderRadius: 10, border: 0, cursor: "pointer", fontWeight: 700, fontSize: 14, background: tab === k ? "var(--ink)" : "transparent", color: tab === k ? "var(--on-ink)" : "var(--mute)" }}
+    >
+      {label}
+    </button>
+  );
   return (
-    <div style={{ display: "grid", gap: 12, paddingTop: 4 }}>
-      <h2 style={{ margin: 0, fontSize: 18, fontWeight: 800 }}>{t.app.trade.account}</h2>
-      <div style={{ background: pal.card, borderRadius: 14, padding: 16 }}>
-        <div style={{ fontSize: 12.5, color: pal.mute }}>{t.app.trade.balance}</div>
-        <div style={{ fontSize: 28, fontWeight: 800, direction: "ltr", textAlign: fa ? "right" : "left" }}>{money(balance, fa)}</div>
-      </div>
-      <Link href="/app?tab=positions" style={btn(pal, true)}>{t.app.trade.positions}</Link>
-      <Link href="/app?tab=wallet" style={btn(pal, false)}>{t.app.trade.wallet}</Link>
-      <button type="button" onClick={onSignOut} style={{ ...btn(pal, false), border: 0, color: pal.mute, fontWeight: 600, fontSize: 13.5 }}>
-        {t.app.trade.signOut}
-      </button>
+    <div onClick={onClose} style={{ position: "fixed", inset: 0, zIndex: 1000, background: "rgba(0,0,0,.45)" }}>
+      <aside
+        role="dialog"
+        aria-modal="true"
+        aria-label={t.app.trade.account}
+        dir={rtl ? "rtl" : "ltr"}
+        onClick={(e) => e.stopPropagation()}
+        style={{ position: "absolute", top: 0, bottom: 0, [rtl ? "left" : "right"]: 0, width: "min(460px, 100vw)", background: "var(--page)", color: "var(--ink)", borderInlineStart: "1px solid var(--line)", display: "flex", flexDirection: "column", boxShadow: "0 0 60px rgba(0,0,0,.4)" }}
+      >
+        <div style={{ padding: "16px 16px 10px", borderBottom: "1px solid var(--line)", display: "grid", gap: 12 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 12, color: "var(--mute)" }}>{t.app.trade.balance}</div>
+              <div dir="auto" style={{ fontSize: 24, fontWeight: 800, unicodeBidi: "isolate" }}>{money(balance, fa)}</div>
+            </div>
+            <button type="button" onClick={onSignOut} style={{ border: 0, background: "transparent", color: "var(--mute)", fontSize: 13, cursor: "pointer" }}>
+              {t.app.trade.signOut}
+            </button>
+            <button type="button" aria-label={t.app.trade.close} onClick={onClose} style={{ width: 34, height: 34, borderRadius: 9, border: "1px solid var(--line)", background: "transparent", color: "var(--mute)", cursor: "pointer" }}>
+              ✕
+            </button>
+          </div>
+          <div style={{ display: "flex", gap: 6, background: "var(--card)", padding: 4, borderRadius: 12 }}>
+            {tabBtn("positions", t.app.trade.positions)}
+            {tabBtn("wallet", t.app.trade.wallet)}
+          </div>
+        </div>
+        <div style={{ flex: 1, overflowY: "auto" }}>
+          {tab === "positions" ? <PositionsScreen onOpenMarket={onOpenMarket} /> : <WalletScreen />}
+        </div>
+      </aside>
     </div>
   );
 }
-
