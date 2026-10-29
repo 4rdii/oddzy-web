@@ -1,6 +1,5 @@
 "use client";
 
-import { heavyRoute } from "@/lib/routes";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState, useSyncExternalStore } from "react";
@@ -67,7 +66,7 @@ export function OdWire() {
         {ticks.length > 0 && (
           <div className="od-wire-tape">
             {[...ticks, ...ticks].map((t, i) => (
-              <Link
+              <Link prefetch={false}
                 key={i}
                 href={t.url}
                 aria-hidden={i >= ticks.length ? true : undefined}
@@ -134,7 +133,7 @@ export function OdNav({ active }: { active?: string }) {
       {NAV.map((n) => (
         <span key={n.key} style={{ display: "contents" }}>
           {n.sec && <span className="div" aria-hidden />}
-          <Link href={n.href} prefetch={heavyRoute(n.href) ? false : undefined} aria-current={n.key === on ? "page" : undefined} className={n.sec ? "sec" : undefined}>
+          <Link href={n.href} prefetch={false} aria-current={n.key === on ? "page" : undefined} className={n.sec ? "sec" : undefined}>
             {n.label}
           </Link>
         </span>

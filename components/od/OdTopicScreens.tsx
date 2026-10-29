@@ -65,7 +65,7 @@ export async function OdSectionScreen({ desk, slug }: { desk: Desk; slug: string
       <div className="od-main">
         <div style={{ padding: "28px 0 22px", borderBottom: "1px solid var(--od-line)", display: "grid", gap: 12 }}>
           <div className="mono" style={{ fontWeight: 600, fontSize: 11.5, letterSpacing: ".07em", textTransform: "uppercase", color: "var(--od-ink3)" }}>
-            <Link href="/">World Map</Link> / <span style={{ color: "var(--od-ink2)" }}>{S.name}</span>
+            <Link prefetch={false} href="/">World Map</Link> / <span style={{ color: "var(--od-ink2)" }}>{S.name}</span>
           </div>
           <div style={{ display: "flex", flexWrap: "wrap", alignItems: "flex-end", justifyContent: "space-between", gap: "16px 40px" }}>
             <div style={{ display: "grid", gap: 10, maxWidth: 760 }}>
@@ -154,7 +154,7 @@ export async function OdSectionScreen({ desk, slug }: { desk: Desk; slug: string
                 );
                 const st: React.CSSProperties = { display: "grid", gridTemplateColumns: "minmax(0,1fr) 72px 92px", gap: 12, alignItems: "center", padding: "9px 0", borderBottom: "1px solid var(--od-line2)" };
                 return c.topicSlug ? (
-                  <Link key={id} href={topicUrl(c.topicSlug)} style={st}>
+                  <Link prefetch={false} key={id} href={topicUrl(c.topicSlug)} style={st}>
                     {inner}
                   </Link>
                 ) : (
@@ -172,7 +172,7 @@ export async function OdSectionScreen({ desk, slug }: { desk: Desk; slug: string
           <SecHead title="Subtopics" right={`${subs.length} DESKS`} style={{ marginBottom: 14 }} />
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(min(100%,250px),1fr))", gap: 10 }}>
             {subs.map((t) => (
-              <Link key={t.slug} href={topicUrl(t.slug)} style={{ display: "grid", gap: 12, alignContent: "space-between", padding: 16, borderRadius: 14, background: "var(--od-panel)", border: "1px solid var(--od-line2)", minHeight: 150 }}>
+              <Link prefetch={false} key={t.slug} href={topicUrl(t.slug)} style={{ display: "grid", gap: 12, alignContent: "space-between", padding: 16, borderRadius: 14, background: "var(--od-panel)", border: "1px solid var(--od-line2)", minHeight: 150 }}>
                 <span style={{ display: "grid", gap: 4 }}>
                   <span className="serif" style={{ fontWeight: 500, fontSize: 23, lineHeight: 1.1, color: "var(--od-ink)" }}>
                     {t.name}
@@ -202,7 +202,7 @@ export async function OdSectionScreen({ desk, slug }: { desk: Desk; slug: string
             <SecHead title={`Moving in ${S.short}`} right="24H CHANGE" style={{ marginBottom: 14 }} />
             <div className="noscroll" style={{ display: "grid", gridAutoFlow: "column", gridAutoColumns: "minmax(260px,1fr)", gap: 10, overflowX: "auto", paddingBottom: 4 }}>
               {movers.map((m) => (
-                <Link key={m.id} href={`/market/${m.slug}`} style={{ display: "grid", gap: 10, padding: 14, borderRadius: 12, background: "var(--od-panel)", border: "1px solid var(--od-line2)" }}>
+                <Link prefetch={false} key={m.id} href={`/market/${m.slug}`} style={{ display: "grid", gap: 10, padding: 14, borderRadius: 12, background: "var(--od-panel)", border: "1px solid var(--od-line2)" }}>
                   <span style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                     <span className="mono" style={{ fontWeight: 700, fontSize: 13, color: chgCol(m.chg), background: chgBg(m.chg), borderRadius: 6, padding: "5px 8px" }}>
                       {chg(m.chg)} pts
@@ -248,7 +248,7 @@ export async function OdSectionScreen({ desk, slug }: { desk: Desk; slug: string
             <SecHead title="Guides" style={{ marginBottom: 14 }} />
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(min(100%,300px),1fr))", gap: 10 }}>
               {guides.map((g) => (
-                <Link key={g.slug} href={`/learn/${g.slug}`} style={{ display: "grid", gap: 8, alignContent: "start", padding: 18, borderRadius: 14, border: "1px solid var(--od-line)" }}>
+                <Link prefetch={false} key={g.slug} href={`/learn/${g.slug}`} style={{ display: "grid", gap: 8, alignContent: "start", padding: 18, borderRadius: 14, border: "1px solid var(--od-line)" }}>
                   <span className="mono" style={{ fontWeight: 600, fontSize: 10.5, letterSpacing: ".07em", color: "var(--od-ink3)" }}>
                     GUIDE
                   </span>
@@ -272,7 +272,7 @@ function KeyCard({ m, now, chartH, big }: { m: ReturnType<typeof mini> & { tot: 
     <div style={{ background: "var(--od-panel)", border: "1px solid var(--od-line)", borderRadius: big ? 16 : 14, padding: big ? 18 : 16, display: "grid", gap: big ? 14 : 10, minWidth: 0 }}>
       <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "space-between", alignItems: big ? "flex-start" : "baseline", gap: big ? 12 : 10 }}>
         {big ? (
-          <Link href={m.url} className="serif" style={{ flex: "1 1 300px", fontWeight: 500, fontSize: "clamp(22px,2.2vw,30px)", lineHeight: 1.15, color: "var(--od-ink)" }}>
+          <Link prefetch={false} href={m.url} className="serif" style={{ flex: "1 1 300px", fontWeight: 500, fontSize: "clamp(22px,2.2vw,30px)", lineHeight: 1.15, color: "var(--od-ink)" }}>
             {m.q}
           </Link>
         ) : (
@@ -315,7 +315,7 @@ function NewsList({ title, items, summaries }: { title: string; items: ReturnTyp
           </a>
           {summaries && n.s && <span style={{ fontSize: 13.5, lineHeight: 1.5, color: "var(--od-ink2)" }}>{n.s}</span>}
           {n.m && (
-            <Link
+            <Link prefetch={false}
               href={n.m.url}
               style={{ display: "flex", gap: 8, alignItems: "baseline", fontSize: 12.5, color: "var(--od-ink2)", ...(summaries ? { padding: "8px 10px", borderRadius: 9, background: "var(--od-chip)" } : {}) }}
             >
@@ -370,7 +370,7 @@ export async function OdSubtopicScreen({ desk, slug }: { desk: Desk; slug: strin
         <div className="od-sub-top">
           <div style={{ display: "grid", gap: 14, alignContent: "start", minWidth: 0 }}>
             <div className="mono" style={{ fontWeight: 600, fontSize: 11.5, letterSpacing: ".07em", textTransform: "uppercase", color: "var(--od-ink3)" }}>
-              <Link href="/">World Map</Link> / <Link href={topicUrl(S.slug)}>{S.name}</Link> / <span style={{ color: "var(--od-ink2)" }}>{T.name}</span>
+              <Link prefetch={false} href="/">World Map</Link> / <Link prefetch={false} href={topicUrl(S.slug)}>{S.name}</Link> / <span style={{ color: "var(--od-ink2)" }}>{T.name}</span>
             </div>
             <h1 className="serif" style={{ margin: 0, fontWeight: 500, fontSize: "clamp(48px,7vw,96px)", lineHeight: 0.92, letterSpacing: "-.03em" }}>
               {T.name}
@@ -394,7 +394,7 @@ export async function OdSubtopicScreen({ desk, slug }: { desk: Desk; slug: strin
                 .map((k) => desk.subs.find((s) => s.slug === k))
                 .filter((s): s is NonNullable<typeof s> => !!s)
                 .map((s) => (
-                  <Link key={s.slug} href={topicUrl(s.slug)} style={{ height: 30, padding: "0 12px", borderRadius: 999, border: "1px solid var(--od-line)", fontSize: 12.5, fontWeight: 600, color: "var(--od-ink2)", display: "flex", alignItems: "center" }}>
+                  <Link prefetch={false} key={s.slug} href={topicUrl(s.slug)} style={{ height: 30, padding: "0 12px", borderRadius: 999, border: "1px solid var(--od-line)", fontSize: 12.5, fontWeight: 600, color: "var(--od-ink2)", display: "flex", alignItems: "center" }}>
                     {s.name}
                   </Link>
                 ))}
