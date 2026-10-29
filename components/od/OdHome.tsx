@@ -413,7 +413,7 @@ export function OdHome({
           </div>
           <div className="od-movers-list noscroll">
             {movers.map((m) => (
-              <Link
+              <Link prefetch={false}
                 key={m.id}
                 href={m.url}
                 style={{ display: "grid", gridTemplateColumns: "52px minmax(0,1fr) auto", gap: 10, alignItems: "center", padding: "11px 12px", borderRadius: 12, background: "var(--od-panel)", border: "1px solid var(--od-line2)" }}
@@ -478,7 +478,7 @@ export function OdHome({
                   )}
                 </div>
                 {n.m && (
-                  <Link href={n.m.url} className="od-pill" style={{ alignSelf: "start", display: "grid", gap: 4, padding: "10px 12px", borderRadius: 10, border: "1px solid var(--od-line)", background: "var(--od-panel)", minWidth: 0 }}>
+                  <Link prefetch={false} href={n.m.url} className="od-pill" style={{ alignSelf: "start", display: "grid", gap: 4, padding: "10px 12px", borderRadius: 10, border: "1px solid var(--od-line)", background: "var(--od-panel)", minWidth: 0 }}>
                     <span className="clamp2" style={{ fontSize: 12.5, lineHeight: 1.3, color: "var(--od-ink2)" }}>
                       {n.m.q}
                     </span>
@@ -496,7 +496,7 @@ export function OdHome({
               </div>
             );
           })}
-          <Link href="/extension" style={{ display: "flex", alignItems: "center", gap: 8, padding: "14px 0", fontSize: 13.5, fontWeight: 600, color: "var(--od-ink2)", flexWrap: "wrap" }}>
+          <Link prefetch={false} href="/extension" style={{ display: "flex", alignItems: "center", gap: 8, padding: "14px 0", fontSize: 13.5, fontWeight: 600, color: "var(--od-ink2)", flexWrap: "wrap" }}>
             <span style={{ width: 18, height: 18, borderRadius: 5, background: "linear-gradient(140deg,#2fe0a0,#0c9f8e)", flex: "none" }} />
             See markets for any article →<span style={{ fontWeight: 400, color: "var(--od-ink3)" }}>Market Finder for Chrome</span>
           </Link>
@@ -545,7 +545,7 @@ export function OdHome({
             </div>
             <div style={{ display: "grid", gap: 10 }}>
               {desks.map((d) => (
-                <Link key={d.key} href={d.url} style={{ display: "grid", gap: 10, padding: 16, borderRadius: 14, background: "var(--od-panel)", border: "1px solid var(--od-line2)" }}>
+                <Link prefetch={false} key={d.key} href={d.url} style={{ display: "grid", gap: 10, padding: 16, borderRadius: 14, background: "var(--od-panel)", border: "1px solid var(--od-line2)" }}>
                   <span style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 8 }}>
                     <span className="serif" style={{ fontWeight: 500, fontSize: 22, lineHeight: 1.1, color: "var(--od-ink)" }}>
                       {d.name}
@@ -615,7 +615,7 @@ function LeadCard({ lead }: { lead: Lead }) {
           </div>
           <div style={{ display: "grid", gridTemplateColumns: `repeat(${f.stops.length},minmax(0,1fr))`, gap: 8 }}>
             {f.stops.map((m) => (
-              <Link key={m.id} href={m.url} style={{ display: "grid", justifyItems: "center", gap: 2, padding: "8px 4px", borderRadius: 10, background: "var(--od-chip)", textAlign: "center" }}>
+              <Link prefetch={false} key={m.id} href={m.url} style={{ display: "grid", justifyItems: "center", gap: 2, padding: "8px 4px", borderRadius: 10, background: "var(--od-chip)", textAlign: "center" }}>
                 <span className="mono" style={{ fontWeight: 500, fontSize: 11.5, color: "var(--od-ink3)" }}>
                   {m.lab}
                 </span>
@@ -633,7 +633,7 @@ function LeadCard({ lead }: { lead: Lead }) {
       {f && f.t === "race" && (
         <div style={{ display: "grid", gap: 4 }}>
           {f.stops.slice(0, 4).map((m, i) => (
-            <Link key={m.id} href={m.url} style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) 54px 40px", gap: 10, alignItems: "center", padding: "6px 0" }}>
+            <Link prefetch={false} key={m.id} href={m.url} style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) 54px 40px", gap: 10, alignItems: "center", padding: "6px 0" }}>
               <span style={{ display: "grid", gap: 5, minWidth: 0 }}>
                 <span style={{ fontSize: 13.5, fontWeight: 600 }}>{m.lab}</span>
                 <span style={{ height: 6, borderRadius: 3, background: "var(--od-line2)" }}>
@@ -662,7 +662,7 @@ function LeadCard({ lead }: { lead: Lead }) {
             <path d={line} style={{ fill: "none", stroke: "var(--od-brand)", strokeWidth: 1.6 }} vectorEffect="non-scaling-stroke" />
           </svg>
         </div>
-        <Link href={k.url} style={{ flex: "none", height: 42, padding: "0 18px", borderRadius: 10, background: "var(--od-ink)", color: "var(--od-bg)", fontWeight: 700, fontSize: 14.5, display: "flex", alignItems: "center", gap: 6 }}>
+        <Link prefetch={false} href={k.url} style={{ flex: "none", height: 42, padding: "0 18px", borderRadius: 10, background: "var(--od-ink)", color: "var(--od-bg)", fontWeight: 700, fontSize: 14.5, display: "flex", alignItems: "center", gap: 6 }}>
           Trade<span aria-hidden>→</span>
         </Link>
       </div>
@@ -732,7 +732,7 @@ function CountryCard({
       {markets.length > 0 && (
         <div style={{ display: "grid" }}>
           {markets.map((m) => (
-            <Link key={m.id} href={m.url} style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) auto", gap: 10, alignItems: "center", padding: "8px 0", borderTop: "1px solid var(--od-line2)" }}>
+            <Link prefetch={false} key={m.id} href={m.url} style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) auto", gap: 10, alignItems: "center", padding: "8px 0", borderTop: "1px solid var(--od-line2)" }}>
               <span style={{ display: "grid", gap: 2, minWidth: 0 }}>
                 <span style={{ fontSize: 13, fontWeight: 600, lineHeight: 1.3, color: "var(--od-ink)" }}>{m.q}</span>
                 <span className="mono" style={{ fontWeight: 500, fontSize: 10.5, color: "var(--od-ink3)" }}>
@@ -758,7 +758,7 @@ function CountryCard({
               {linkLabel}
             </a>
           ) : (
-            <Link href={link} style={{ fontWeight: 700, color: "var(--od-brand)" }}>
+            <Link prefetch={false} href={link} style={{ fontWeight: 700, color: "var(--od-brand)" }}>
               {linkLabel}
             </Link>
           )

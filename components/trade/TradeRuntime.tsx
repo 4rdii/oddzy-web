@@ -231,7 +231,7 @@ function NoPrivyModal({ fa, rtl, t, onClose }: { fa: boolean; rtl: boolean; t: D
   return (
     <Modal onClose={onClose} pal={pal} rtl={rtl} label={t.app.trade.openApp}>
       <p style={{ margin: "8px 40px 16px 0" }}>{t.app.trade.unavailable}</p>
-      <Link href="/app" style={btn(pal, true)}>{t.app.trade.openApp}</Link>
+      <Link prefetch={false} href="/app" style={btn(pal, true)}>{t.app.trade.openApp}</Link>
     </Modal>
   );
 }

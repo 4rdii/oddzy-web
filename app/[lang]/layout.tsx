@@ -15,6 +15,9 @@ const grotesk = Space_Grotesk({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
   display: "swap",
+  // Declared once for both brands, so next/font would preload all nine files on
+  // every page. Off: the browser fetches only the faces the page uses.
+  preload: false,
 });
 
 const plexMono = IBM_Plex_Mono({
@@ -22,6 +25,9 @@ const plexMono = IBM_Plex_Mono({
   subsets: ["latin"],
   weight: ["400", "500", "600"],
   display: "swap",
+  // Declared once for both brands, so next/font would preload all nine files on
+  // every page. Off: the browser fetches only the faces the page uses.
+  preload: false,
 });
 
 /**
@@ -40,6 +46,9 @@ const vazirmatn = Vazirmatn({
   // 900: the PolyBaaz redesign's figures and headings (handoff: Vazirmatn 400–900).
   weight: ["400", "500", "600", "700", "800", "900"],
   display: "swap",
+  // Declared once for both brands, so next/font would preload all nine files on
+  // every page. Off: the browser fetches only the faces the page uses.
+  preload: false,
 });
 
 /**
@@ -51,18 +60,27 @@ const newsreader = Newsreader({
   subsets: ["latin"],
   weight: ["400", "500", "600"],
   display: "swap",
+  // Declared once for both brands, so next/font would preload all nine files on
+  // every page. Off: the browser fetches only the faces the page uses.
+  preload: false,
 });
 const schibsted = Schibsted_Grotesk({
   variable: "--font-schibsted",
   subsets: ["latin"],
   weight: ["400", "500", "600", "700", "800"],
   display: "swap",
+  // Declared once for both brands, so next/font would preload all nine files on
+  // every page. Off: the browser fetches only the faces the page uses.
+  preload: false,
 });
 const jbMono = JetBrains_Mono({
   variable: "--font-jbmono",
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
   display: "swap",
+  // Declared once for both brands, so next/font would preload all nine files on
+  // every page. Off: the browser fetches only the faces the page uses.
+  preload: false,
 });
 
 export function generateStaticParams() {

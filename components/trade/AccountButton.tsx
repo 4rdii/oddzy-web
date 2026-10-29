@@ -20,6 +20,7 @@ export function AccountButton({ lang, label, className, style }: { lang: "en" | 
       : label;
   return (
     <Link
+      prefetch={false}
       href="/app"
       className={className}
       style={style}

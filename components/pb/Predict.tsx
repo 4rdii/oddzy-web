@@ -104,6 +104,7 @@ export function PredictCtas({ slug, side, amount, title, label }: { slug: string
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
       <Link
+        prefetch={false}
         href={`/app?market=${encodeURIComponent(slug)}`}
         onClick={(e) => tradeClick(e, { kind: "trade", req: { slug, side, amount, title, label } })}
         className="pb-gold-btn"

@@ -250,6 +250,7 @@ function Row({
           </p>
           {!settled && (
             <Link
+              prefetch={false}
               href={`/app?market=${encodeURIComponent(m.slug)}`}
               onClick={(e) => tradeClick(e, { kind: "trade", req: { slug: m.slug } })}
               className="min-h-[44px] rounded-xl bg-[var(--accent)] px-4 py-2.5 text-[14px] font-semibold text-[var(--on-accent)]"

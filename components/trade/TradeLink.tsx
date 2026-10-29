@@ -11,7 +11,7 @@ import { tradeClick, type TradeRequest } from "@/lib/trade-bus";
  */
 export function TradeLink({ href, req, className, style, children }: { href: string; req: TradeRequest; className?: string; style?: CSSProperties; children: ReactNode }) {
   return (
-    <Link href={href} className={className} style={style} onClick={(e) => tradeClick(e, { kind: "trade", req })}>
+    <Link prefetch={false} href={href} className={className} style={style} onClick={(e) => tradeClick(e, { kind: "trade", req })}>
       {children}
     </Link>
   );

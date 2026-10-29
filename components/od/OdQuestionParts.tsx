@@ -192,7 +192,7 @@ export function TradeBox({ slug, yes }: { slug: string; yes: number }) {
             </b>
           </span>
         </div>
-        <Link href={href}
+        <Link prefetch={false} href={href}
         onClick={(e) => tradeClick(e, { kind: "trade", req: { slug, side: side === "yes" ? "YES" : "NO", amount: amt } })} style={{ height: 50, borderRadius: 12, background: "var(--od-brand)", color: "var(--od-brandInk)", fontWeight: 800, fontSize: 16, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
           Trade {sideName} on Oddzy →
         </Link>
@@ -203,7 +203,7 @@ export function TradeBox({ slug, yes }: { slug: string; yes: number }) {
       <div className="od-q-bar">
         {btn("yes", 50, true)}
         {btn("no", 50, true)}
-        <Link href={href} style={{ height: 50, borderRadius: 12, background: "var(--od-brand)", color: "var(--od-brandInk)", fontWeight: 800, fontSize: 15, display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
+        <Link prefetch={false} href={href} style={{ height: 50, borderRadius: 12, background: "var(--od-brand)", color: "var(--od-brandInk)", fontWeight: 800, fontSize: 15, display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
           Trade {sideName} →
         </Link>
       </div>

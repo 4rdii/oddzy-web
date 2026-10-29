@@ -8,7 +8,7 @@ import { getMe, getServerMe, subscribeMe, tradeClick } from "@/lib/trade-bus";
 export function SignInLink({ className, style, children }: { className?: string; style?: CSSProperties; children: ReactNode }) {
   const me = useSyncExternalStore(subscribeMe, getMe, getServerMe);
   return (
-    <Link href="/app" className={className} style={style} onClick={(e) => tradeClick(e, { kind: me.state === "in" ? "account" : "signin" })}>
+    <Link prefetch={false} href="/app" className={className} style={style} onClick={(e) => tradeClick(e, { kind: me.state === "in" ? "account" : "signin" })}>
       {children}
     </Link>
   );
