@@ -134,7 +134,7 @@ export function PredictCtas({ slug, side = "YES", amount, title, label, prob }: 
     <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
       <div style={{ display: "flex", gap: 8 }}>
         <Link prefetch={false} href={`/app?market=${encodeURIComponent(slug)}`} onClick={go(side)} style={btn(side, true)}>
-          <span>بله{label ? ` · ${label}` : ""}</span>
+          <span>بله</span>
           {p != null && <span style={{ fontSize: 13, opacity: 0.85 }}>{fa(p)}٪</span>}
         </Link>
         <Link prefetch={false} href={`/app?market=${encodeURIComponent(slug)}`} onClick={go(other)} style={btn(other, false)}>
