@@ -1,5 +1,6 @@
 "use client";
 
+import { heavyRoute } from "@/lib/trade-bus";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState, useSyncExternalStore } from "react";
@@ -133,7 +134,7 @@ export function OdNav({ active }: { active?: string }) {
       {NAV.map((n) => (
         <span key={n.key} style={{ display: "contents" }}>
           {n.sec && <span className="div" aria-hidden />}
-          <Link href={n.href} aria-current={n.key === on ? "page" : undefined} className={n.sec ? "sec" : undefined}>
+          <Link href={n.href} prefetch={heavyRoute(n.href) ? false : undefined} aria-current={n.key === on ? "page" : undefined} className={n.sec ? "sec" : undefined}>
             {n.label}
           </Link>
         </span>

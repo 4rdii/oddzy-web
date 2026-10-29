@@ -1,5 +1,6 @@
 "use client";
 
+import { heavyRoute } from "@/lib/trade-bus";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useId, useRef, useState, useSyncExternalStore } from "react";
@@ -178,6 +179,7 @@ export function PbNav({ label, part }: { label: string; part: "desktop" | "phone
                   {g.items.map((it) => (
                     <li key={it.href}>
                       <Link
+                        prefetch={heavyRoute(it.href) ? false : undefined}
                         href={it.href}
                         aria-current={isOn(path, it.href) ? "page" : undefined}
                         className={`flex min-h-[48px] items-center gap-3 rounded-xl px-3 py-2 hover:bg-[color-mix(in_srgb,var(--ink)_6%,transparent)] ${
@@ -234,6 +236,7 @@ export function PbNav({ label, part }: { label: string; part: "desktop" | "phone
             {active.items.map((it) => (
               <Link
                 key={it.href}
+                prefetch={heavyRoute(it.href) ? false : undefined}
                 href={it.href}
                 aria-current={isOn(path, it.href) ? "page" : undefined}
                 style={{ fontSize: 13 }}
@@ -276,6 +279,7 @@ export function PbNav({ label, part }: { label: string; part: "desktop" | "phone
               {sheetGroup.items.map((it) => (
                 <li key={it.href}>
                   <Link
+                    prefetch={heavyRoute(it.href) ? false : undefined}
                     href={it.href}
                     onClick={() => setSheet(null)}
                     aria-current={isOn(path, it.href) ? "page" : undefined}

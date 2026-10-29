@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { heavyRoute } from "@/lib/trade-bus";
 import { AccountButton } from "@/components/trade/AccountButton";
 import { ActiveChipIntoView } from "@/components/site/ActiveChipIntoView";
 import Link from "next/link";
@@ -222,7 +223,7 @@ function flattenTopics(tree: Topic[]): Topic[] {
 
 function NavLink({ href, children }: { href: string; children: React.ReactNode }) {
   return (
-    <Link href={href} className="text-[14px] font-medium text-[var(--mute)] hover:text-[var(--ink)]">
+    <Link href={href} prefetch={heavyRoute(href) ? false : undefined} className="text-[14px] font-medium text-[var(--mute)] hover:text-[var(--ink)]">
       {children}
     </Link>
   );

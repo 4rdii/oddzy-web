@@ -12,7 +12,8 @@ type RuntimeProps = { lang: Locale; pending: TradeMsg | null; clear: () => void 
  * page would fight it, so the host stays off there and entry points fall back
  * to their /app links (see lib/trade-bus).
  */
-const OWN_PROVIDER = /^\/(app|baskets|creator)(\/|$)/;
+// The basket index and builder have their own provider; a basket detail page does not.
+const OWN_PROVIDER = /^\/(app|creator)(\/|$)|^\/baskets(\/new)?\/?$/;
 
 /**
  * Mounted once in the layout. Costs nothing until used: the runtime (Privy +
