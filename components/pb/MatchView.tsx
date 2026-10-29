@@ -163,7 +163,9 @@ function MatchInner(p: MatchViewProps) {
   };
 
   const cur = p.groups.find((g) => g.key === tab) ?? p.groups[0];
-  const rows = cur ? (all ? cur.rows : cur.rows.slice(0, COLLAPSED)) : [];
+  // Same question at different lines (O/U 0.5…7.5, one side's spread) → one slider card.
+  const items = cur ? ladderItems(cur.rows) : [];
+  const shown = all ? items : items.slice(0, COLLAPSED);
 
   const names = whales ? sideNames(whales) : null;
   const topWhales = (whales?.whales ?? []).slice(0, 2);
@@ -433,37 +435,14 @@ function MatchInner(p: MatchViewProps) {
               })}
             </div>
             <div style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: 18, overflow: "hidden" }}>
-              {rows.map((r) => (
-                <div
-                  key={r.slug}
-                  id={`mk-${r.slug}`}
-                  className={flash === r.slug ? "pb-flash" : undefined}
-                  style={{
-                    display: "flex",
-                    flexWrap: "wrap",
-                    alignItems: "center",
-                    gap: "10px 14px",
-                    padding: "14px 16px",
-                    borderTop: "1px solid var(--line)",
-                    marginTop: -1,
-                  }}
-                >
-                  <div style={{ flex: "1 1 220px", minWidth: 0, display: "flex", flexDirection: "column", gap: 3 }}>
-                    <span style={{ fontSize: 14.5, fontWeight: 600, lineHeight: 1.7 }}>{r.q}</span>
-                    {r.h24 > 0 && r.status === "active" && (
-                      <span style={{ fontSize: 12, color: "var(--muted)" }}>حجم ۲۴ ساعت {faMoney(r.h24)}</span>
-                    )}
-                  </div>
-                  {r.status === "active" && !ended ? (
-                    <YesNoLabelled row={r} sub={sub} />
-                  ) : (
-                    <span style={{ fontSize: 13, fontWeight: 700, color: "var(--muted)" }}>
-                      {r.outcome === "YES" ? `تسویه شد: ${r.yes}` : r.outcome === "NO" ? `تسویه شد: ${r.no}` : ended ? "در انتظار تسویه" : "بسته شد"}
-                    </span>
-                  )}
-                </div>
-              ))}
-              {cur && cur.rows.length > COLLAPSED && (
+              {shown.map((it) =>
+                it.kind === "ladder" ? (
+                  <LineLadder key={it.key} rows={it.rows} title={it.title} sub={sub} ended={ended} />
+                ) : (
+                  <PlainRow key={it.r.slug} r={it.r} sub={sub} ended={ended} flash={flash} />
+                ),
+              )}
+              {items.length > COLLAPSED && (
                 <button
                   type="button"
                   onClick={() => setAll((v) => !v)}
@@ -479,7 +458,7 @@ function MatchInner(p: MatchViewProps) {
                     cursor: "pointer",
                   }}
                 >
-                  {all ? "نمایش کمتر" : `نمایش همهٔ ${fa(cur.rows.length)} بازار ${cur.label}`}
+                  {all ? "نمایش کمتر" : `نمایش همهٔ ${fa(cur?.rows.length ?? 0)} بازار ${cur?.label ?? ""}`}
                 </button>
               )}
             </div>
@@ -567,7 +546,7 @@ function MatchInner(p: MatchViewProps) {
                 ضریب <b style={{ color: "var(--text)" }}>×{fa(mult.toFixed(2))}</b>
               </span>
             </div>
-            <PredictCtas slug={sel.o.slug} side={p.resultType === "head_to_head" && pick > 0 ? "NO" : "YES"} amount={amt} title={`${p.title}: ${sel.label}؟`} label={sel.label} />
+            <PredictCtas slug={sel.o.slug} side={p.resultType === "head_to_head" && pick > 0 ? "NO" : "YES"} amount={amt} title={`${p.title}: ${sel.label}؟`} label={sel.label} prob={sel.pct} />
           </aside>
         )}
       </main>
@@ -637,6 +616,132 @@ function YesNoLabelled({ row, sub }: { row: MatchRow; sub: string }) {
   const plain = row.yes === "بله" && row.no === "خیر";
   if (plain) return <YesNo title={row.q} sub={sub} slug={row.slug} p={y} />;
   return <LabelledPair row={row} sub={sub} y={y} />;
+}
+
+/** One market row: the question, its volume, and Yes/No (or how it settled). */
+function PlainRow({ r, sub, ended, flash }: { r: MatchRow; sub: string; ended: boolean; flash: string | null }) {
+  return (
+    <div
+            id={`mk-${r.slug}`}
+      className={flash === r.slug ? "pb-flash" : undefined}
+      style={{
+        display: "flex",
+        flexWrap: "wrap",
+        alignItems: "center",
+        gap: "10px 14px",
+        padding: "14px 16px",
+        borderTop: "1px solid var(--line)",
+        marginTop: -1,
+      }}
+    >
+      <div style={{ flex: "1 1 220px", minWidth: 0, display: "flex", flexDirection: "column", gap: 3 }}>
+        <span style={{ fontSize: 14.5, fontWeight: 600, lineHeight: 1.7 }}>{r.q}</span>
+        {r.h24 > 0 && r.status === "active" && (
+          <span style={{ fontSize: 12, color: "var(--muted)" }}>حجم ۲۴ ساعت {faMoney(r.h24)}</span>
+        )}
+      </div>
+      {r.status === "active" && !ended ? (
+        <YesNoLabelled row={r} sub={sub} />
+      ) : (
+        <span style={{ fontSize: 13, fontWeight: 700, color: "var(--muted)" }}>
+          {r.outcome === "YES" ? `تسویه شد: ${r.yes}` : r.outcome === "NO" ? `تسویه شد: ${r.no}` : ended ? "در انتظار تسویه" : "بسته شد"}
+        </span>
+      )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------- line ladders
+
+const NUM_RE = /[+\-−]?[\d۰-۹]+(?:[.٫][\d۰-۹]+)?/;
+const toNum = (s: string) => Number(s.replace(/[۰-۹]/g, (d) => String("۰۱۲۳۴۵۶۷۸۹".indexOf(d))).replace("٫", ".").replace("−", "-"));
+
+type LadderItem = { kind: "row"; r: MatchRow } | { kind: "ladder"; key: string; title: string; rows: MatchRow[] };
+
+/**
+ * Fold rows that are one question at several lines — «بالاتر/پایین‌تر از ۰.۵»
+ * … «۷.۵», or one side's spread — into a single item, in place of the first
+ * of them. Four or more lines make a ladder; fewer stay plain rows.
+ */
+function ladderItems(rows: MatchRow[]): LadderItem[] {
+  const fam = new Map<string, MatchRow[]>();
+  for (const r of rows) {
+    if (!NUM_RE.test(r.q)) continue;
+    const k = r.q.replace(NUM_RE, "#");
+    fam.set(k, [...(fam.get(k) ?? []), r]);
+  }
+  const out: LadderItem[] = [];
+  const placed = new Set<string>();
+  for (const r of rows) {
+    const k = NUM_RE.test(r.q) ? r.q.replace(NUM_RE, "#") : null;
+    const f = k ? fam.get(k) : undefined;
+    if (k && f && f.length >= 4) {
+      if (placed.has(k)) continue;
+      placed.add(k);
+      const sorted = [...f].sort((a, b) => toNum(a.q.match(NUM_RE)![0]) - toNum(b.q.match(NUM_RE)![0]));
+      out.push({ kind: "ladder", key: k, title: k, rows: sorted });
+    } else out.push({ kind: "row", r });
+  }
+  return out;
+}
+
+/** Polymarket-style line picker: a slider over the lines, Yes/No (Over/Under) for the chosen one. */
+function LineLadder({ rows, title, sub, ended }: { rows: MatchRow[]; title: string; sub: string; ended: boolean }) {
+  const live = rows.filter((r) => r.status === "active");
+  const list = live.length ? live : rows;
+  // Start on the most balanced line, like Polymarket.
+  const start = list.reduce((bi, r, i) => (Math.abs((r.p ?? 0.5) - 0.5) < Math.abs((list[bi].p ?? 0.5) - 0.5) ? i : bi), 0);
+  const [i, setI] = useState(start);
+  const r = list[Math.min(i, list.length - 1)];
+  const line = r.q.match(NUM_RE)?.[0] ?? "";
+  return (
+    <div id={`mk-${r.slug}`} style={{ padding: "14px 16px", borderTop: "1px solid var(--line)", marginTop: -1, display: "flex", flexDirection: "column", gap: 12 }}>
+      <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "10px 14px" }}>
+        <div style={{ flex: "1 1 220px", minWidth: 0, display: "flex", flexDirection: "column", gap: 3 }}>
+          <span style={{ fontSize: 14.5, fontWeight: 600, lineHeight: 1.7 }}>
+            {title.split("#")[0]}
+            <b style={{ color: "var(--gold)", fontSize: 16 }}>{line}</b>
+            {title.split("#")[1]}
+          </span>
+          <span style={{ fontSize: 12, color: "var(--muted)" }}>
+            {fa(list.length)} خط · {r.h24 > 0 ? `حجم ۲۴ ساعت ${faMoney(r.h24)}` : "خط را با اسلایدر انتخاب کنید"}
+          </span>
+        </div>
+        {r.status === "active" && !ended ? (
+          <YesNoLabelled row={r} sub={sub} />
+        ) : (
+          <span style={{ fontSize: 13, fontWeight: 700, color: "var(--muted)" }}>{ended ? "در انتظار تسویه" : "بسته شد"}</span>
+        )}
+      </div>
+      <div dir="ltr" style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        <input
+          type="range"
+          min={0}
+          max={list.length - 1}
+          step={1}
+          value={Math.min(i, list.length - 1)}
+          onChange={(e) => setI(Number(e.target.value))}
+          aria-label="line"
+          style={{ width: "100%", accentColor: "var(--gold)", cursor: "pointer" }}
+        />
+        <div className="pb-noscroll" style={{ display: "flex", gap: 6, overflowX: "auto", scrollbarWidth: "none" }}>
+          {list.map((x, k) => {
+            const on = k === Math.min(i, list.length - 1);
+            return (
+              <button
+                key={x.slug}
+                type="button"
+                onClick={() => setI(k)}
+                style={{ flexShrink: 0, padding: "5px 10px", borderRadius: 999, fontSize: 12.5, fontWeight: 700, cursor: "pointer", border: `1px solid ${on ? "var(--goldline)" : "var(--line)"}`, background: on ? "var(--goldbg)" : "transparent", color: on ? "var(--gold)" : "var(--text2)" }}
+              >
+                {x.q.match(NUM_RE)?.[0]}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
 }
 
 function LabelledPair({ row, sub, y }: { row: MatchRow; sub: string; y: number | null }) {

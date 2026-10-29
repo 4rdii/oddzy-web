@@ -13,7 +13,7 @@ import { type NextRequest } from "next/server";
  *
  * Only the hosts next.config already trusts are allowed.
  */
-const ALLOWED = [/^https:\/\/polymarket-upload\.s3\.us-east-2\.amazonaws\.com\//, /^https:\/\/cdn-api\.pandascore\.co\/images\//];
+const ALLOWED = [/^https:\/\/polymarket-upload\.s3\.us-east-2\.amazonaws\.com\//, /^https:\/\/cdn-api\.pandascore\.co\/images\//, /^https:\/\/a\.espncdn\.com\/i\/teamlogos\//];
 const MAX_BYTES = 2_000_000;
 
 /**

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { TradeLink } from "@/components/trade/TradeLink";
+import { YesNoTrade } from "@/components/trade/YesNoTrade";
 import type { Metadata } from "next";
 import { notFound, permanentRedirect } from "next/navigation";
 import { NoMarket, noMarketMetadata } from "@/components/site/NoMarket";
@@ -278,13 +278,13 @@ export default async function MarketPage(props: Params) {
           {/* Opens the mini-app on THIS market, not a bare bot start screen.
               Someone who read a page about one question and tapped through to a
               generic feed had to find it again from scratch. */}
-          <TradeLink
-            href={`/app?market=${encodeURIComponent(slug)}`}
-            req={{ slug, title }}
-            className="mt-4 inline-block rounded-xl bg-[var(--accent)] px-5 py-3 text-[15px] font-semibold text-[var(--on-accent)]"
-          >
-            {t.cta.tradeThisMarket}
-          </TradeLink>
+          <YesNoTrade
+            slug={slug}
+            title={title}
+            yes={market.status === "active" ? market.probability.yes : null}
+            labels={{ yes: t.match.yes, no: t.match.no }}
+            fa={lang === "fa"}
+          />
         </section>
 
         <p className="mt-6 font-mono text-[11px] text-[var(--faint)]">

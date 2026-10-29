@@ -90,8 +90,13 @@ const TG_ICON = (
   </svg>
 );
 
-/** Gold "predict on the web" + the small Telegram pill under it. */
-export function PredictCtas({ slug, side, amount, title, label }: { slug: string; side?: TradeSide; amount?: number; title?: string; label?: string }) {
+/**
+ * «بله» / «خیر» on the picked outcome — each opens the trade pop-up on that
+ * side (lib/trade-bus) — plus the small Telegram pill under them. Replaced a
+ * single «پیش‌بینی در وب» button that only led to the next step.
+ * `prob`: whole percent of the picked side.
+ */
+export function PredictCtas({ slug, side = "YES", amount, title, label, prob }: { slug: string; side?: TradeSide; amount?: number; title?: string; label?: string; prob?: number }) {
   const pill: CSSProperties = {
     alignSelf: "center",
     display: "inline-flex",
@@ -106,25 +111,37 @@ export function PredictCtas({ slug, side, amount, title, label }: { slug: string
     padding: "8px 16px",
     borderRadius: 999,
   };
+  const other: TradeSide = side === "YES" ? "NO" : "YES";
+  const p = prob != null && Number.isFinite(prob) ? Math.max(1, Math.min(99, Math.round(prob))) : null;
+  const btn = (s: TradeSide, yes: boolean): CSSProperties => ({
+    flex: 1,
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    gap: 2,
+    padding: "12px 8px",
+    borderRadius: 14,
+    fontWeight: 900,
+    fontSize: 16,
+    textAlign: "center",
+    color: yes ? "var(--up)" : "var(--down)",
+    background: yes ? "color-mix(in srgb, var(--up) 14%, transparent)" : "color-mix(in srgb, var(--down) 12%, transparent)",
+    border: `1px solid ${yes ? "color-mix(in srgb, var(--up) 45%, transparent)" : "color-mix(in srgb, var(--down) 40%, transparent)"}`,
+  });
+  const go = (s: TradeSide) => (e: React.MouseEvent) =>
+    tradeClick(e, { kind: "trade", req: { slug, side: s, amount, title, label: s === side ? label : undefined } });
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-      <Link
-        prefetch={false}
-        href={`/app?market=${encodeURIComponent(slug)}`}
-        onClick={(e) => tradeClick(e, { kind: "trade", req: { slug, side, amount, title, label } })}
-        className="pb-gold-btn"
-        style={{
-          display: "block",
-          textAlign: "center",
-          fontWeight: 900,
-          fontSize: 17,
-          padding: 16,
-          borderRadius: 16,
-          boxShadow: "0 10px 26px -12px var(--gold)",
-        }}
-      >
-        پیش‌بینی در وب
-      </Link>
+      <div style={{ display: "flex", gap: 8 }}>
+        <Link prefetch={false} href={`/app?market=${encodeURIComponent(slug)}`} onClick={go(side)} style={btn(side, true)}>
+          <span>بله{label ? ` · ${label}` : ""}</span>
+          {p != null && <span style={{ fontSize: 13, opacity: 0.85 }}>{fa(p)}٪</span>}
+        </Link>
+        <Link prefetch={false} href={`/app?market=${encodeURIComponent(slug)}`} onClick={go(other)} style={btn(other, false)}>
+          <span>خیر</span>
+          {p != null && <span style={{ fontSize: 13, opacity: 0.85 }}>{fa(100 - p)}٪</span>}
+        </Link>
+      </div>
       <a href={botLink(undefined, BRANDS.fa.tgBot)} style={pill}>
         {TG_ICON}یا در ربات تلگرام
       </a>
@@ -258,7 +275,7 @@ function PredictSheet({ pick, onClose }: { pick: PredictPick; onClose: () => voi
             </span>
           </div>
         </div>
-        <PredictCtas slug={pick.slug} side={pick.side} amount={amt} title={pick.title} label={pick.outcome} />
+        <PredictCtas slug={pick.slug} side={pick.side} amount={amt} title={pick.title} label={pick.outcome} prob={pick.prob} />
         <div style={{ fontSize: 11, color: "var(--faint)", textAlign: "center", lineHeight: 1.8 }}>
           قیمت نهایی، قیمت لحظهٔ ثبت سفارش است. پیش‌بینی با ریسک از دست دادن سرمایه همراه است.
         </div>

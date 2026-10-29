@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { TradeLink } from "@/components/trade/TradeLink";
+import { YesNoTrade } from "@/components/trade/YesNoTrade";
 import type { Metadata } from "next";
 import { notFound, permanentRedirect } from "next/navigation";
 import { NoMarket, noMarketMetadata } from "@/components/site/NoMarket";
@@ -303,13 +303,13 @@ export default async function QuestionPage(props: Params) {
         <section className="mt-8 rounded-2xl border border-[var(--line)] bg-[var(--card)] p-5">
           <p className="text-[15px] leading-relaxed">{t.market.ctaLead}</p>
           {/* Trade on the page (the site's trade pop-up); PolyBaaz keeps Telegram as a second way in. */}
-          <TradeLink
-            href={`/app?market=${encodeURIComponent(market.slug)}`}
-            req={{ slug: market.slug, title }}
-            className="mt-4 inline-block rounded-xl bg-[var(--accent)] px-5 py-3 text-[15px] font-semibold text-[var(--on-accent)]"
-          >
-            {t.cta.tradeThisMarket}
-          </TradeLink>
+          <YesNoTrade
+            slug={market.slug}
+            title={title}
+            yes={market.status === "active" ? market.probability.yes : null}
+            labels={{ yes: t.match.yes, no: t.match.no }}
+            fa={lang === "fa"}
+          />
           {lang === "fa" && (
             <a href={`https://t.me/${brand.tgBot}`} className="ms-4 mt-4 inline-block text-[14px] text-[var(--mute)] underline underline-offset-4">
               {t.cta.openTelegram}
