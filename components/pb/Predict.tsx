@@ -116,10 +116,10 @@ export function PredictCtas({ slug, side = "YES", amount, title, label, prob }: 
   const btn = (s: TradeSide, yes: boolean): CSSProperties => ({
     flex: 1,
     display: "flex",
-    flexDirection: "column",
     alignItems: "center",
-    gap: 2,
-    padding: "12px 8px",
+    justifyContent: "center",
+    gap: 6,
+    padding: "10px 8px",
     borderRadius: 14,
     fontWeight: 900,
     fontSize: 16,
@@ -135,11 +135,11 @@ export function PredictCtas({ slug, side = "YES", amount, title, label, prob }: 
       <div style={{ display: "flex", gap: 8 }}>
         <Link prefetch={false} href={`/app?market=${encodeURIComponent(slug)}`} onClick={go(side)} style={btn(side, true)}>
           <span>بله</span>
-          {p != null && <span style={{ fontSize: 13, opacity: 0.85 }}>{fa(p)}٪</span>}
+          {p != null && <span style={{ fontSize: 14, opacity: 0.85 }}>{fa(p)}٪</span>}
         </Link>
         <Link prefetch={false} href={`/app?market=${encodeURIComponent(slug)}`} onClick={go(other)} style={btn(other, false)}>
           <span>خیر</span>
-          {p != null && <span style={{ fontSize: 13, opacity: 0.85 }}>{fa(100 - p)}٪</span>}
+          {p != null && <span style={{ fontSize: 14, opacity: 0.85 }}>{fa(100 - p)}٪</span>}
         </Link>
       </div>
       <a href={botLink(undefined, BRANDS.fa.tgBot)} style={pill}>
