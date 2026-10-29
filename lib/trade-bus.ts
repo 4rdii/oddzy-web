@@ -23,7 +23,14 @@ export type TradeSide = "YES" | "NO";
  * English title only, so the page's own wording wins when it has one.
  */
 export type TradeRequest = { slug: string; side?: TradeSide; amount?: number; title?: string; label?: string };
-export type TradeMsg = { kind: "trade"; req: TradeRequest } | { kind: "signin" } | { kind: "account" };
+export type TradeMsg =
+  | { kind: "trade"; req: TradeRequest }
+  | { kind: "signin" }
+  | { kind: "account" }
+  /** Buy a basket in the portfolio drawer (the app's basket screen, on the page). */
+  | { kind: "basket"; slug: string }
+  /** The Up/Down fast markets, in the drawer. */
+  | { kind: "updown" };
 
 const EV = "oz-trade";
 

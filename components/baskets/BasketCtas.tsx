@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { tradeClick } from "@/lib/trade-bus";
 import { captureSource, track } from "@/lib/track";
 
 /**
@@ -58,7 +59,11 @@ export function BasketCtas({
       <a
         ref={webRef}
         href={webHref}
-        onClick={() => track("basket_cta", { basket: slug, target: "web", src: srcRef.current })}
+        onClick={(e) => {
+          track("basket_cta", { basket: slug, target: "web", src: srcRef.current });
+          // Buy on the page (the app's basket screen in the site drawer); /app is the fallback.
+          tradeClick(e, { kind: "basket", slug });
+        }}
         className="block w-full rounded-xl px-5 py-3.5 text-center text-[15px] font-bold"
         style={{
           background: "var(--bk-cta)",

@@ -564,7 +564,7 @@ export const en = {
     resolved: "Resolved: {outcome}",
     rulesNote: "Each market settles on its own rules. Open one to read exactly how it resolves.",
     ctaLead: "Take a side on any of these {count} markets, right here on the web.",
-    openApp: "Open this match in the app",
+    openApp: "Trade this match",
     asOf: "Prices as of",
   },
   hub: {

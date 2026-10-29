@@ -7,6 +7,10 @@ import { LocaleProvider, useLocale } from "@/components/app/LocaleProvider";
 import { PRIVY_ENABLED, PrivyRoot } from "@/components/app/PrivyRoot";
 import { WebLogin } from "@/components/app/WebLogin";
 import { PositionsScreen, WalletScreen } from "@/components/app/AccountScreens";
+import { BasketsScreen, BasketReceiptScreen, type BasketReceipt } from "@/components/app/BasketsScreen";
+import { UpDownScreen } from "@/components/app/UpDownScreen";
+import { Receipt } from "@/components/app/Receipt";
+import type { PlacedBet } from "@/components/app/MarketDetail";
 import type { Market } from "@/lib/api";
 import { ApiCallError, authedGet, authedPost } from "@/lib/client-api";
 // The plain dictionary modules, not lib/dict (server-only): this file is a
@@ -104,7 +108,8 @@ const cents = (p: number, fa: boolean) => {
 // ---------------------------------------------------------------- controller
 
 type Tab = "positions" | "wallet";
-type View = { kind: "signin" } | { kind: "drawer"; tab: Tab } | { kind: "trade"; req: TradeRequest };
+type Extra = { kind: "basket"; slug: string } | { kind: "updown" };
+type View = { kind: "signin" } | { kind: "drawer"; tab: Tab; extra?: Extra } | { kind: "trade"; req: TradeRequest };
 
 function Controller({ pending, clear }: { pending: TradeMsg | null; clear: () => void }) {
   const { t, locale, rtl } = useLocale();
@@ -143,7 +148,17 @@ function Controller({ pending, clear }: { pending: TradeMsg | null; clear: () =>
   useEffect(() => {
     if (!pending) return;
     // eslint-disable-next-line react-hooks/set-state-in-effect -- a message from a page button opens the modal
-    setView(pending.kind === "trade" ? { kind: "trade", req: pending.req } : pending.kind === "account" ? { kind: "drawer", tab: "positions" } : { kind: "signin" });
+    setView(
+      pending.kind === "trade"
+        ? { kind: "trade", req: pending.req }
+        : pending.kind === "account"
+          ? { kind: "drawer", tab: "positions" }
+          : pending.kind === "basket"
+            ? { kind: "drawer", tab: "positions", extra: { kind: "basket", slug: pending.slug } }
+            : pending.kind === "updown"
+              ? { kind: "drawer", tab: "positions", extra: { kind: "updown" } }
+              : { kind: "signin" },
+    );
     clear();
   }, [pending, clear]);
 
@@ -163,7 +178,9 @@ function Controller({ pending, clear }: { pending: TradeMsg | null; clear: () =>
     return (
       <Drawer
         tab={view.tab}
+        extra={view.extra ?? null}
         setTab={(tab) => setView({ kind: "drawer", tab })}
+        refreshMe={refreshMe}
         balance={balance}
         rtl={rtl}
         fa={fa}
@@ -458,7 +475,9 @@ function Row({ k, v, strong, color }: { k: string; v: string; strong?: boolean; 
  */
 function Drawer({
   tab,
+  extra,
   setTab,
+  refreshMe,
   balance,
   rtl,
   fa,
@@ -467,7 +486,9 @@ function Drawer({
   onOpenMarket,
 }: {
   tab: Tab;
+  extra: Extra | null;
   setTab: (t: Tab) => void;
+  refreshMe: () => Promise<void>;
   balance: number | null;
   rtl: boolean;
   fa: boolean;
@@ -476,6 +497,8 @@ function Drawer({
   onOpenMarket: (slug: string) => void;
 }) {
   const { t } = useLocale();
+  const [basketDone, setBasketDone] = useState<BasketReceipt | null>(null);
+  const [placed, setPlaced] = useState<PlacedBet | null>(null);
   useEffect(() => {
     const k = (e: KeyboardEvent) => e.key === "Escape" && onClose();
     window.addEventListener("keydown", k);
@@ -524,7 +547,36 @@ function Drawer({
           </div>
         </div>
         <div style={{ flex: 1, overflowY: "auto" }}>
-          {tab === "positions" ? <PositionsScreen onOpenMarket={onOpenMarket} /> : <WalletScreen />}
+          {extra?.kind === "basket" ? (
+            basketDone ? (
+              <BasketReceiptScreen receipt={basketDone} onPositions={() => setTab("positions")} onDone={onClose} />
+            ) : (
+              <BasketsScreen
+                balance={balance}
+                initialSlug={extra.slug}
+                onDone={(r) => {
+                  setBasketDone(r);
+                  void refreshMe();
+                }}
+              />
+            )
+          ) : extra?.kind === "updown" ? (
+            placed ? (
+              <Receipt bet={placed} onPositions={() => setTab("positions")} onNext={() => setPlaced(null)} />
+            ) : (
+              <UpDownScreen
+                balance={balance}
+                onPlaced={(b) => {
+                  setPlaced(b);
+                  void refreshMe();
+                }}
+              />
+            )
+          ) : tab === "positions" ? (
+            <PositionsScreen onOpenMarket={onOpenMarket} />
+          ) : (
+            <WalletScreen />
+          )}
         </div>
       </aside>
     </div>

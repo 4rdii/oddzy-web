@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { SiteChrome } from "@/components/site/Chrome";
 import { UpDownBoard } from "@/components/updown/UpDownBoard";
 import { getUpDownWindows } from "@/lib/api";
-import { brandFor, isLocale, LOCALES } from "@/lib/i18n";
+import { isLocale, LOCALES } from "@/lib/i18n";
 import { getDict } from "@/lib/dict";
 
 /**
@@ -53,7 +53,6 @@ export default async function UpDownPage(props: Params) {
   if (!isLocale(lang)) notFound();
 
   const t = getDict(lang);
-  const brand = brandFor(lang);
   const { windows, settled } = await getUpDownWindows();
 
   return (
@@ -89,9 +88,9 @@ export default async function UpDownPage(props: Params) {
           initial={windows}
           initialSettled={settled}
           locale={lang}
-          // Oddzy is web-first: the CTA opens the web app on its Up/Down tab.
-          // PolyBaaz keeps its Telegram bot CTA unchanged.
-          ctaHref={lang === "fa" ? `https://t.me/${brand.tgBot}` : "/app?tab=updown"}
+          // Both brands trade Up/Down on the page (the site drawer); /app is the
+          // link's fallback for no-JS and modified clicks.
+          ctaHref="/app?tab=updown"
           copy={{
             none: t.updown.none,
             closesIn: t.updown.closesIn,

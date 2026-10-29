@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { tradeClick } from "@/lib/trade-bus";
 import type { UpDownWindow, SettledUpDownWindow } from "@/lib/api";
 import { PriceChart, useWindowPrices } from "./PriceChart";
 import {
@@ -298,6 +299,7 @@ export function UpDownBoard({
 
           <a
             href={ctaHref}
+            onClick={(e) => tradeClick(e, { kind: "updown" })}
             className="mt-4 block rounded-xl bg-[var(--accent)] px-5 py-3 text-center text-[15px] font-semibold text-[var(--on-accent)]"
           >
             {copy.cta}

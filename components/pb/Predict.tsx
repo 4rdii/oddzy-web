@@ -1,6 +1,6 @@
 "use client";
 
-import { tradeClick, type TradeSide } from "@/lib/trade-bus";
+import { sendTrade, tradeClick, type TradeSide } from "@/lib/trade-bus";
 import Link from "next/link";
 import { createContext, useCallback, useContext, useEffect, useState, type CSSProperties, type ReactNode } from "react";
 import { BRANDS } from "@/lib/i18n";
@@ -36,7 +36,12 @@ export const usePredict = () => useContext(PredictCtx);
 
 export function PredictProvider({ children }: { children: ReactNode }) {
   const [pick, setPick] = useState<PredictPick | null>(null);
-  const open = useCallback((p: PredictPick) => setPick(p), []);
+  // Straight to the trade pop-up (lib/trade-bus): the sheet was a second step
+  // in front of it. It stays as the fallback where the trade runtime is off.
+  const open = useCallback((p: PredictPick) => {
+    if (sendTrade({ kind: "trade", req: { slug: p.slug, side: p.side ?? "YES", title: p.title, label: p.outcome } })) return;
+    setPick(p);
+  }, []);
   return (
     <PredictCtx.Provider value={open}>
       {children}
