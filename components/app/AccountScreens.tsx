@@ -760,11 +760,13 @@ function DepositSheet({
   const [qr, setQr] = useState<string | null>(null);
   const [rails, setRails] = useState<DepositRail[] | null>(null);
   const [picked, setPicked] = useState<string | null>(null);
+  const [paused, setPaused] = useState(false);
 
   useEffect(() => {
     const ctrl = new AbortController();
-    authedGet<{ rails: DepositRail[] }>("/webapp/v1/deposit", ctrl.signal)
+    authedGet<{ rails: DepositRail[]; paused?: boolean }>("/webapp/v1/deposit", ctrl.signal)
       .then((d) => {
+        setPaused(!!d.paused);
         const sorted = [...d.rails].sort(
           (a, b) => railRank(a.id) - railRank(b.id),
         );
@@ -800,6 +802,28 @@ function DepositSheet({
       live = false;
     };
   }, [address]);
+
+  // No address while deposits are paused, and none while we don't know yet:
+  // the fallback address must not flash up before the answer arrives.
+  if (paused || rails === null) {
+    return (
+      <>
+        <div className="fixed inset-0 z-40 bg-black/40" onClick={onClose} aria-hidden />
+        <div
+          className="oz-sheet fixed inset-x-0 bottom-0 z-50 rounded-t-3xl border-t border-[var(--line)] bg-[var(--paper)] p-5 pb-8"
+          role="dialog"
+          aria-modal="true"
+          aria-label={t.app.wallet.deposit}
+        >
+          <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-[var(--handle)]" />
+          <div className="mx-auto max-w-md text-center">
+            <h2 className="text-[18px] font-bold tracking-[-0.02em]">{t.app.wallet.depositTitle}</h2>
+            {paused && <p className="mt-3 text-[14px] leading-6 text-[var(--mute)]">{t.app.wallet.depositsPaused}</p>}
+          </div>
+        </div>
+      </>
+    );
+  }
 
   return (
     <>

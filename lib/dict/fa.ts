@@ -1232,6 +1232,7 @@ export const fa: Dict = {
       copy: "کپی",
       copied: "کپی شد",
       depositTitle: "افزایش موجودی",
+      depositsPaused: "واریز موقتاً متوقف شده است. لطفاً فعلاً به هیچ آدرسی واریز نکنید. موجودی شما امن است و برداشت فعال است.",
       depositNetwork: "فقط شبکهٔ پلی‌گان",
       qrAlt: "کد QR آدرس واریز {address}",
       copyAddress: "کپی آدرس",

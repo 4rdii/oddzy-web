@@ -1303,6 +1303,7 @@ export const en = {
       copy: "Copy",
       copied: "Copied",
       depositTitle: "Add money",
+      depositsPaused: "Deposits are temporarily paused. Please don't send funds to any deposit address for now. Your balance is safe and withdrawals still work.",
       depositNetwork: "Polygon network only",
       qrAlt: "QR code for deposit address {address}",
       copyAddress: "Copy address",
