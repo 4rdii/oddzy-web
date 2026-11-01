@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { usePrivy } from "@privy-io/react-auth";
 import QRCode from "qrcode";
 import { usd, cents } from "@/lib/format";
 import { authedGet, authedPost, ApiCallError, type ApiFailure } from "@/lib/client-api";
@@ -561,7 +562,8 @@ export function ReduceSheet({
 export function WalletScreen() {
   const { t } = useLocale();
   const state = useAuthed<Account>("/webapp/v1/me");
-  const [sheet, setSheet] = useState<"deposit" | "withdraw" | null>(null);
+  const [sheet, setSheet] = useState<"deposit" | "withdraw" | "export" | null>(null);
+  const { inTelegram } = useTelegram();
   const [sent, setSent] = useState<WithdrawSent | null>(null);
   const [showAddresses, setShowAddresses] = useState(false);
 
@@ -664,12 +666,27 @@ export function WalletScreen() {
         </div>
       )}
 
+      {/* In Telegram the session is initData, not Privy, and the bot has its own export. */}
+      {data.walletAddress && !inTelegram && (
+        <button
+          type="button"
+          onClick={() => setSheet("export")}
+          className="mt-3 min-h-[44px] w-full rounded-xl border border-[var(--line)] text-[13px] font-semibold text-[var(--mute)]"
+        >
+          {t.app.wallet.exportKey}
+        </button>
+      )}
+
       {/* Money in and out. Sits under the addresses block because it answers the
           same class of question — "what has actually happened to my funds" —
           and because both are reference, not actions. */}
       <WalletActivity />
 
       <ReferralCard />
+
+      {sheet === "export" && data.walletAddress && (
+        <ExportKeySheet address={data.walletAddress} onClose={() => setSheet(null)} />
+      )}
 
       {sheet === "deposit" && addr && (
         <DepositSheet address={addr} onClose={() => setSheet(null)} />
@@ -735,6 +752,66 @@ type DepositRail = { id: string; chainId: number | null; address: string; vault:
 
 /** Rails in the order they should be offered, easiest funding path first. */
 const RAIL_ORDER = ["56", "42161", "8453", "tron", "evm", "svm", "btc", "polygon"];
+
+/**
+ * The warning in front of Privy's export window. The key is shown inside Privy's
+ * isolated frame, so neither this page nor our servers ever see it.
+ */
+function ExportKeySheet({ address, onClose }: { address: string; onClose: () => void }) {
+  const { t } = useLocale();
+  const { exportWallet } = usePrivy();
+  const [busy, setBusy] = useState(false);
+  const [failed, setFailed] = useState(false);
+
+  const reveal = async () => {
+    setBusy(true);
+    setFailed(false);
+    try {
+      await exportWallet({ address });
+      onClose();
+    } catch {
+      setFailed(true);
+      setBusy(false);
+    }
+  };
+
+  return (
+    <>
+      <div className="fixed inset-0 z-40 bg-black/40" onClick={onClose} aria-hidden />
+      <div
+        className="oz-sheet fixed inset-x-0 bottom-0 z-50 rounded-t-3xl border-t border-[var(--line)] bg-[var(--paper)] p-5 pb-8"
+        role="dialog"
+        aria-modal="true"
+        aria-label={t.app.wallet.exportKey}
+      >
+        <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-[var(--handle)]" />
+        <div className="mx-auto max-w-md">
+          <h2 className="text-center text-[18px] font-bold tracking-[-0.02em]">{t.app.wallet.exportKey}</h2>
+          <p className="mt-3 rounded-xl bg-[color-mix(in_srgb,var(--down)_10%,transparent)] px-3 py-2.5 text-[13px] leading-6">
+            {t.app.wallet.exportWarning}
+          </p>
+          <p className="mt-3 text-[13px] leading-6 text-[var(--mute)]">{t.app.wallet.exportNote}</p>
+          {failed && <p className="mt-3 text-[13px] text-[var(--down)]">{t.app.wallet.exportFailed}</p>}
+          <button
+            type="button"
+            onClick={reveal}
+            disabled={busy}
+            className="mt-4 min-h-[48px] w-full rounded-xl bg-[var(--ink)] font-semibold text-[var(--on-ink)] disabled:opacity-60"
+          >
+            {t.app.wallet.exportConfirm}
+          </button>
+          <button
+            type="button"
+            onClick={onClose}
+            className="mt-2 min-h-[44px] w-full rounded-xl text-[13px] font-semibold text-[var(--mute)]"
+          >
+            {t.app.wallet.dismiss}
+          </button>
+        </div>
+      </div>
+    </>
+  );
+}
 
 /**
  * Deposit: pick a chain, then its address + QR and the network warning.
