@@ -171,10 +171,9 @@ export default async function MatchPage(props: Params) {
 
   const jsonLd = {
     "@context": "https://schema.org",
-    "@type": "SportsEvent",
+    // Not SportsEvent: Google requires a venue for that, and we don't have one.
+    "@type": "WebPage",
     name: title,
-    ...(event.starts_at ? { startDate: event.starts_at } : {}),
-    eventStatus: "https://schema.org/EventScheduled",
     url: `${brand.siteUrl}/match/${event.id}`,
     inLanguage: brand.htmlLang,
   };

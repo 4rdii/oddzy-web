@@ -227,14 +227,8 @@ export function leagueJsonLd(lang: Locale, t: Dict, hub: LeagueHub, fixtures: Ma
       itemListElement: fixtures.slice(0, 50).map((ev, i) => ({
         "@type": "ListItem",
         position: i + 1,
-        item: {
-          "@type": "SportsEvent",
-          name: fixtureTitle(lang, t, ev),
-          ...(ev.starts_at ? { startDate: ev.starts_at } : {}),
-          eventStatus: "https://schema.org/EventScheduled",
-          ...(sport ? { sport } : {}),
-          url: `${brand.siteUrl}/match/${ev.id}`,
-        },
+        name: fixtureTitle(lang, t, ev),
+        url: `${brand.siteUrl}/match/${ev.id}`,
       })),
     },
     {
