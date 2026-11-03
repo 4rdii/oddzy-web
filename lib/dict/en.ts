@@ -1169,6 +1169,7 @@ export const en = {
     },
 
     bet: {
+      thinBook: "Few sellers right now: buying costs {live} although the market shows {shown}. If you sell soon, you may get much less back.",
       sheetLabel: "Place bet",
       yes: "YES",
       no: "NO",

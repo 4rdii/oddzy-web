@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { Market } from "@/lib/api";
 import { cents, compactUsd, pct, payoutFor, shortDate, usd, localized } from "@/lib/format";
-import { authedPost, ApiCallError } from "@/lib/client-api";
+import { authedGet, authedPost, ApiCallError } from "@/lib/client-api";
 import { useTelegram } from "@/lib/telegram";
 import { useLocale } from "./LocaleProvider";
 
@@ -37,10 +37,10 @@ export type PlacedBet = {
  * payout preview → confirm. Placement POSTs to the bot's /webapp/v1/bet, which
  * runs the same placeBetCore the chat flow uses.
  *
- * The price shown here is the cached snapshot probability, which is fine for a
- * preview but is NOT what the order is capped against — the server re-quotes
- * the executable price at placement time and returns the actual fill, so the
- * receipt reflects what really happened rather than what we predicted.
+ * The slip prices from GET /webapp/v1/quote — the executable ask the server
+ * caps the order against — not the snapshot probability. On a thin book those
+ * are far apart: one user saw 68 and filled at 99 (2026-11-03). The snapshot is
+ * only the fallback while the quote loads or if it fails.
  */
 export function MarketDetail({
   market,
@@ -62,7 +62,22 @@ export function MarketDetail({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const price = side === "YES" ? market.probability.yes : market.probability.no;
+  const shown = side === "YES" ? market.probability.yes : market.probability.no;
+  const [quote, setQuote] = useState<{ side: "YES" | "NO"; price: number } | null>(null);
+  useEffect(() => {
+    if (!sheetOpen) return;
+    const ctrl = new AbortController();
+    authedGet<{ price: number }>(`/webapp/v1/quote?marketId=${encodeURIComponent(market.id)}&side=${side}`, ctrl.signal)
+      .then((d) => {
+        if (Number(d.price) > 0) setQuote({ side, price: Number(d.price) });
+      })
+      .catch(() => {});
+    return () => ctrl.abort();
+  }, [sheetOpen, side, market.id]);
+  const live = quote && quote.side === side ? quote.price : null;
+  const price = live ?? shown;
+  // The buy costs well over what the market shows: few sellers near the mid.
+  const thin = live != null && live - shown >= 0.1;
   const shares = price > 0 ? stake / price : 0;
   const payout = payoutFor(stake, price);
   const yesPct = pct(market.probability.yes);
@@ -313,6 +328,12 @@ export function MarketDetail({
                   </span>
                 )}
               </p>
+
+              {thin && (
+                <p className="mt-3 rounded-lg bg-[color-mix(in_srgb,var(--down)_12%,transparent)] px-3 py-2 text-[13px] text-[var(--down)]">
+                  {tf(t.app.bet.thinBook, { live: cents(live ?? price), shown: cents(shown) })}
+                </p>
+              )}
 
               {insufficient && (
                 <p className="mt-3 text-[13px] text-[var(--down)]">
