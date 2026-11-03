@@ -1177,6 +1177,12 @@ export const fa: Dict = {
       sellApprox: "فروش {shares} سهم ≈",
       estimateNote:
         "این عدد بر اساس قیمت همین لحظه است. قیمت نهایی هنگام تأیید محاسبه می‌شود و در بازارهای کم‌عمق می‌تواند فرق کند.",
+      closeDoneTitle: "انجام شد",
+      closeDoneSold: "{shares} سهم فروخته شد به مبلغ",
+      closeDoneClaimed: "{shares} سهم برداشت شد به مبلغ",
+      closeDoneLeft: "{shares} سهم هنوز باز است.",
+      closeDoneBalance: "ممکن است چند ثانیه طول بکشد تا در موجودی شما نمایش داده شود.",
+      closeDoneOk: "باشه",
       closeError: "بستن این موقعیت انجام نشد. چیزی تغییر نکرد — کمی بعد دوباره تلاش کنید.",
       processing: "در حال انجام…",
       claim: "دریافت",

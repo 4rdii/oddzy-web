@@ -5,6 +5,7 @@ import { usePrivy } from "@privy-io/react-auth";
 import QRCode from "qrcode";
 import { usd, cents } from "@/lib/format";
 import { authedGet, authedPost, ApiCallError, type ApiFailure } from "@/lib/client-api";
+import { requestMeRefresh } from "@/lib/trade-bus";
 import { botLink, useTelegram } from "@/lib/telegram";
 import { SignInButton } from "./SignInButton";
 import { WithdrawSheet, type WithdrawSent } from "./WithdrawSheet";
@@ -26,6 +27,14 @@ export type Position = {
   progress: number;
   settled: boolean;
   won: boolean;
+};
+
+/** What POST /webapp/v1/close reports back. */
+export type CloseResult = {
+  mode: "sell" | "redeem";
+  soldShares: number;
+  received: number;
+  remainingShares?: number;
 };
 
 export type Account = {
@@ -140,6 +149,21 @@ export function PositionsScreen({ onOpenMarket }: { onOpenMarket: (slug: string)
   const [tab, setTab] = useState<"open" | "settled">("open");
   const state = useAuthed<{ positions: Position[] }>("/webapp/v1/positions");
   const [manage, setManage] = useState<Position | null>(null);
+  /**
+   * Shares left after a close, keyed by market+side. Polymarket's positions
+   * feed lags a fill by seconds, so without this the row you just sold stays
+   * on screen at its old size until a hard refresh. The server wins as soon
+   * as it reports the new size (or less).
+   */
+  const [closed, setClosed] = useState<Record<string, number>>({});
+  const { reload } = state;
+  const [refreshes, setRefreshes] = useState(0);
+  useEffect(() => {
+    if (!refreshes) return;
+    const timers = [2500, 7000, 15000, 30000].map((ms) => window.setTimeout(reload, ms));
+    return () => timers.forEach(clearTimeout);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- reload's identity changes each render
+  }, [refreshes]);
 
   if (state.status === "loading")
     return <p className="px-4 py-12 text-center text-[var(--mute)]">{t.app.positions.loading}</p>;
@@ -147,7 +171,14 @@ export function PositionsScreen({ onOpenMarket }: { onOpenMarket: (slug: string)
 
   // "Open" = everything currently held on-chain (including a redeemable winner
   // awaiting its claim); "Settled" comes from the persistent history endpoint.
-  const held = state.data.positions;
+  const keyOf = (p: Position) => `${p.marketId}-${p.side}`;
+  const held = state.data.positions.flatMap((p) => {
+    const left = closed[keyOf(p)];
+    if (left === undefined || p.shares <= left + 0.01) return [p];
+    if (left < 0.01) return [];
+    const f = left / p.shares;
+    return [{ ...p, shares: left, stake: p.stake * f, value: p.value * f, pnl: p.pnl * f }];
+  });
   const openOnly = held.filter((p) => !p.settled);
 
   /*
@@ -228,9 +259,16 @@ export function PositionsScreen({ onOpenMarket }: { onOpenMarket: (slug: string)
         <ReduceSheet
           position={manage}
           onClose={() => setManage(null)}
-          onDone={() => {
+          onDone={(r) => {
+            const p = manage;
             setManage(null);
+            if (r) {
+              const left = r.mode === "redeem" ? 0 : Math.max(0, r.remainingShares ?? p.shares - r.soldShares);
+              setClosed((c) => ({ ...c, [keyOf(p)]: left }));
+            }
             state.reload();
+            setRefreshes((n) => n + 1);
+            requestMeRefresh();
           }}
         />
       )}
@@ -430,7 +468,7 @@ export function ReduceSheet({
 }: {
   position: Position;
   onClose: () => void;
-  onDone: () => void;
+  onDone: (result?: CloseResult) => void;
   /**
    * The fraction pre-selected when the sheet opens. 50 on the Positions tab,
    * where "reduce" is the question; 100 where the button that opened it said
@@ -444,6 +482,7 @@ export function ReduceSheet({
   const [pct, setPct] = useState<number>(claimable ? 100 : defaultPct);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [done, setDone] = useState<CloseResult | null>(null);
 
   const sellShares = claimable ? position.shares : position.shares * (pct / 100);
   const estProceeds = claimable ? position.shares : sellShares * position.curPrice;
@@ -452,18 +491,70 @@ export function ReduceSheet({
     setSubmitting(true);
     setError(null);
     try {
-      await authedPost<{ ok: boolean }>("/webapp/v1/close", {
+      const r = await authedPost<{ ok: boolean } & Partial<CloseResult>>("/webapp/v1/close", {
         slug: position.slug,
         outcome: position.side,
         pct: claimable ? 100 : pct,
       });
-      onDone();
+      // Show what happened before the sheet goes away: closing used to just
+      // vanish, which read as "did anything happen?".
+      setDone({
+        mode: r.mode === "redeem" ? "redeem" : "sell",
+        soldShares: Number(r.soldShares ?? sellShares),
+        received: Number(r.received ?? estProceeds),
+        remainingShares: r.remainingShares,
+      });
     } catch (e) {
       const server = (e as ApiCallError & { serverMessage?: string })?.serverMessage;
       setError(server ?? t.app.positions.closeError);
     } finally {
       setSubmitting(false);
     }
+  }
+
+  if (done) {
+    const finish = () => onDone(done);
+    return (
+      <>
+        <div className="fixed inset-0 z-40 bg-black/40" onClick={finish} aria-hidden />
+        <div
+          className="oz-sheet fixed inset-x-0 bottom-0 z-50 rounded-t-3xl border-t border-[var(--line)] bg-[var(--paper)] p-5 pb-8"
+          role="dialog"
+          aria-modal="true"
+          aria-label={t.app.positions.closeDoneTitle}
+        >
+          <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-[var(--handle)]" />
+          <div className="mx-auto max-w-md text-center">
+            <div className="text-[28px]">✓</div>
+            <h2 className="mt-1 text-[18px] font-bold tracking-[-0.02em]">{t.app.positions.closeDoneTitle}</h2>
+            <p className="mt-1 text-[13px] text-[var(--mute)]">{position.title}</p>
+            <div className="mt-4 flex items-center justify-between rounded-xl bg-[var(--btn)] px-4 py-3">
+              <span className="text-[13px] text-[var(--mute)]">
+                {done.mode === "redeem"
+                  ? tf(t.app.positions.closeDoneClaimed, { shares: done.soldShares.toFixed(1) })
+                  : tf(t.app.positions.closeDoneSold, { shares: done.soldShares.toFixed(1) })}
+              </span>
+              <span className="ltr-num font-mono text-[17px] font-bold" style={{ color: "var(--up)" }}>
+                {usd(done.received)}
+              </span>
+            </div>
+            {done.mode === "sell" && (done.remainingShares ?? 0) >= 0.01 && (
+              <p className="mt-2 text-[12px] text-[var(--mute)]">
+                {tf(t.app.positions.closeDoneLeft, { shares: (done.remainingShares ?? 0).toFixed(1) })}
+              </p>
+            )}
+            <p className="mt-2 text-[12px] text-[var(--faint)]">{t.app.positions.closeDoneBalance}</p>
+            <button
+              type="button"
+              onClick={finish}
+              className="mt-4 min-h-[52px] w-full rounded-2xl bg-[var(--ink)] text-[16px] font-bold text-[var(--on-ink)]"
+            >
+              {t.app.positions.closeDoneOk}
+            </button>
+          </div>
+        </div>
+      </>
+    );
   }
 
   return (

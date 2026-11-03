@@ -20,7 +20,7 @@ import { fa as faDict } from "@/lib/dict/fa";
 import { localized } from "@/lib/format";
 import { brandFor, type Locale } from "@/lib/i18n";
 import { track } from "@/lib/track";
-import { setMe, type TradeMsg, type TradeRequest, type TradeSide } from "@/lib/trade-bus";
+import { onMeRefresh, setMe, type TradeMsg, type TradeRequest, type TradeSide } from "@/lib/trade-bus";
 
 /**
  * The website's trading runtime (loaded lazily by TradeHost): Privy, the
@@ -133,6 +133,9 @@ function Controller({ pending, clear }: { pending: TradeMsg | null; clear: () =>
       setMe({ state: "out" });
     }
   }, []);
+
+  // Sells and claims inside the drawer ask for a fresh balance on the header.
+  useEffect(() => onMeRefresh(() => void refreshMe()), [refreshMe]);
 
   useEffect(() => {
     if (!ready) return;

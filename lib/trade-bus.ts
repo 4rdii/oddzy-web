@@ -94,6 +94,16 @@ export function subscribeMe(f: () => void): () => void {
   meListeners.add(f);
   return () => meListeners.delete(f);
 }
+/** Ask the trade runtime to re-read the balance (after a sell, claim, withdrawal). */
+const ME_REFRESH = "oz-me-refresh";
+export function requestMeRefresh(): void {
+  if (typeof window !== "undefined") window.dispatchEvent(new Event(ME_REFRESH));
+}
+export function onMeRefresh(cb: () => void): () => void {
+  window.addEventListener(ME_REFRESH, cb);
+  return () => window.removeEventListener(ME_REFRESH, cb);
+}
+
 const SERVER_ME: Me = { state: "unknown" };
 export const getServerMe = (): Me => SERVER_ME;
 

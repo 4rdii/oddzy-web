@@ -1236,6 +1236,12 @@ export const en = {
       sellApprox: "Sell {shares} shares ≈",
       estimateNote:
         "Estimated at the current price. Your real fill is quoted when you confirm, and can differ on a thin book.",
+      closeDoneTitle: "Done",
+      closeDoneSold: "Sold {shares} shares for",
+      closeDoneClaimed: "Claimed {shares} shares for",
+      closeDoneLeft: "{shares} shares still open.",
+      closeDoneBalance: "It can take a few seconds to show in your balance.",
+      closeDoneOk: "OK",
       closeError: "Couldn't close that position. Nothing changed — try again shortly.",
       processing: "Processing…",
       /** Followed by the amount as its own span. */
