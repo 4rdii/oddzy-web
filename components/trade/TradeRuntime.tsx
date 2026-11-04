@@ -292,7 +292,8 @@ function TradePanel({ req, balance, pal, onPlaced, onClose, onDrawer }: { req: T
   const [market, setMarket] = useState<Market | null | "missing">(null);
   const [side, setSide] = useState<TradeSide>(req.side ?? "YES");
   const [amount, setAmount] = useState<number>(req.amount && req.amount > 0 ? req.amount : 10);
-  const [quote, setQuote] = useState<number | null>(null);
+  // Live buy price per side: undefined = loading, null = quote failed.
+  const [quotes, setQuotes] = useState<{ YES?: number | null; NO?: number | null }>({});
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [receipt, setReceipt] = useState<{ shares: number; cost: number; avg: number } | null>(null);
@@ -311,17 +312,25 @@ function TradePanel({ req, balance, pal, onPlaced, onClose, onDrawer }: { req: T
     };
   }, [req.slug]);
 
-  // Live executable price for the chosen side; the snapshot probability covers the gap.
+  /*
+   * Live executable price for BOTH sides, shown instead of the snapshot.
+   * On a thin book the snapshot (Polymarket's midpoint) means nothing: one
+   * market showed 41/59 while buying Under cost 99c (2026-11-04). So prices,
+   * shares and payout wait for the quote; the snapshot is only the fallback
+   * when a quote fails.
+   */
   const seq = useRef(0);
   useEffect(() => {
     if (!market || market === "missing") return;
     const n = ++seq.current;
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- clear the old side's quote while the new one loads
-    setQuote(null);
-    authedGet<{ price: number }>(`/webapp/v1/quote?marketId=${encodeURIComponent(market.id)}&side=${side}`)
-      .then((q) => n === seq.current && Number.isFinite(q.price) && setQuote(q.price))
-      .catch(() => {});
-  }, [market, side]);
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- reset while the new market's quotes load
+    setQuotes({});
+    for (const s of ["YES", "NO"] as const) {
+      authedGet<{ price: number }>(`/webapp/v1/quote?marketId=${encodeURIComponent(market.id)}&side=${s}`)
+        .then((q) => n === seq.current && setQuotes((o) => ({ ...o, [s]: Number(q.price) > 0 ? Number(q.price) : null })))
+        .catch(() => n === seq.current && setQuotes((o) => ({ ...o, [s]: null })));
+    }
+  }, [market]);
 
   if (market === null) return <Spinner pal={pal} text={t.app.trade.loadingMarket} />;
   if (market === "missing" || market.status !== "active")
@@ -343,8 +352,12 @@ function TradePanel({ req, balance, pal, onPlaced, onClose, onDrawer }: { req: T
   };
   const title = req.title || localized(locale, market.title, market.title_fa);
   const snapshot = side === "YES" ? market.probability.yes : market.probability.no;
+  const quote = quotes[side];
+  const loading = quote === undefined;
   const price = quote ?? snapshot;
   const shares = price > 0 ? amount / price : 0;
+  // Buying costs far more than the midpoint: few sellers, a wide book.
+  const thin = typeof quote === "number" && quote - snapshot >= 0.1;
   const tooLow = balance != null && amount > balance;
 
   if (receipt) {
@@ -390,7 +403,8 @@ function TradePanel({ req, balance, pal, onPlaced, onClose, onDrawer }: { req: T
   const sideBtn = (s: TradeSide) => {
     const on = side === s;
     const col = s === "YES" ? pal.up : pal.down;
-    const p = s === "YES" ? market.probability.yes : market.probability.no;
+    const q = quotes[s];
+    const p = q ?? (s === "YES" ? market.probability.yes : market.probability.no);
     return (
       <button
         type="button"
@@ -398,7 +412,7 @@ function TradePanel({ req, balance, pal, onPlaced, onClose, onDrawer }: { req: T
         style={{ flex: 1, minWidth: 0, padding: "12px 8px", borderRadius: 12, cursor: "pointer", border: `1.5px solid ${on ? col : pal.line}`, background: on ? (s === "YES" ? pal.upBg : pal.downBg) : "transparent", color: pal.text, display: "grid", gap: 2, justifyItems: "center" }}
       >
         <span style={{ fontSize: 13, fontWeight: 700, color: col, maxWidth: "100%", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{labelOf(s)}</span>
-        <b style={{ fontSize: 20 }}>{cents(on && quote != null ? quote : p, fa)}</b>
+        <b style={{ fontSize: 20 }}>{q === undefined ? "…" : cents(p, fa)}</b>
       </button>
     );
   };
@@ -437,10 +451,10 @@ function TradePanel({ req, balance, pal, onPlaced, onClose, onDrawer }: { req: T
         <span style={{ color: pal.mute }}>$</span>
       </label>
       <div style={{ background: pal.card, borderRadius: 14, padding: 14, display: "grid", gap: 8, fontSize: 14 }}>
-        <Row k={t.app.trade.livePrice} v={quote == null ? `${cents(snapshot, fa)} …` : cents(quote, fa)} />
-        <Row k={t.app.trade.shares} v={qty(shares, fa)} />
-        <Row k={t.app.trade.payout} v={money(shares, fa)} strong color={pal.up} />
-        {shares > amount && <Row k={t.app.trade.profit} v={`+${money(shares - amount, fa)}`} color={pal.up} />}
+        <Row k={t.app.trade.livePrice} v={loading ? "…" : cents(price, fa)} />
+        <Row k={t.app.trade.shares} v={loading ? "…" : qty(shares, fa)} />
+        <Row k={t.app.trade.payout} v={loading ? "…" : money(shares, fa)} strong color={pal.up} />
+        {!loading && shares > amount && <Row k={t.app.trade.profit} v={`+${money(shares - amount, fa)}`} color={pal.up} />}
         {balance != null && <Row k={t.app.trade.balance} v={money(balance, fa)} color={tooLow ? pal.down : undefined} />}
       </div>
       {tooLow ? (
@@ -449,9 +463,14 @@ function TradePanel({ req, balance, pal, onPlaced, onClose, onDrawer }: { req: T
           <button type="button" style={btn(pal, true)} onClick={() => onDrawer("wallet")}>{t.app.trade.deposit}</button>
         </>
       ) : (
-        <button type="button" disabled={busy || amount <= 0} onClick={place} style={btn(pal, true, busy || amount <= 0)}>
+        <button type="button" disabled={busy || loading || amount <= 0} onClick={place} style={btn(pal, true, busy || loading || amount <= 0)}>
           {busy ? t.app.trade.placing : `${tf(t.app.trade.buy, { side: labelOf(side) })} · ${money(amount, fa)}`}
         </button>
+      )}
+      {thin && (
+        <p style={{ margin: 0, fontSize: 13, lineHeight: 1.6, color: pal.down }}>
+          {tf(t.app.bet.thinBook, { live: cents(price, fa), shown: cents(snapshot, fa) })}
+        </p>
       )}
       {error && <p style={{ margin: 0, fontSize: 13, color: pal.down }}>{error}</p>}
       <p style={{ margin: 0, fontSize: 11.5, color: pal.mute, textAlign: "center" }}>{t.app.trade.onPolymarket}</p>
