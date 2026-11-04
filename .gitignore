@@ -41,3 +41,6 @@ yarn-error.log*
 next-env.d.ts
 .env*.local
 .vercel
+
+# local API snapshots for offline testing (large, not source)
+/fixtures/
