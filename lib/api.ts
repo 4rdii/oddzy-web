@@ -480,6 +480,25 @@ export async function getIndexableMarketsOrNull(): Promise<IndexableMarket[] | n
   }
 }
 
+/**
+ * The same gate on a short window, for a page that the day-long copy says is
+ * NOT indexable. A market usually turns indexable a little after its first
+ * render (its Persian title lands later), while the sitemap picks it up within
+ * the hour — so the page sat noindex-but-in-sitemap for up to a day (Search
+ * Console emails, 2026-11-09). Reading this only on the noindex path also drops
+ * that page's ISR window to FRESH_GATE_TTL, so it re-checks soon; indexable
+ * pages keep their long window. `fresh=1` gives it its own data-cache entry.
+ */
+const FRESH_GATE_TTL = 900;
+export async function getIndexableMarketsFreshOrNull(): Promise<IndexableMarket[] | null> {
+  try {
+    const data = await get<{ markets: IndexableMarket[] }>("/markets/indexable?fresh=1", FRESH_GATE_TTL);
+    return data.markets;
+  } catch {
+    return null;
+  }
+}
+
 /** One deadline of a rolling question, as it appears in the family's timeline. */
 export type SeriesMember = {
   slug: string;

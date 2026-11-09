@@ -4,7 +4,7 @@ import type { Metadata } from "next";
 import { notFound, permanentRedirect } from "next/navigation";
 import { NoMarket, noMarketMetadata } from "@/components/site/NoMarket";
 import { SiteChrome } from "@/components/site/Chrome";
-import { getIndexableMarkets, getIndexableMarketsOrNull, getMarketDetail, getQuestionSeries, MARKET_TTL } from "@/lib/api";
+import { getIndexableMarkets, getIndexableMarketsFreshOrNull, getIndexableMarketsOrNull, getMarketDetail, getQuestionSeries, MARKET_TTL } from "@/lib/api";
 import { brandFor, isLocale, LOCALES, type Locale } from "@/lib/i18n";
 import { getDict } from "@/lib/dict";
 import { compactUsd, deadlineDate, localized, pct } from "@/lib/format";
@@ -79,7 +79,13 @@ export async function generateMetadata(props: Params): Promise<Metadata> {
   // offered to search: see the module comment.
   // Unknown (API blink) counts as indexable — see getIndexableMarketsOrNull.
   const gate = await getIndexableMarketsOrNull();
-  const indexable = gate === null || gate.some((m) => m.slug === slug);
+  let indexable = gate === null || gate.some((m) => m.slug === slug);
+  // The day-long gate can be stale for a market that just became indexable;
+  // re-check on a short window, which also shortens this page's ISR window.
+  if (!indexable) {
+    const fresh = await getIndexableMarketsFreshOrNull();
+    indexable = fresh !== null && fresh.some((m) => m.slug === slug);
+  }
   const seriesKey = await seriesKeyFor(slug);
 
   const settled = market.status !== "active";
