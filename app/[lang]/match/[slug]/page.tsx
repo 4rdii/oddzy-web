@@ -222,6 +222,8 @@ export default async function MatchPage(props: Params) {
               slug: m.slug,
               q: m.title_fa ?? m.title,
               p: m.p,
+              by: m.by,
+              bn: m.bn,
               yes: m.yes,
               no: m.no,
               h24: m.h24,

@@ -23,6 +23,9 @@ export type BoardMarket = {
   title: string;
   title_fa: string | null;
   p: number | null;
+  /** Buy prices per side at last sync (YES ask, NO 1-bid); shown instead of `p`. */
+  by?: number | null;
+  bn?: number | null;
   yes: string;
   no: string;
   h24: number;
@@ -199,6 +202,9 @@ function Row({
   const title = lang === "fa" && m.title_fa ? m.title_fa : m.title;
   const settled = m.status !== "active" || m.outcome !== null;
   const yesPct = m.p === null ? null : pct(m.p);
+  // What buying each side costs; the midpoint split only as a fallback.
+  const yesBuy = m.by != null ? pct(m.by) : yesPct;
+  const noBuy = m.bn != null ? pct(m.bn) : yesPct === null ? null : 100 - yesPct;
 
   return (
     <li
@@ -228,11 +234,11 @@ function Row({
           yesPct !== null && (
             <span className="flex shrink-0 flex-col gap-1 sm:flex-row sm:gap-2">
               <span className="rounded-[9px] bg-[var(--uptint)] px-2.5 py-1.5 text-[13px] font-semibold whitespace-nowrap text-[var(--up)]">
-                {m.yes} <span className="ltr-num font-mono">{yesPct}%</span>
+                {m.yes} <span className="ltr-num font-mono">{yesBuy}%</span>
               </span>
               <span className="rounded-[9px] border border-[var(--line)] px-2.5 py-1.5 text-[13px] font-semibold whitespace-nowrap text-[var(--text2)]">
                 {m.no}{" "}
-                <span className="ltr-num font-mono">{100 - yesPct}%</span>
+                <span className="ltr-num font-mono">{noBuy}%</span>
               </span>
             </span>
           )
