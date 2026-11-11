@@ -1,7 +1,8 @@
 import { TradeLink } from "./TradeLink";
 
 /**
- * Two direct trade buttons — "Yes 63%" / "No 37%" — in place of a single
+ * Two direct trade buttons — "Yes 63%" / "No 37%", priced at what a buy of
+ * each side costs (`buy`), not the midpoint — in place of a single
  * "trade this market" button. Each opens the site's trade pop-up on that side
  * (lib/trade-bus); /app stays the link fallback.
  */
@@ -9,6 +10,7 @@ export function YesNoTrade({
   slug,
   title,
   yes,
+  buy,
   labels,
   fa,
 }: {
@@ -16,6 +18,8 @@ export function YesNoTrade({
   title?: string;
   /** YES probability 0–1, or null when unpriced. */
   yes: number | null;
+  /** What buying each side costs (from the API's `buy`); preferred over the midpoint. */
+  buy?: { yes: number | null; no: number | null } | null;
   labels: { yes: string; no: string };
   fa: boolean;
 }) {
@@ -29,10 +33,10 @@ export function YesNoTrade({
   return (
     <div className="mt-4 flex gap-3">
       <TradeLink href={href} req={{ slug, side: "YES", title, label: labels.yes }} className={`${base} bg-[color-mix(in_srgb,var(--up)_16%,transparent)] text-[var(--up)] ring-1 ring-[color-mix(in_srgb,var(--up)_45%,transparent)]`}>
-        {labels.yes} <span className="ltr-num">{pct(yes)}</span>
+        {labels.yes} <span className="ltr-num">{pct(yes == null ? null : buy?.yes ?? yes)}</span>
       </TradeLink>
       <TradeLink href={href} req={{ slug, side: "NO", title, label: labels.no }} className={`${base} bg-[color-mix(in_srgb,var(--down)_14%,transparent)] text-[var(--down)] ring-1 ring-[color-mix(in_srgb,var(--down)_40%,transparent)]`}>
-        {labels.no} <span className="ltr-num">{pct(yes == null ? null : 1 - yes)}</span>
+        {labels.no} <span className="ltr-num">{pct(yes == null ? null : buy?.no ?? 1 - yes)}</span>
       </TradeLink>
     </div>
   );

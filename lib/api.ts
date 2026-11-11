@@ -51,6 +51,12 @@ export type Market = {
   description_fa: string | null;
   category: { id: string; name: string; name_fa: string | null } | null;
   probability: { yes: number; no: number };
+  /**
+   * What a buy of each side costs at last sync (YES = best ask, NO = 1 - best
+   * bid). Buy buttons show these, never the midpoint: on a thin book the mid is
+   * a price nobody can buy at. Null side = empty book. The buy step re-quotes live.
+   */
+  buy?: { yes: number | null; no: number | null } | null;
   outcome_labels: { yes: string | null; no: string | null; yes_fa: string | null; no_fa: string | null } | null;
   volume: { total: number; h24: number };
   close_time: string | null;
@@ -348,6 +354,8 @@ export type IndexableMarket = {
 
 /** One side of a match's headline result, as /events/{slug} summarises it. */
 export type MatchResultOption = {
+  /** What backing this side costs at last sync (its YES ask). */
+  buy?: number | null;
   label: string;
   label_fa: string | null;
   /** The market to trade this side on. Both sides of a fight share one. */

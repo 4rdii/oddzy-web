@@ -307,6 +307,7 @@ export default async function QuestionPage(props: Params) {
             slug={market.slug}
             title={title}
             yes={market.status === "active" ? market.probability.yes : null}
+            buy={market.buy}
             labels={{ yes: t.match.yes, no: t.match.no }}
             fa={lang === "fa"}
           />

@@ -19,6 +19,9 @@ export type MatchRow = {
   slug: string;
   q: string;
   p: number | null;
+  /** Buy prices (YES ask, NO 1-bid) at last sync; buttons prefer these over `p`. */
+  by?: number | null;
+  bn?: number | null;
   yes: string;
   no: string;
   h24: number;
@@ -151,7 +154,9 @@ function MatchInner(p: MatchViewProps) {
     const k = sideKeyAt(i, n, o.label);
     const name = o.label === "Draw" ? "مساوی" : o.label_fa ?? o.label;
     const label = p.resultType === "head_to_head" || o.label === "Draw" ? name : `برد ${name}`;
-    return { o, k, name, label, pct: probs[i], fav: probs[i] === mx && mx > 0, col: SIDE_COLOR[k] };
+    // `pct` is the market's estimate (the big tiles); `buy` is what backing this
+    // side costs, which the payout preview and the trade must use.
+    return { o, k, name, label, pct: probs[i], buy: pc(o.buy ?? null) ?? probs[i], fav: probs[i] === mx && mx > 0, col: SIDE_COLOR[k] };
   });
   const openSide = (i: number) => {
     const x = outs[i];
@@ -159,7 +164,7 @@ function MatchInner(p: MatchViewProps) {
     // A fight's second side is the NO of the same market; the sheet opens that
     // market either way, with the side's own odds.
     // A head-to-head is one market: its second side is that market's NO.
-    open({ title: `${p.title}: ${x.label}؟`, sub, outcome: x.label, prob: x.pct, slug: x.o.slug, side: p.resultType === "head_to_head" && i > 0 ? "NO" : "YES" });
+    open({ title: `${p.title}: ${x.label}؟`, sub, outcome: x.label, prob: x.buy, slug: x.o.slug, side: p.resultType === "head_to_head" && i > 0 ? "NO" : "YES" });
   };
 
   const cur = p.groups.find((g) => g.key === tab) ?? p.groups[0];
@@ -172,7 +177,7 @@ function MatchInner(p: MatchViewProps) {
 
   const chip: CSSProperties = { fontSize: 12, color: "var(--text2)", border: "1px solid var(--line)", borderRadius: 999, padding: "3px 11px" };
   const sel = outs[Math.min(pick, outs.length - 1)];
-  const { pay, mult } = payout(amt, sel?.pct || 50);
+  const { pay, mult } = payout(amt, sel?.buy || sel?.pct || 50);
 
   return (
     <div dir="rtl" className="pb">
@@ -546,7 +551,7 @@ function MatchInner(p: MatchViewProps) {
                 ضریب <b style={{ color: "var(--text)" }}>×{fa(mult.toFixed(2))}</b>
               </span>
             </div>
-            <PredictCtas slug={sel.o.slug} side={p.resultType === "head_to_head" && pick > 0 ? "NO" : "YES"} amount={amt} title={`${p.title}: ${sel.label}؟`} label={sel.label} prob={sel.pct} />
+            <PredictCtas slug={sel.o.slug} side={p.resultType === "head_to_head" && pick > 0 ? "NO" : "YES"} amount={amt} title={`${p.title}: ${sel.label}؟`} label={sel.label} prob={sel.buy} />
           </aside>
         )}
       </main>
@@ -614,7 +619,7 @@ function Team({ t }: { t: { name: string; logo: string | null } | null }) {
 function YesNoLabelled({ row, sub }: { row: MatchRow; sub: string }) {
   const y = pc(row.p);
   const plain = row.yes === "بله" && row.no === "خیر";
-  if (plain) return <YesNo title={row.q} sub={sub} slug={row.slug} p={y} />;
+  if (plain) return <YesNo title={row.q} sub={sub} slug={row.slug} p={y} buy={{ yes: pc(row.by ?? null), no: pc(row.bn ?? null) }} />;
   return <LabelledPair row={row} sub={sub} y={y} />;
 }
 
@@ -748,23 +753,26 @@ function LabelledPair({ row, sub, y }: { row: MatchRow; sub: string; y: number |
   const open = usePredict();
   const base: CSSProperties = { minWidth: 84, padding: "9px 12px", borderRadius: 11, fontWeight: 800, fontSize: 13.5, cursor: "pointer" };
   const yy = y ?? 50;
+  // Price each button at what buying it costs; the midpoint only as a fallback.
+  const yb = pc(row.by ?? null) ?? yy;
+  const nb = pc(row.bn ?? null) ?? 100 - yy;
   return (
     <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
       <button
         type="button"
         className="pb-yes"
-        onClick={() => open({ title: row.q, sub, slug: row.slug, outcome: row.yes, prob: yy })}
+        onClick={() => open({ title: row.q, sub, slug: row.slug, outcome: row.yes, prob: yb })}
         style={{ ...base, border: "1px solid transparent", background: "var(--upbg)", color: "var(--up)" }}
       >
-        {row.yes} {y === null ? "" : `${fa(yy)}٪`}
+        {row.yes} {y === null ? "" : `${fa(yb)}٪`}
       </button>
       <button
         type="button"
         className="pb-no"
-        onClick={() => open({ title: row.q, sub, slug: row.slug, outcome: row.no, prob: 100 - yy, side: "NO" })}
+        onClick={() => open({ title: row.q, sub, slug: row.slug, outcome: row.no, prob: nb, side: "NO" })}
         style={{ ...base, border: "1px solid var(--line)", background: "var(--bg2)", color: "var(--text2)" }}
       >
-        {row.no} {y === null ? "" : `${fa(100 - yy)}٪`}
+        {row.no} {y === null ? "" : `${fa(nb)}٪`}
       </button>
     </div>
   );

@@ -313,6 +313,7 @@ export function YesNo({
   prefix,
   showPct = true,
   compact,
+  buy,
 }: {
   title: string;
   sub?: string;
@@ -323,8 +324,12 @@ export function YesNo({
   prefix?: string;
   showPct?: boolean;
   compact?: boolean;
+  /** Whole-percent buy prices per side; shown (and quoted) instead of the midpoint. */
+  buy?: { yes: number | null; no: number | null };
 }) {
   const y = p ?? 50;
+  const yb = buy?.yes ?? y;
+  const nb = buy?.no ?? 100 - y;
   const base: CSSProperties = {
     minWidth: compact ? undefined : 84,
     padding: compact ? "7px 12px" : "9px 12px",
@@ -336,18 +341,18 @@ export function YesNo({
   return (
     <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
       <PredictButton
-        pick={{ title, sub, slug, outcome: out("بله"), prob: y }}
+        pick={{ title, sub, slug, outcome: out("بله"), prob: yb }}
         className="pb-yes"
         style={{ ...base, border: "1px solid transparent", background: "var(--upbg)", color: "var(--up)" }}
       >
-        بله{showPct && p !== null ? ` ${fa(y)}٪` : ""}
+        بله{showPct && p !== null ? ` ${fa(yb)}٪` : ""}
       </PredictButton>
       <PredictButton
-        pick={{ title, sub, slug, outcome: out("خیر"), prob: 100 - y, side: "NO" }}
+        pick={{ title, sub, slug, outcome: out("خیر"), prob: nb, side: "NO" }}
         className="pb-no"
         style={{ ...base, border: "1px solid var(--line)", background: "var(--bg2)", color: "var(--text2)" }}
       >
-        خیر{showPct && p !== null ? ` ${fa(100 - y)}٪` : ""}
+        خیر{showPct && p !== null ? ` ${fa(nb)}٪` : ""}
       </PredictButton>
     </div>
   );

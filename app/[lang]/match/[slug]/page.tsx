@@ -102,6 +102,8 @@ function boardGroups(lang: Locale, t: Dict, board: EventBoard): BoardGroup[] {
         title: stripped ? m.title.slice(prefix.length) : m.title,
         title_fa: faCut,
         p: m.probability ? m.probability.yes : null,
+        by: m.buy?.yes ?? null,
+        bn: m.buy?.no ?? null,
         yes,
         no,
         h24: m.volume.h24 ?? 0,

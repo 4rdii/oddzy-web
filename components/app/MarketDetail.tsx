@@ -62,7 +62,7 @@ export function MarketDetail({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const shown = side === "YES" ? market.probability.yes : market.probability.no;
+  const shown = (side === "YES" ? market.buy?.yes : market.buy?.no) ?? (side === "YES" ? market.probability.yes : market.probability.no);
   const [quote, setQuote] = useState<{ side: "YES" | "NO"; price: number } | null>(null);
   useEffect(() => {
     if (!sheetOpen) return;
@@ -218,7 +218,7 @@ export function MarketDetail({
             side="YES"
             label={t.app.bet.yes}
             active={side === "YES"}
-            price={market.probability.yes}
+            price={market.buy?.yes ?? market.probability.yes}
             onClick={() => {
               setSide("YES");
               setSheetOpen(true);
@@ -228,7 +228,7 @@ export function MarketDetail({
             side="NO"
             label={t.app.bet.no}
             active={side === "NO"}
-            price={market.probability.no}
+            price={market.buy?.no ?? market.probability.no}
             onClick={() => {
               setSide("NO");
               setSheetOpen(true);
@@ -258,14 +258,14 @@ export function MarketDetail({
                   side="YES"
                   label={t.app.bet.yes}
                   active={side === "YES"}
-                  price={market.probability.yes}
+                  price={market.buy?.yes ?? market.probability.yes}
                   onClick={() => setSide("YES")}
                 />
                 <SideButton
                   side="NO"
                   label={t.app.bet.no}
                   active={side === "NO"}
-                  price={market.probability.no}
+                  price={market.buy?.no ?? market.probability.no}
                   onClick={() => setSide("NO")}
                 />
               </div>
