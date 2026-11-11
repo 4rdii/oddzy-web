@@ -1,0 +1,85 @@
+---
+title: "How do Fed rate prediction markets work?"
+description: "A Fed rate prediction market pays $1 if the FOMC moves rates by a set amount at one meeting. What the brackets mean, what settles them and what moves them."
+tag: GUIDE
+topics: ["economy-fed", "economy-inflation"]
+readingMinutes: 5
+publishedAt: "2026-11-11"
+lead: "A Fed rate prediction market turns one FOMC decision into a set of yes-or-no contracts, one per possible move. The concept takes a sentence. The rules underneath it — which number counts, against what baseline, and what happens to a move nobody listed — are where positions are won and lost."
+keywords:
+  - "Fed rate prediction market"
+  - "FOMC prediction market"
+  - "Fed rate hike odds December 2026"
+  - "Polymarket Fed decision"
+  - "federal funds rate"
+takeaways:
+  - "A Fed rate prediction market pays $1 if the upper bound of the federal funds target range changes by a stated amount at one named FOMC meeting, and $0 otherwise."
+  - "Each meeting is split into five brackets — cut 50+, cut 25, no change, hike 25, hike 50+ — so a 50 bps hike resolves the 25 bps hike contract No."
+  - "As of 11 November 2026 on Oddzy, a 25 bps hike at the 9 December meeting trades at 85.5¢ and a hold at 3.85¢, on $7.3M of 24-hour volume across the five brackets."
+  - "Meeting markets measure the change at that meeting only, so a December hike does nothing for the January 2027 hike contract, which trades at 47.5¢."
+  - "If the FOMC releases no statement by the end of the next scheduled meeting, the meeting market resolves to the No change bracket."
+faq:
+  - q: "What is the federal funds rate, and who sets it?"
+    a: "The federal funds rate is the overnight rate at which US banks lend reserves to each other. The Federal Open Market Committee, the Fed's 12-member rate-setting body, sets a target range for it at eight scheduled meetings a year and announces the decision in a written statement. Fed rate prediction markets settle on that statement."
+  - q: "Do Fed prediction markets agree with fed funds futures?"
+    a: "Usually, to within a few percentage points. Fed funds futures, read through tools such as CME FedWatch, put a 25 bps December 2026 hike at about 85% after the 28 October hold, close to the 85.5 cents the prediction market showed on 11 November. Futures carry institutional hedging money while prediction markets carry more direct retail views, so small gaps are normal."
+  - q: "Can I sell a Fed position before the meeting?"
+    a: "Yes, at any time before the market closes, by selling into the best bid on the order book. Much of the money on a Fed board changes hands in the days around inflation and jobs releases, so many traders take a view on the data and exit before the decision. On a thin bracket the bid can sit several cents below the price on the card."
+  - q: "What happens if the Fed holds an emergency meeting between scheduled ones?"
+    a: "A meeting market measures the change versus the level just before that named meeting, so an emergency move in between shifts the baseline rather than counting at the next meeting. Some year-level markets, such as Another Fed rate hike in 2026, explicitly count emergency hikes. Read which kind you hold, because the same emergency move can settle one and not the other."
+---
+
+A Fed rate prediction market is a contract that pays $1 if the Federal Reserve moves interest rates by a stated amount at one named meeting, and nothing if it does not. You buy YES at a price in cents, and that price is the market's probability: 85.5¢ means about an 85.5% chance. Fed boards are among the deepest on Oddzy, and the rules underneath them are short enough to read in full.
+
+*Prices are from Oddzy on 11 November 2026 at 07:12 UTC. Check the live price before acting. Market explainer, not financial advice.*
+
+## What is a Fed rate prediction market?
+
+It is a yes-or-no contract on the outcome of one Federal Open Market Committee (FOMC) meeting — the 12-member committee that sets the target range for the federal funds rate, the overnight rate banks charge each other. There is no leverage and no liquidation, so the most you can lose is what you paid. Each meeting gets its own set of contracts, and each contract settles on the FOMC's own statement.
+
+The rate has been at **3.75%–4%** since the 16 September 2026 hike. On 28 October the FOMC held it there on a 10–2 vote, with Governor Lisa Cook and Cleveland Fed President Beth Hammack dissenting in favour of a quarter-point increase. The October no-change market settled Yes; the October 25 bps hike market settled No.
+
+## Why does one meeting have five markets?
+
+Because every plausible move gets its own bracket, and the five together form one probability distribution. Here is the board for the 8–9 December 2026 meeting:
+
+| Outcome at the December meeting | YES price | $100 returns if right |
+| --- | --- | --- |
+| [Hike 25 bps](/market/will-the-fed-increase-interest-rates-by-25-bps-after-the-december-2026-meeting-20260729232808636) | **85.5¢** | $117 |
+| [Hike 50 bps or more](/market/will-the-fed-increase-interest-rates-by-50-bps-after-the-december-2026-meeting-20260729232808637) | 10.8¢ | $926 |
+| [No change](/market/will-there-be-no-change-in-fed-interest-rates-after-the-december-2026-meeting-20260729232808635) | 3.85¢ | $2,597 |
+| Cut 25 bps | 0.35¢ | — |
+| Cut 50 bps or more | 0.25¢ | — |
+
+The five brackets traded about **$7.3 million** in the 24 hours to 07:12 UTC on 11 November, and about **$24.9 million** in total. They sum to 100.75¢, a little over a dollar, because each bracket has its own order book and the gap is the cost of crossing those spreads.
+
+The first column is the trap. "Hike 25 bps" does not mean "any hike." If the Fed raises by half a point, that contract pays nothing and the 50 bps bracket pays instead.
+
+## What exactly decides how a Fed market resolves?
+
+The written rules on the December markets name three things. The rate is the **upper bound** of the target range. The move is measured **against the level before that meeting**. The source is the **FOMC statement** issued after the meeting, and the market can resolve as soon as it is out.
+
+Two edge cases are written in too:
+
+- **An odd-sized move is rounded up to the nearest 25 bps.** A 12.5 bps hike counts as 25.
+- **No statement means no change.** If the FOMC releases no statement by the end date of the next scheduled meeting, the market resolves to the No change bracket.
+
+This is the general case for [reading the resolution rules before the price](/learn/read-the-resolution-rules-first): the title says "after the December meeting," and only the rules tell you it is the upper bound, versus the prior level, on the Fed's own wording.
+
+## How is a year-level Fed market different from a meeting market?
+
+A meeting market asks what happens at one meeting. A year-level market asks whether something happens at any point in a window. [Another Fed rate hike in 2026?](/market/another-fed-rate-hike-in-2026) resolves Yes on any increase from 17 September through the December decision, emergency hikes included, and it cannot resolve No until the December statement is out. It traded at **95.6¢** on 11 November, close to the 96.3¢ you get by adding the two December hike brackets.
+
+The same logic makes the next meeting a separate question. The [January 2027 25 bps hike](/market/will-the-fed-increase-interest-rates-by-25-bps-after-the-january-2027-meeting-20260729233815506) market trades at **47.5¢** against 52.5¢ for no change. Because each meeting is measured against its own starting level, that price is the chance of a *second* hike in a row, not a restatement of December.
+
+## What moves a Fed market between meetings?
+
+Data releases and the Fed's own words, mostly in short bursts. The December 25 bps contract traded at **25.5¢** on 19 August 2026 on under $8,000 of daily volume. It rose to 67.5¢ after the September hike, sat in the 70s through October, and jumped from **79.5¢ to 85.5¢** on 10 November, the day the October CPI report was published, on **$1.59 million** of volume. Another-hike went from 82.5¢ to 96¢ the same day.
+
+That pattern is the practical lesson. Most of the repricing happens within hours of a scheduled release, so the calendar — CPI, payrolls, the meeting itself — matters more than any day in between.
+
+## Before you take a position
+
+A high price is not a safe one. Buying the December 25 bps hike at 85.5¢ returns about 17% if it lands, and loses the whole 85.5¢ on a hold or on a 50 bps move — together about 15% of the board. That trade-off is set out in [whether buying near-certain shares is free money](/learn/buying-99-cent-shares), and sizing it is covered in [how to size a position](/learn/how-to-size-a-position).
+
+Check depth before size, too. The December brackets are deep; each January 2027 bracket traded between $115,000 and $185,000 in the same 24 hours, and a large order there can [fill worse than the quoted price](/learn/why-did-my-order-fill-at-a-worse-price). Every live contract is on the [Fed rates topic page](/topic/economy-fed), with its own resolution text one tap away.
