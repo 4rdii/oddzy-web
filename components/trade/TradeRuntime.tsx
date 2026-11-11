@@ -33,7 +33,7 @@ export function TradeRuntime({ lang, pending, clear }: { lang: Locale; pending: 
   return (
     <LocaleProvider value={value}>
       {PRIVY_ENABLED ? (
-        <PrivyRoot>
+        <PrivyRoot lang={lang}>
           <Controller pending={pending} clear={clear} />
         </PrivyRoot>
       ) : (

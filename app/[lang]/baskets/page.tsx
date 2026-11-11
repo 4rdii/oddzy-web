@@ -57,7 +57,7 @@ export default async function CommunityBasketsPage({
     // were rendering bare). SiteChrome is server-only and loads no auth SDK.
     <SiteChrome lang={lang}>
     <LocaleProvider value={{ locale: lang, brand, t, rtl: brand.dir === "rtl" }}>
-      <PrivyRoot>
+      <PrivyRoot lang={lang}>
         <main className="mx-auto max-w-[1100px] px-4 py-8">
           <header className="mb-6 flex flex-wrap items-start justify-between gap-4">
             <div>

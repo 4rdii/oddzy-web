@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { usePrivy, useWallets, useSigners } from "@privy-io/react-auth";
+import { useLogin, usePrivy, useWallets, useSigners } from "@privy-io/react-auth";
 import { authedPost } from "@/lib/client-api";
 import { attribution } from "@/lib/track";
 import { useLocale } from "./LocaleProvider";
@@ -38,7 +38,21 @@ type Phase = "login" | "wallet" | "granting" | "registering" | "ready" | "error"
 /** `compact`: inside the website's trade modal rather than full-screen /app. */
 export function WebLogin({ onReady, compact = false }: { onReady: () => void; compact?: boolean }) {
   const { t, tf } = useLocale();
-  const { ready, authenticated, login, logout, user } = usePrivy();
+  const { ready, authenticated, logout, user } = usePrivy();
+  // Same modal as usePrivy().login, plus the failure reason. "Authentication
+  // failed" in the modal says nothing; the code goes to the bot server's log
+  // (/log/wallet-stuck is proxied on polybaaz.com) so a flaky login can be read.
+  const { login } = useLogin({
+    onError: (err) => {
+      if (typeof window === "undefined" || !/(^|\.)polybaaz\.com$/.test(window.location.hostname)) return;
+      fetch("/log/wallet-stuck", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ stage: "web-login", origin: window.location.origin, lastError: String(err), ua: navigator.userAgent, platform: "web" }),
+        keepalive: true,
+      }).catch(() => {});
+    },
+  });
   const { wallets } = useWallets();
   const { addSigners, removeSigners } = useSigners();
 

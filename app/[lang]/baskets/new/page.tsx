@@ -71,7 +71,7 @@ export default async function NewBasketPage({
     <LocaleProvider
       value={{ locale: lang, brand, t, rtl: brand.dir === "rtl" }}
     >
-      <PrivyRoot>
+      <PrivyRoot lang={lang}>
         <main className="mx-auto max-w-[1100px] px-4 py-8">
           <header className="mb-6">
             <h1 className="text-[24px] font-extrabold text-[var(--ink)]">

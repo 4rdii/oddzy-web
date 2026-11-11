@@ -34,6 +34,29 @@ const nextConfig: NextConfig = {
    * markup. 308 keeps the method and tells crawlers the move is permanent, so
    * the ranking on those article-linked pages follows.
    */
+  /**
+   * The PolyBaaz bot's browser pages (Mini App onboarding, funding, key export)
+   * are served by the bot server at app.polybaaz.com, but they log in with
+   * Telegram, and Telegram allows ONE login domain per bot — now polybaaz.com,
+   * which the website needs. So the site proxies those paths to the bot server:
+   * the browser only ever sees polybaaz.com, and every surface shares the one
+   * domain the bot allows. The pages call back with root-relative URLs, so
+   * their POSTs come through here too.
+   */
+  async rewrites() {
+    const bot = "https://app.polybaaz.com";
+    const host = [{ type: "host" as const, value: "polybaaz.com" }];
+    return {
+      beforeFiles: [
+        { source: "/miniapp", has: host, destination: `${bot}/miniapp` },
+        { source: "/fund", has: host, destination: `${bot}/fund` },
+        { source: "/static/:file", has: host, destination: `${bot}/static/:file` },
+        { source: "/auth/privy/:path*", has: host, destination: `${bot}/auth/privy/:path*` },
+        { source: "/log/:path*", has: host, destination: `${bot}/log/:path*` },
+      ],
+    };
+  },
+
   async redirects() {
     return [
       { source: "/basket", destination: "/baskets", permanent: true },

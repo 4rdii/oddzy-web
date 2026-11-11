@@ -34,14 +34,15 @@ export const PRIVY_ENABLED = Boolean(process.env.NEXT_PUBLIC_PRIVY_APP_ID);
 const FA_CLIENT_ID =
   process.env.NEXT_PUBLIC_PRIVY_CLIENT_ID_FA ?? "client-WY6ZbEtz28WbnxYxWm2QBU4BSvkMG8hjzjG6NbYPoCu1D";
 
-function clientIdForHost(): string | undefined {
-  if (typeof window === "undefined") return undefined;
-  return /(^|\.)polybaaz\.com$/.test(window.location.hostname) ? FA_CLIENT_ID : undefined;
-}
-
-export function PrivyRoot({ children }: { children: React.ReactNode }) {
+/**
+ * `lang` picks the client: "fa" is the PolyBaaz site. Passed in rather than
+ * read from window.location so the server render and the hydrated render agree
+ * — a provider that mounts with no client id and only learns it on the client
+ * could initialise against the default client.
+ */
+export function PrivyRoot({ children, lang }: { children: React.ReactNode; lang?: "en" | "fa" }) {
   const appId = process.env.NEXT_PUBLIC_PRIVY_APP_ID;
-  const clientId = clientIdForHost();
+  const clientId = lang === "fa" ? FA_CLIENT_ID : undefined;
 
   // Without an app id the provider throws on mount and takes the whole route
   // down. Rendering the children unwrapped degrades to browse-only, which is

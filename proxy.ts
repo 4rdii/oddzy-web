@@ -59,7 +59,9 @@ export const config = {
      *  - /_next/*      framework assets
      *  - /sitemap.xml, /robots.txt  per-host SEO files, served unprefixed
      *  - any path with a file extension (favicon.ico, og images, fonts)
+     *  - /miniapp, /fund, /auth/privy/*, /log/*, /static/*  the bot server's
+     *    pages, proxied by next.config rewrites on polybaaz.com
      */
-    "/((?!api|_next|sitemap\\.xml|robots\\.txt|.*\\.[\\w]+$).*)",
+    "/((?!api|_next|miniapp$|fund$|auth/|log/|static/|sitemap\\.xml|robots\\.txt|.*\\.[\\w]+$).*)",
   ],
 };

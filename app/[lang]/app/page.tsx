@@ -50,7 +50,7 @@ export default async function AppPage({
         rtl: brandFor(lang).dir === "rtl",
       }}
     >
-      <PrivyRoot>
+      <PrivyRoot lang={lang}>
         <MiniApp topics={topics} initialMarkets={snapshot.markets} />
       </PrivyRoot>
     </LocaleProvider>
