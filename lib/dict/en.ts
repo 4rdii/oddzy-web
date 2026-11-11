@@ -1448,6 +1448,8 @@ export const en = {
       settingUp: "Setting up your account…",
       walletTimeout:
         "Your wallet didn't finish loading. This is usually a desktop browser issue — try again on mobile or in Chrome.",
+      privySlow: "The sign-in service is taking too long to respond. If you use a VPN, make sure it's on, then reload.",
+      reload: "Reload",
       setupFailed: "Couldn't finish setting up your wallet. ({detail})",
     },
 

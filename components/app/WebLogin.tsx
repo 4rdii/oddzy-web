@@ -35,6 +35,50 @@ type Phase = "login" | "wallet" | "granting" | "registering" | "ready" | "error"
  * that makes Privy unusable inside Telegram Desktop's WebKitGTK view. A timeout
  * gives a readable message instead of a spinner that never resolves.
  */
+/** Posts a diagnostic line to the bot server log (proxied on polybaaz.com). */
+function report(stage: string, extra: Record<string, unknown> = {}) {
+  if (typeof window === "undefined" || !/(^|\.)polybaaz\.com$/.test(window.location.hostname)) return;
+  fetch("/log/wallet-stuck", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ stage, origin: window.location.origin, ua: navigator.userAgent, platform: "web", ...extra }),
+    keepalive: true,
+  }).catch(() => {});
+}
+
+const PRIVY_READY_TIMEOUT_MS = 12_000;
+
+/**
+ * Privy's SDK has not reported ready. That is its own start-up (config fetch
+ * and wallet iframe from privy.io), before any login: when it hangs the cause
+ * is the network between the browser and Privy, not us. Spinning forever told
+ * the user nothing; after a while say so, offer a reload, and log it.
+ */
+function NotReady({ compact }: { compact: boolean }) {
+  const { t } = useLocale();
+  const [slow, setSlow] = useState(false);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setSlow(true);
+      report("web-privy-not-ready", { elapsedMs: PRIVY_READY_TIMEOUT_MS });
+    }, PRIVY_READY_TIMEOUT_MS);
+    return () => clearTimeout(timer);
+  }, []);
+  if (!slow) return <Centered compact={compact}>{t.app.login.loading}</Centered>;
+  return (
+    <Centered compact={compact}>
+      <p className="text-[14px] leading-6 text-[var(--mute)]">{t.app.login.privySlow}</p>
+      <button
+        type="button"
+        onClick={() => window.location.reload()}
+        className="mt-4 min-h-[44px] rounded-xl bg-[var(--ink)] px-5 text-[14px] font-semibold text-[var(--on-ink)]"
+      >
+        {t.app.login.reload}
+      </button>
+    </Centered>
+  );
+}
+
 /** `compact`: inside the website's trade modal rather than full-screen /app. */
 export function WebLogin({ onReady, compact = false }: { onReady: () => void; compact?: boolean }) {
   const { t, tf } = useLocale();
@@ -43,15 +87,7 @@ export function WebLogin({ onReady, compact = false }: { onReady: () => void; co
   // failed" in the modal says nothing; the code goes to the bot server's log
   // (/log/wallet-stuck is proxied on polybaaz.com) so a flaky login can be read.
   const { login } = useLogin({
-    onError: (err) => {
-      if (typeof window === "undefined" || !/(^|\.)polybaaz\.com$/.test(window.location.hostname)) return;
-      fetch("/log/wallet-stuck", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ stage: "web-login", origin: window.location.origin, lastError: String(err), ua: navigator.userAgent, platform: "web" }),
-        keepalive: true,
-      }).catch(() => {});
-    },
+    onError: (err) => report("web-login", { lastError: String(err) }),
   });
   const { wallets } = useWallets();
   const { addSigners, removeSigners } = useSigners();
@@ -131,7 +167,7 @@ export function WebLogin({ onReady, compact = false }: { onReady: () => void; co
   }, [ready, authenticated, address, addSigners, removeSigners, onReady, fail, t, tf]);
 
   if (!ready) {
-    return <Centered compact={compact}>{t.app.login.loading}</Centered>;
+    return <NotReady compact={compact} />;
   }
 
   if (!authenticated) {
