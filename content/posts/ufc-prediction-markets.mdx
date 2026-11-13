@@ -1,0 +1,95 @@
+---
+title: "How do UFC prediction markets settle a fight?"
+description: "One UFC fight is a winner market plus a dozen props, each with its own rule for a draw, a DQ or a no contest. How they price, settle and where the volume sits."
+tag: GUIDE
+topics: ["ufc-fights", "ufc-titles", "ufc"]
+readingMinutes: 5
+publishedAt: "2026-11-13"
+lead: "A UFC prediction market turns a fight into a set of tradeable questions — who wins, how, and in which round. Each has its own price and its own order book, and they do not all settle the same way when a fight ends badly."
+keywords:
+  - "UFC prediction markets"
+  - "UFC prediction market odds"
+  - "Polymarket UFC"
+  - "MMA prediction markets"
+  - "UFC 334"
+takeaways:
+  - "A UFC winner market resolves 50-50 on a draw or a no contest, paying 50¢ a share to both sides instead of $1 to one of them."
+  - "Method-of-victory markets resolve No on a draw or a disqualification, so the same fight can pay half on the winner market and nothing on the KO market."
+  - "Over 1.5 rounds means the fight lasts past the 2:30 mark of Round 2, and a stoppage between rounds counts as ending in the round just completed."
+  - "As of 13 November 2026 on Oddzy, the Gane–Hokit winner market traded $1.17 million in 24 hours while Gane to win by KO or TKO traded $619."
+  - "Next-opponent markets settle on the first official, dated UFC announcement of a bout, whether or not that fight then takes place."
+faq:
+  - q: "Does a doctor or corner stoppage count as a KO or TKO?"
+    a: "Yes. The KO/TKO markets on Oddzy count a referee stoppage, a doctor stoppage and a corner stoppage as a KO or TKO. A stoppage between rounds counts as ending in the round that has just been completed, which matters for the round-by-round markets. A submission market separately counts a tapout, a verbal submission and a technical submission, where the referee stops the fight because of a hold."
+  - q: "What does it mean when a UFC market resolves 50-50?"
+    a: "Every share on both sides pays 50 cents instead of one side paying $1 and the other nothing. On a UFC winner market it happens on a draw, a technical draw, a no contest, or a fight that is cancelled or postponed past the date written in the rules. Whether 50-50 is good or bad for you depends entirely on the price you paid: a Gane share bought at 66 cents loses 16 cents, a Hokit share bought at 35 cents gains 15."
+  - q: "What happens to my position if a UFC fight is cancelled or postponed?"
+    a: "The rules on each fight market name a cut-off date. For UFC 334 on 14 November 2026 it is 28 November, two weeks after the event. A fight rescheduled within that window still settles normally; one cancelled outright or pushed past it resolves 50-50 on the winner, method and round markets. Until then your money stays in the position."
+  - q: "Is Polymarket the official prediction market of the UFC?"
+    a: "Yes. TKO, the UFC's parent company, announced Polymarket as the official prediction market partner of the UFC and Zuffa Boxing in November 2025, including showing market odds during fight broadcasts. The UFC markets on Oddzy are Polymarket markets, so they settle on the same rules and use the official UFC result as their resolution source."
+  - q: "Why does the price I pay differ from the price on a fight card?"
+    a: "The card shows the midpoint between the best bid and the best offer, and a buy order fills at the offer. On a deep market the gap is a cent: as of 13 November 2026 Hokit showed 34.5 cents and cost 35. On a thin prop it can be far wider: Gane to win in Round 3 showed 8.5 cents but the cheapest share on offer cost 13."
+---
+
+A UFC prediction market is a yes-or-no question about a fight that you trade instead of betting on it with a bookmaker. Will Ciryl Gane beat Josh Hokit. Will the fight go the distance. Each share pays $1 if the answer is yes and $0 if not, so its price in cents is the probability the market puts on it.
+
+The price is usually not what catches people out. The rules are. Every market on the same fight has its own rule for a draw, a disqualification and a no contest, and those rules do not agree with each other.
+
+## What is a UFC prediction market?
+
+It is one question about one bout, with its own order book. "UFC 334: Josh Hokit vs. Ciryl Gane" is the winner market, and it pays the side of whichever fighter the UFC officially declares the winner. "Will Ciryl Gane win by KO or TKO?" is a separate market with separate traders and separate settlement terms. Nobody manages a combined line across them.
+
+As of 13 November 2026, 07:12 UTC, on Oddzy, the UFC 334 heavyweight title fight at Madison Square Garden on 14 November priced Gane at 65.5¢ and Hokit at 34.5¢. Those are the two sides of one book, so they sum to 100¢. Buying either side costs slightly more, 66¢ and 35¢, and that extra cent is the spread. How the price gets there in the first place is covered in [what a prediction market is](/learn/what-is-a-prediction-market).
+
+## Which markets does one fight actually have?
+
+At least 11 for the UFC 334 main event, as of 13 November 2026 on Oddzy. There is the winner, each fighter by KO or TKO, the fight by KO or TKO, the fight by submission, each fighter to win in a specific round, the fight to go the distance, and over/under on rounds at 1.5 and 3.5.
+
+The winner market has nearly all the money:
+
+| Market (UFC 334 main event) | Card price | Cheapest to buy | 24h volume |
+|---|---|---|---|
+| Winner, Gane / Hokit | 65.5¢ / 34.5¢ | 66¢ / 35¢ | $1,167,083 |
+| Gane wins by KO or TKO | 41.5¢ | 42¢ | $619 |
+| Fight goes the distance | 29¢ | 30¢ | $268 |
+| Gane wins in Round 3 | 8.5¢ | 13¢ | $62 |
+
+The last row is the one to look at twice. Paying 13¢ for a share the card shows at 8.5¢ means paying about 50% above the displayed price, before the fight has started. That is [why an order fills at a worse price than the one you clicked](/learn/why-did-my-order-fill-at-a-worse-price), and on a thin prop it is a large part of the price.
+
+## How does a UFC market settle on a draw, a DQ or a no contest?
+
+It depends on the market type, and the winner and method markets point in different directions. A draw or a no contest splits the winner market 50-50, so every share pays 50¢. A method-of-victory market pays No on a draw or a disqualification and only splits 50-50 on a no contest.
+
+From the resolution text on the UFC 334 markets on Oddzy:
+
+| Market | Draw | Disqualification | No contest | Cancelled or postponed past cut-off |
+|---|---|---|---|---|
+| Winner | 50-50 | Pays the declared winner | 50-50 | 50-50 |
+| Win by KO/TKO, submission or decision | No | No | 50-50 | 50-50 |
+| Fighter wins in Round N | No | No | 50-50 | 50-50 |
+| Fight goes the distance | Yes, if scored after all rounds | No | 50-50 | 50-50 |
+| Over/under rounds | Settles on fight length | Settles on fight length | Settles on fight length | 50-50 |
+
+So someone holding Gane to win and Gane by KO would get 50¢ back on the first and nothing on the second if the fight is scored a draw. Two more traps are in the text. A technical decision counts as "won by decision" but not as "goes the distance". And the over/under rules do not list a no contest as a 50-50 case, so as written they settle on how long the fight lasted. These are the clauses that make it worth [reading the resolution rules before the price](/learn/read-the-resolution-rules-first).
+
+## When is a fight over or under 1.5 rounds?
+
+Over 1.5 rounds means the fight is still going past the 2:30 mark of Round 2, halfway through the five-minute round. A finish before 2:30 of Round 2 is Under. A finish exactly at 2:30 resolves 50-50. On the same logic, 3.5 rounds is measured at 2:30 of Round 4.
+
+Stoppages between rounds have their own rule. A doctor or corner stoppage between rounds counts as ending in the round that has just been completed. A fighter who does not come out for Round 4 has lost in Round 3, and an "ends before Round 4" market resolves Yes.
+
+## Why does the main event trade so much more than the rest of the card?
+
+Most people come in with a view on who wins a headline fight. Not many have one on who wins a prelim, or on the round it ends in. On Oddzy, the Hokit–Gane winner market traded $798 on 1 November 2026, $143,014 on 10 November and $1.17 million in the 24 hours to 07:12 UTC on 13 November. In the same window the co-main, Amanda Nunes against Kayla Harrison, traded $7,899.
+
+Volume arrives in the final days and gathers on one leg of one fight. If you might want to exit before the result, do it on that leg. [Selling before a market resolves](/learn/can-you-sell-before-a-market-resolves) is easy on a market with a million dollars of volume and expensive on one with sixty.
+
+## What do UFC title and next-opponent markets settle on?
+
+A title market asks who holds the belt on a fixed date, not who wins a given fight. "Will Ciryl Gane be the UFC Heavyweight Champion on December 31, 2026?" checks the official UFC champion at 12:00 PM ET on 31 December. Interim champions do not count, and a vacant belt resolves to "Other". As of 13 November it traded at 63.5¢, close to Gane's 65.5¢ in the fight market but settling on a different question. A draw on 14 November would split the fight market 50-50. It would not take the belt off Gane, and the title market only checks who holds the belt.
+
+A next-opponent market settles on the first official UFC announcement of a dated bout, whether or not that fight ever happens. "Will Rafael Fiziev fight Mateusz Gamrot next?" traded at 39.9¢ on Oddzy on 13 November and resolves "Other" if no qualifying announcement arrives by 27 June 2027.
+
+## Before you take a position
+
+Every UFC 334 market on Oddzy lists a close time of 00:00 UTC on 15 November. Check the close time on the market page rather than assuming you can trade until the main event starts. Size the stake so you can lose all of it, because a fight market pays nothing at all when it goes the other way. [How to size a position](/learn/how-to-size-a-position) is the piece to read before the first one. The current card, title and next-opponent markets are on [the UFC topic page](/topic/ufc).
