@@ -103,6 +103,7 @@ const NAV: NavItem[] = [
   { key: "eco", label: "Economy", href: "/topic/economy" },
   { key: "war", label: "War & Geopolitics", href: "/topic/world" },
   { key: "baskets", label: "Baskets", href: "/baskets" },
+  { key: "traders", label: "Traders", href: "/traders" },
   { key: "learn", label: "Learn", href: "/learn" },
   { key: "sports", label: "Sports", href: "/live", sec: true },
 ];
@@ -113,6 +114,7 @@ function activeOf(path: string): string | null {
   const topic = /^\/topic\/([^/]+)/.exec(path);
   if (topic) return (SUB_SECTION[topic[1]] as SecKey | undefined) ?? "sports";
   if (path.startsWith("/baskets") || path.startsWith("/creator")) return "baskets";
+  if (path.startsWith("/traders")) return "traders";
   if (path.startsWith("/learn") || path.startsWith("/how-it-works") || path.startsWith("/faq")) return "learn";
   if (/^\/(live|big-games|match)(\/|$)/.test(path)) return "sports";
   return null;

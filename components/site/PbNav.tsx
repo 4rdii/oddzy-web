@@ -56,6 +56,7 @@ export const PB_GROUPS: Group[] = [
     icon: "🧺",
     items: [
       { href: "/baskets", label: "سبدها", desc: "چند پیش‌بینی در یک خرید", icon: "🧺" },
+      { href: "/traders", label: "کتابخانهٔ تریدرها", desc: "بهترین تریدرها بر پایهٔ مهارت، نه سود خام", icon: "🧠" },
       { href: "/how-it-works", label: "آموزش کار با پلی‌باز", desc: "از واریز تا برداشت", icon: "📘" },
       { href: "/faq", label: "سؤال‌های رایج", desc: "جواب‌های کوتاه", icon: "❓" },
     ],

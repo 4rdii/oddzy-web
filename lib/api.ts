@@ -28,7 +28,7 @@ const BASE = process.env.ODDZY_API_BASE ?? "https://app.oddzy.xyz/api";
  * the API, which is cheap. Bump it when a deploy needs fresh upstream data.
  * The API ignores the parameter.
  */
-const CACHE_EPOCH = "2026-11-16a";
+const CACHE_EPOCH = "2026-11-16b";
 const TOKEN = process.env.ODDZY_API_TOKEN ?? "";
 
 export type Market = {
@@ -1150,6 +1150,125 @@ export async function getLive(revalidate = 15): Promise<LiveBoard | null> {
     return await get<LiveBoard>("/live", revalidate);
   } catch (e) {
     console.error("getLive", e);
+    return null;
+  }
+}
+
+// ── Trader library (oddzy-api traders.js, built nightly by build-traders.mjs) ──
+
+export type TraderCat = {
+  share: number;
+  events: number;
+  staked: number;
+  pnl: number;
+  roi: number;
+  z: number;
+  z_eff: number;
+  win_rate: number;
+  /** 0–100 for this category's own list: category skill × copyability × recency. */
+  score?: number;
+};
+
+export type TraderHolding = {
+  title: string;
+  slug: string;
+  event_slug: string | null;
+  outcome: string;
+  avg_price: number;
+  price: number;
+  value: number;
+  pnl: number;
+  end_date: string | null;
+  /** True when the market is one we list and it is still open here. */
+  ours: boolean;
+  our_event_slug: string | null;
+  our_event_kind: string | null;
+};
+
+export type Trader = {
+  wallet: string;
+  name: string | null;
+  image: string | null;
+  x: string | null;
+  verified: boolean;
+  /** 0–100 overall: quality × copyability × recency. */
+  score: number;
+  /** 0–100 from the skill z-score (profit measured against luck). */
+  skill: number;
+  consistency: number;
+  /** 0–100: how little the profit depends on one bet. */
+  spread: number;
+  /** 0–100: how shallow the worst losing run was. */
+  calm: number;
+  /** 0–100: could a follower have had the same prices? */
+  copy: number;
+  copy_grade: "easy" | "moderate" | "hard";
+  copy_why: string[];
+  is_bot: boolean;
+  labels: string[];
+  main_cat: string | null;
+  stats: {
+    events: number;
+    positions: number;
+    staked: number;
+    pnl: number;
+    roi: number;
+    z: number;
+    z_loo: number;
+    z_eff: number;
+    win_rate: number;
+    profit_factor: number;
+    top1_share: number;
+    top3_share: number;
+    weeks: number;
+    weekly_hit: number;
+    max_dd: number;
+    max_dd_pct: number;
+    median_bet: number;
+    avg_entry: number;
+    share_favourites: number;
+    share_longshots: number;
+    share_short_fuse: number;
+    two_sided: number;
+    trades_per_day: number;
+    rebate_share: number;
+    active_days_30: number;
+    last_trade_at: number | null;
+    since: number | null;
+    all_time_pnl: number;
+    all_time_volume: number;
+    joined: number | null;
+  };
+  hot: { events: number; pnl: number; roi: number; z: number; z_eff: number; win_rate?: number; score?: number };
+  cats: Record<string, TraderCat>;
+  /** This list's own category record, when the list is a category. */
+  cat: TraderCat | null;
+  spark: number[];
+  holding: TraderHolding[];
+};
+
+export type TraderList = {
+  built_at: string | null;
+  window_days?: number;
+  analysed?: number;
+  candidates?: number;
+  thresholds?: { min_events: number; min_staked: number };
+  list: string;
+  total: number;
+  counts: Record<string, number>;
+  traders: Trader[];
+};
+
+/**
+ * One list of the trader library, full records included so the page can open a
+ * trader in place. The data is rebuilt once a night, so the page's own ISR
+ * window (six hours) is the only cost that matters.
+ */
+export async function getTraders(list: string, revalidate: number, limit = 40): Promise<TraderList | null> {
+  try {
+    return await get<TraderList>(`/traders?list=${encodeURIComponent(list)}&full=1&limit=${limit}`, revalidate);
+  } catch (e) {
+    console.error("getTraders", e);
     return null;
   }
 }

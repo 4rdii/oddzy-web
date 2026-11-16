@@ -959,6 +959,8 @@ html[data-locale="fa"] [lang="en"] .oz-prose {
 .pb .pb-yes:hover { border-color: var(--up); }
 .pb .pb-no:hover { border-color: var(--line2); }
 .pb .pb-row:hover { background: var(--card2); }
+/* Trader library rows: the profit sparkline is the first thing to go on a phone. */
+@media (max-width: 520px) { .pb .pb-spark { display: none !important; } }
 @keyframes pbpulse {
   0% { box-shadow: 0 0 0 0 rgba(63, 207, 142, 0.5); }
   70% { box-shadow: 0 0 0 7px rgba(63, 207, 142, 0); }

@@ -151,6 +151,7 @@ export async function SiteChrome({
               <NavLink href="/learn">{t.nav.learn}</NavLink>
               <NavLink href="/updown">{t.nav.updown}</NavLink>
               <NavLink href="/big-games">{fa ? "بازی‌های بزرگ امروز" : t.nav.bigGames}</NavLink>
+              <NavLink href="/traders">{t.traders.navLabel}</NavLink>
               <NavLink href="/live">{fa ? "بازی‌های زنده" : t.nav.liveGames}</NavLink>
               {fa && <NavLink href="/world">نقشهٔ جهان</NavLink>}
               <NavLink href="/baskets">{t.nav.baskets}</NavLink>

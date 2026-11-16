@@ -61,6 +61,7 @@ export function OdChrome({
             <Link href="/topic/economy">Economy</Link>
             <Link href="/topic/world">War &amp; Geopolitics</Link>
             <Link href="/baskets" prefetch={false}>Baskets</Link>
+            <Link href="/traders">Traders</Link>
             <Link href="/learn">Learn</Link>
             <Link href="/how-it-works">How it works</Link>
             <Link href="/faq">FAQ</Link>
