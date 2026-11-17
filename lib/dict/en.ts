@@ -936,6 +936,12 @@ export const en = {
     sideLists: "Lists",
     sideShow: "Show",
     curveTitle: "Profit over time",
+    chartRange30: "30D",
+    chartRange90: "90D",
+    chartRangeAll: "All",
+    chartRangeLabel: "Time range",
+    chartChange: "Change",
+    chartSinceStart: "Since start of range",
     how: [
       "We start from Polymarket's public leaderboards, in 11 categories, for this month and all time, and pull every resolved bet each wallet made in the last 12 months.",
       "Skill. A share bought at 30¢ should win 30% of the time. We compare each trader's results with what the prices implied and measure the gap in standard deviations of luck. Then the best single event is removed and the test repeated, so one lucky longshot cannot carry a record. Bets on the same match count as one.",

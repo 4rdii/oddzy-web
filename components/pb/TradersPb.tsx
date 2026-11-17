@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import type { Trader, TraderCat, TraderList } from "@/lib/api";
 import { Avatar, ScoreRing } from "@/components/pb/ScoreRing";
+import { ProfitChart } from "@/components/pb/ProfitChart";
 import { useNow } from "@/components/pb/useNow";
 import { agoOf, dayMonthOf, money, num, pctOf, type PbLang } from "@/lib/pb";
 import type { Dict } from "@/lib/dict/en";
@@ -180,14 +181,20 @@ function Detail({ tr, lang, t, now }: { tr: Trader; lang: PbLang; t: T; now: num
   const lastIso = s.last_trade_at ? new Date(s.last_trade_at * 1000).toISOString() : null;
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
-      {tr.spark.length >= 3 && (
+      {tr.curve && tr.curve.t.length >= 2 ? (
+        <section>
+          <SectionTitle>{t.curveTitle}</SectionTitle>
+          <ProfitChart curve={tr.curve} lang={lang} t={t} />
+        </section>
+      ) : tr.spark.length >= 3 ? (
+        // Records built before the dated curve existed: the plain line.
         <section>
           <SectionTitle>{t.curveTitle}</SectionTitle>
           <div style={{ padding: "12px 12px 8px", borderRadius: 12, border: "1px solid var(--line)", background: "var(--card2)" }}>
             <Spark points={tr.spark} w={600} h={84} fluid />
           </div>
         </section>
-      )}
+      ) : null}
       <section>
         <SectionTitle>{t.partsTitle}</SectionTitle>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(230px, 1fr))", gap: "16px 22px" }}>

@@ -28,7 +28,7 @@ const BASE = process.env.ODDZY_API_BASE ?? "https://app.oddzy.xyz/api";
  * the API, which is cheap. Bump it when a deploy needs fresh upstream data.
  * The API ignores the parameter.
  */
-const CACHE_EPOCH = "2026-11-17b";
+const CACHE_EPOCH = "2026-11-17d";
 const TOKEN = process.env.ODDZY_API_TOKEN ?? "";
 
 export type Market = {
@@ -1247,6 +1247,8 @@ export type Trader = {
   /** This list's own category record, when the list is a category. */
   cat: TraderCat | null;
   spark: number[];
+  /** Cumulative profit by day: `t` are day numbers (unix time / 86400), `v` dollars. */
+  curve?: { t: number[]; v: number[] };
   holding: TraderHolding[];
 };
 
