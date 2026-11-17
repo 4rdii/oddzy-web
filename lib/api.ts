@@ -28,7 +28,7 @@ const BASE = process.env.ODDZY_API_BASE ?? "https://app.oddzy.xyz/api";
  * the API, which is cheap. Bump it when a deploy needs fresh upstream data.
  * The API ignores the parameter.
  */
-const CACHE_EPOCH = "2026-11-16b";
+const CACHE_EPOCH = "2026-11-17b";
 const TOKEN = process.env.ODDZY_API_TOKEN ?? "";
 
 export type Market = {
@@ -1235,6 +1235,9 @@ export type Trader = {
     active_days_30: number;
     last_trade_at: number | null;
     since: number | null;
+    /** Start of the period the record covers (shorter than 12 months for very active wallets). */
+    covered_from?: number;
+    truncated?: boolean;
     all_time_pnl: number;
     all_time_volume: number;
     joined: number | null;

@@ -901,6 +901,7 @@ export const en = {
     calmHint: "Worst run gave back {pct} of winnings",
     copyability: "Copyability",
     trackTitle: "Track record, last 12 months",
+    trackTitleSince: "Track record since {date}",
     profit: "Profit",
     staked: "Money risked",
     events: "Events bet on",
@@ -931,6 +932,10 @@ export const en = {
     onPolymarket: "Profile on Polymarket",
     howOpen: "How is the score calculated?",
     howClose: "Close",
+    close: "Close",
+    sideLists: "Lists",
+    sideShow: "Show",
+    curveTitle: "Profit over time",
     how: [
       "We start from Polymarket's public leaderboards, in 11 categories, for this month and all time, and pull every resolved bet each wallet made in the last 12 months.",
       "Skill. A share bought at 30¢ should win 30% of the time. We compare each trader's results with what the prices implied and measure the gap in standard deviations of luck. Then the best single event is removed and the test repeated, so one lucky longshot cannot carry a record. Bets on the same match count as one.",
