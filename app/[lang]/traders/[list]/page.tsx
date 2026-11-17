@@ -10,7 +10,7 @@ import { isLocale, LOCALES } from "@/lib/i18n";
 export const revalidate = 21600;
 
 /** Must match oddzy-api traders.js LISTS, minus "all" (that is /traders). */
-const LISTS = ["hot", "sports", "esports", "crypto", "politics", "geopolitics", "middle_east", "economy", "tech", "culture", "mentions", "weather", "bots"];
+const LISTS = ["hot", "sports", "baskets", "combos", "esports", "crypto", "politics", "geopolitics", "middle_east", "economy", "tech", "culture", "mentions", "weather", "bots"];
 
 export async function generateStaticParams() {
   return LOCALES.flatMap((lang) => LISTS.map((list) => ({ lang, list })));
@@ -24,8 +24,9 @@ export async function generateMetadata(props: Params): Promise<Metadata> {
   if (!isLocale(lang) || !LISTS.includes(list)) return {};
   const t = getDict(lang).traders;
   const cat = (t.lists as Record<string, string>)[list] ?? list;
+  const named = (t.listTitles as Record<string, string>)[list];
   return {
-    title: t.metaTitleList.replace("{cat}", cat),
+    title: named ? t.metaTitleNamed.replace("{title}", named) : t.metaTitleList.replace("{cat}", cat),
     description: t.metaDescription,
     alternates: { canonical: `/traders/${list}` },
   };

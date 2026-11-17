@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import type { Trader, TraderCat, TraderList } from "@/lib/api";
+import type { Trader, TraderCat, TraderComboOpen, TraderHolding, TraderList } from "@/lib/api";
 import { Avatar, ScoreRing } from "@/components/pb/ScoreRing";
 import { ProfitChart } from "@/components/pb/ProfitChart";
 import { useNow } from "@/components/pb/useNow";
@@ -25,7 +25,7 @@ type Filter = "all" | "copy" | "sharp" | "consistent" | "big" | "whale";
 type Sort = "default" | "score" | "skill" | "roi" | "pnl" | "consistency";
 
 /** Tab order; a list with nobody in it is not shown. */
-const TABS: ListKey[] = ["all", "hot", "sports", "esports", "crypto", "politics", "geopolitics", "middle_east", "economy", "tech", "culture", "mentions", "weather", "bots"];
+const TABS: ListKey[] = ["all", "hot", "sports", "baskets", "combos", "esports", "crypto", "politics", "geopolitics", "middle_east", "economy", "tech", "culture", "mentions", "weather", "bots"];
 
 function fill(tpl: string, vars: Record<string, string | number>): string {
   return tpl.replace(/\{(\w+)\}/g, (m, k: string) => (k in vars ? String(vars[k]) : m));
@@ -171,7 +171,150 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
   return <h3 style={{ margin: "0 0 10px", fontSize: 14, fontWeight: 800, color: "var(--text)" }}>{children}</h3>;
 }
 
-function Detail({ tr, lang, t, now }: { tr: Trader; lang: PbLang; t: T; now: number | null }) {
+/** Where one of our pages for a market lives: the match page for a match, else the market page. */
+const ourHref = (h: { ours: boolean; slug: string | null; our_event_slug: string | null; our_event_kind: string | null }) =>
+  h.ours && h.slug ? (h.our_event_kind === "match" && h.our_event_slug ? `/match/${h.our_event_slug}` : `/market/${h.slug}`) : null;
+
+/** One open position: what it is, entry and current price, value, and a Trade link when we list it. */
+function HoldingRow({ h, lang, t }: { h: TraderHolding; lang: PbLang; t: T }) {
+  const href = ourHref(h);
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "11px 13px", borderRadius: 12, border: "1px solid var(--line)", background: "var(--card2)" }}>
+      <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 4 }}>
+        <div style={{ fontSize: 13, fontWeight: 700, lineHeight: 1.6 }} dir="auto">
+          {h.title}
+        </div>
+        <div style={{ fontSize: 12, color: "var(--muted)", lineHeight: 1.7 }}>
+          {fill(t.holdRow, { outcome: h.outcome, avg: cents(lang, h.avg_price), price: cents(lang, h.price) })}
+          {" · "}
+          {money(lang, h.value)}
+        </div>
+      </div>
+      {href && (
+        <Link href={href} className="pb-gold-btn" style={{ flexShrink: 0, fontSize: 13, fontWeight: 800, padding: "8px 14px", borderRadius: 10 }}>
+          {t.tradeHere}
+        </Link>
+      )}
+    </div>
+  );
+}
+
+/** One open combo: what was paid and what it pays, then every leg with its state. */
+function ComboCard({ c, lang, t }: { c: TraderComboOpen; lang: PbLang; t: T }) {
+  return (
+    <div style={{ borderRadius: 12, border: "1px solid var(--line)", background: "var(--card2)", overflow: "hidden" }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, flexWrap: "wrap", padding: "10px 13px", borderBottom: "1px solid var(--line)", fontSize: 13, fontWeight: 700 }}>
+        <span>{fill(t.comboCard, { legs: num(lang, c.legs_total), cost: money(lang, c.cost), price: cents(lang, c.price), pays: money(lang, c.pays) })}</span>
+        {c.side === "no" && (
+          <span style={{ fontSize: 11, fontWeight: 700, padding: "3px 8px", borderRadius: 999, color: TONE.warn.c, background: TONE.warn.bg }}>{t.comboAgainst}</span>
+        )}
+      </div>
+      <div style={{ display: "flex", flexDirection: "column" }}>
+        {c.legs.map((l, i) => {
+          const won = l.status === "RESOLVED_WIN";
+          const lost = l.status === "RESOLVED_LOSS";
+          const tone = won ? TONE.up : lost ? TONE.warn : TONE.mute;
+          const href = !won && !lost ? ourHref(l) : null;
+          return (
+            <div key={`${l.slug}:${i}`} style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 13px", borderTop: i ? "1px solid var(--line)" : undefined }}>
+              <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 3 }}>
+                <div style={{ fontSize: 13, lineHeight: 1.6 }} dir="auto">
+                  {l.question} <b>→ {l.outcome}</b>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 11, color: "var(--muted)" }}>
+                  <span style={{ fontWeight: 700, padding: "2px 7px", borderRadius: 999, color: tone.c, background: tone.bg }}>{won ? t.legWon : lost ? t.legLost : t.legPending}</span>
+                  {!won && !lost && <span>{fill(t.legNow, { price: cents(lang, l.price) })}</span>}
+                </div>
+              </div>
+              {href && (
+                <Link href={href} style={{ flexShrink: 0, fontSize: 12, fontWeight: 800, padding: "6px 11px", borderRadius: 9, border: "1px solid var(--goldline)", color: "var(--gold)" }}>
+                  {t.tradeHere}
+                </Link>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function ComboSection({ tr, lang, t, now }: { tr: Trader; lang: PbLang; t: T; now: number | null }) {
+  const c = tr.combo;
+  if (!c) return null;
+  const lastIso = c.last_at ? new Date(c.last_at * 1000).toISOString() : null;
+  return (
+    <section>
+      <SectionTitle>{t.comboTitle}</SectionTitle>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(230px, 1fr))", columnGap: 22 }}>
+        <Stat k={t.comboN} v={num(lang, c.n)} />
+        <Stat k={t.profit} v={signedMoney(lang, c.pnl)} tone={c.pnl >= 0 ? "up" : "down"} />
+        <Stat k={t.roi} v={signedPct(lang, c.roi)} tone={c.roi >= 0 ? "up" : "down"} />
+        <Stat k={t.staked} v={money(lang, c.staked)} />
+        <Stat k={t.hitRate} v={pct(lang, c.win_rate)} />
+        <Stat k={t.comboLegs} v={num(lang, c.legs.toFixed(1))} />
+        <Stat k={t.comboPrice} v={cents(lang, c.avg_price)} />
+        <Stat k={t.comboStake} v={money(lang, c.median_stake)} />
+        <Stat k={t.comboFootball} v={pct(lang, c.football_share)} />
+        <Stat k={t.comboRecent} v={num(lang, c.recent30)} />
+        <Stat k={t.comboLast} v={lastIso && now !== null ? agoOf(lang, lastIso, now) : "—"} />
+      </div>
+      <div style={{ marginTop: 18 }}>
+        <SectionTitle>{t.comboOpenTitle}</SectionTitle>
+        {c.open.length === 0 ? (
+          <div style={{ fontSize: 13, color: "var(--muted)" }}>{t.comboOpenNone}</div>
+        ) : (
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            {c.open.map((o, i) => (
+              <ComboCard key={i} c={o} lang={lang} t={t} />
+            ))}
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
+function BasketSection({ tr, lang, t }: { tr: Trader; lang: PbLang; t: T }) {
+  const b = tr.basket;
+  if (!b) return null;
+  const open = tr.basket_open ?? [];
+  return (
+    <section>
+      <SectionTitle>{t.basketTitle}</SectionTitle>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(230px, 1fr))", columnGap: 22 }}>
+        <Stat k={t.basketNights} v={num(lang, b.nights)} />
+        <Stat k={t.basketRecent} v={num(lang, b.recent30)} />
+        <Stat k={t.basketMatches} v={num(lang, b.matches.toFixed(1))} />
+        <Stat k={t.basketStake} v={money(lang, b.night_stake)} />
+        <Stat k={t.profit} v={signedMoney(lang, b.pnl)} tone={b.pnl >= 0 ? "up" : "down"} />
+        <Stat k={t.roi} v={signedPct(lang, b.roi)} tone={b.roi >= 0 ? "up" : "down"} />
+        <Stat k={t.basketNightsWon} v={pct(lang, b.nights_won)} />
+        <Stat k={t.basketPicksWon} v={pct(lang, b.picks_won)} />
+        <Stat k={t.basketWindow} v={fill(t.basketWindowVal, { h: num(lang, Math.round(b.hours)) })} />
+        <Stat k={t.basketShare} v={pct(lang, b.share_of_football)} />
+      </div>
+      <div style={{ marginTop: 18 }}>
+        <SectionTitle>{t.basketOpenTitle}</SectionTitle>
+        {open.length === 0 ? (
+          <div style={{ fontSize: 13, color: "var(--muted)" }}>{t.basketOpenNone}</div>
+        ) : (
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {open.map((h) => (
+              <HoldingRow key={`${h.slug}:${h.outcome}`} h={h} lang={lang} t={t} />
+            ))}
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
+function Detail({ tr, list, lang, t, now }: { tr: Trader; list: string; lang: PbLang; t: T; now: number | null }) {
+  // On the combo and basket lists that record leads; elsewhere it follows the
+  // general one. A handful of basket nights is not a habit worth a section.
+  const combo = tr.combo ? <ComboSection tr={tr} lang={lang} t={t} now={now} /> : null;
+  const basket = tr.basket && (list === "baskets" || tr.basket.nights >= 10) ? <BasketSection tr={tr} lang={lang} t={t} /> : null;
   const s = tr.stats;
   const cats = (Object.entries(tr.cats) as [string, TraderCat][])
     .filter(([k, c]) => k !== "middle_east" && c.share >= 0.03)
@@ -195,6 +338,8 @@ function Detail({ tr, lang, t, now }: { tr: Trader; lang: PbLang; t: T; now: num
           </div>
         </section>
       ) : null}
+      {list === "combos" && combo}
+      {list === "baskets" && basket}
       <section>
         <SectionTitle>{t.partsTitle}</SectionTitle>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(230px, 1fr))", gap: "16px 22px" }}>
@@ -270,37 +415,17 @@ function Detail({ tr, lang, t, now }: { tr: Trader; lang: PbLang; t: T; now: num
         </section>
       )}
 
+      {list !== "combos" && combo}
+      {list !== "baskets" && basket}
       <section>
         <SectionTitle>{t.holdingTitle}</SectionTitle>
         {tr.holding.length === 0 ? (
           <div style={{ fontSize: 13, color: "var(--muted)" }}>{t.holdingNone}</div>
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            {tr.holding.map((h) => {
-              const href = h.ours ? (h.our_event_kind === "match" && h.our_event_slug ? `/match/${h.our_event_slug}` : `/market/${h.slug}`) : null;
-              return (
-                <div
-                  key={`${h.slug}:${h.outcome}`}
-                  style={{ display: "flex", alignItems: "center", gap: 12, padding: "11px 13px", borderRadius: 12, border: "1px solid var(--line)", background: "var(--card2)" }}
-                >
-                  <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 4 }}>
-                    <div style={{ fontSize: 13, fontWeight: 700, lineHeight: 1.6 }} dir="auto">
-                      {h.title}
-                    </div>
-                    <div style={{ fontSize: 12, color: "var(--muted)", lineHeight: 1.7 }}>
-                      {fill(t.holdRow, { outcome: h.outcome, avg: cents(lang, h.avg_price), price: cents(lang, h.price) })}
-                      {" · "}
-                      {money(lang, h.value)}
-                    </div>
-                  </div>
-                  {href && (
-                    <Link href={href} className="pb-gold-btn" style={{ flexShrink: 0, fontSize: 13, fontWeight: 800, padding: "8px 14px", borderRadius: 10 }}>
-                      {t.tradeHere}
-                    </Link>
-                  )}
-                </div>
-              );
-            })}
+            {tr.holding.map((h) => (
+              <HoldingRow key={`${h.slug}:${h.outcome}`} h={h} lang={lang} t={t} />
+            ))}
           </div>
         )}
       </section>
@@ -318,13 +443,25 @@ function Detail({ tr, lang, t, now }: { tr: Trader; lang: PbLang; t: T; now: num
 }
 
 /** The numbers a row leads with: the list's own record where the list has one. */
-function headline(tr: Trader, list: string) {
+function headline(tr: Trader, list: string, lang: PbLang, t: T) {
   const c = tr.cat;
   const hot = list === "hot";
+  // Combo and basket lists lead with that record, in its own words.
+  if (list === "combos" && tr.combo) {
+    const k = tr.combo;
+    return { roi: k.roi, winLabel: t.hitRate, winRate: k.win_rate, count: fill(t.combosCount, { n: num(lang, k.n) }), typical: fill(t.typicalCombo, { money: money(lang, k.median_stake) }), ring: Math.round(k.score) };
+  }
+  if (list === "baskets" && tr.basket) {
+    const b = tr.basket;
+    return { roi: b.roi, winLabel: t.nightsWon, winRate: b.nights_won, count: fill(t.nightsCount, { n: num(lang, b.nights) }), typical: fill(t.perNight, { money: money(lang, b.night_stake) }), ring: Math.round(b.score) };
+  }
+  const events = c ? c.events : hot ? tr.hot.events : tr.stats.events;
   return {
     roi: c ? c.roi : hot ? tr.hot.roi : tr.stats.roi,
-    events: c ? c.events : hot ? tr.hot.events : tr.stats.events,
+    winLabel: t.winRate,
     winRate: c ? c.win_rate : hot ? (tr.hot.win_rate ?? tr.stats.win_rate) : tr.stats.win_rate,
+    count: fill(t.bets, { n: num(lang, events) }),
+    typical: fill(t.typicalBet, { money: money(lang, tr.stats.median_bet) }),
     // The ring is the score this list is ranked by: the category's own on a
     // category list, the 30-day one on "in form", the overall one elsewhere.
     ring: Math.round((c ? c.score : hot ? tr.hot.score : undefined) ?? tr.score),
@@ -351,24 +488,24 @@ function Labels({ tr, t, max }: { tr: Trader; t: T; max: number }) {
 }
 
 function HeadStats({ tr, list, lang, t }: { tr: Trader; list: string; lang: PbLang; t: T }) {
-  const h = headline(tr, list);
+  const h = headline(tr, list, lang, t);
   return (
     <span style={{ display: "flex", flexWrap: "wrap", gap: "2px 12px", fontSize: 12, color: "var(--muted)" }}>
       <span>
         {t.roi} <b style={{ color: h.roi >= 0 ? "var(--up)" : "var(--down)" }}>{signedPct(lang, h.roi)}</b>
       </span>
       <span>
-        {t.winRate} <b style={{ color: "var(--text2)" }}>{pct(lang, h.winRate)}</b>
+        {h.winLabel} <b style={{ color: "var(--text2)" }}>{pct(lang, h.winRate)}</b>
       </span>
-      <span>{fill(t.bets, { n: num(lang, h.events) })}</span>
-      <span>{fill(t.typicalBet, { money: money(lang, tr.stats.median_bet) })}</span>
+      <span>{h.count}</span>
+      <span>{h.typical}</span>
     </span>
   );
 }
 
 function Row({ tr, rank, onOpen, list, lang, t }: { tr: Trader; rank: number; onOpen: () => void; list: string; lang: PbLang; t: T }) {
   const name = nameOf(tr, t);
-  const ring = headline(tr, list).ring;
+  const ring = headline(tr, list, lang, t).ring;
   return (
     <article style={{ borderRadius: 16, border: "1px solid var(--line)", background: "var(--card)", overflow: "hidden" }}>
       <button
@@ -415,7 +552,7 @@ function TraderDialog({ tr, rank, list, lang, t, now, onClose }: { tr: Trader; r
     };
   }, [onClose]);
   const name = nameOf(tr, t);
-  const ring = headline(tr, list).ring;
+  const ring = headline(tr, list, lang, t).ring;
   return (
     <div className="tl-dialog-wrap" onClick={onClose}>
       <div role="dialog" aria-modal="true" aria-label={name} className="tl-dialog" onClick={(e) => e.stopPropagation()}>
@@ -440,7 +577,7 @@ function TraderDialog({ tr, rank, list, lang, t, now, onClose }: { tr: Trader; r
           </button>
         </header>
         <div className="tl-dialog-body">
-          <Detail tr={tr} lang={lang} t={t} now={now} />
+          <Detail tr={tr} list={list} lang={lang} t={t} now={now} />
         </div>
       </div>
     </div>
@@ -502,9 +639,9 @@ export function TradersPb({ data, list, lang = "fa", t }: { data: TraderList | n
   const counts = data?.counts ?? {};
   const tabs = TABS.filter((k) => k === "all" || k === list || (counts[k] ?? 0) > 0);
   const listName = (t.lists as Record<string, string>)[list] ?? list;
-  const isCategory = !["all", "hot", "bots", "middle_east"].includes(list);
-  const listIntro =
-    list === "all" ? null : list === "hot" ? t.listIntro.hot : list === "bots" ? t.listIntro.bots : list === "middle_east" ? t.listIntro.middle_east : fill(t.listIntro.category, { cat: listName });
+  const named = (t.listTitles as Record<string, string>)[list];
+  const ownIntro = (t.listIntro as Record<string, string>)[list];
+  const listIntro = list === "all" ? null : (ownIntro ?? fill(t.listIntro.category, { cat: listName }));
   const filters: [Filter, string][] = [
     ["all", t.filterAll],
     ["copy", t.filterCopy],
@@ -513,7 +650,7 @@ export function TradersPb({ data, list, lang = "fa", t }: { data: TraderList | n
     ["big", t.filterBig],
     ["whale", t.filterWhale],
   ];
-  const ownRanking = isCategory || list === "hot" || list === "middle_east";
+  const ownRanking = list !== "all" && list !== "bots";
   const sorts: [Sort, string][] = [
     ["default", ownRanking ? t.sortSkill : t.sortScore],
     ...(ownRanking ? ([["score", t.sortScore]] as [Sort, string][]) : ([["skill", t.sortSkill]] as [Sort, string][])),
@@ -573,7 +710,7 @@ export function TradersPb({ data, list, lang = "fa", t }: { data: TraderList | n
                 </>
               ) : null}
             </div>
-            <h1 style={{ margin: 0, fontSize: 30, fontWeight: 900, letterSpacing: -0.5, lineHeight: 1.35 }}>{list === "all" ? t.title : fill(t.titleList, { cat: listName })}</h1>
+            <h1 style={{ margin: 0, fontSize: 30, fontWeight: 900, letterSpacing: -0.5, lineHeight: 1.35 }}>{list === "all" ? t.title : (named ?? fill(t.titleList, { cat: listName }))}</h1>
             <p style={{ margin: 0, fontSize: 15, lineHeight: 1.9, color: "var(--text2)", maxWidth: 640, textWrap: "pretty" }}>{listIntro ?? t.intro}</p>
           </header>
 

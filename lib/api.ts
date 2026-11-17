@@ -28,7 +28,7 @@ const BASE = process.env.ODDZY_API_BASE ?? "https://app.oddzy.xyz/api";
  * the API, which is cheap. Bump it when a deploy needs fresh upstream data.
  * The API ignores the parameter.
  */
-const CACHE_EPOCH = "2026-11-17d";
+const CACHE_EPOCH = "2026-11-17e";
 const TOKEN = process.env.ODDZY_API_TOKEN ?? "";
 
 export type Market = {
@@ -1185,6 +1185,75 @@ export type TraderHolding = {
   our_event_kind: string | null;
 };
 
+/** Football baskets: separate positions on 3+ different matches opened the same day. */
+export type TraderBasket = {
+  nights: number;
+  recent30: number;
+  matches: number;
+  night_stake: number;
+  staked: number;
+  pnl: number;
+  roi: number;
+  z: number;
+  z_eff: number;
+  nights_won: number;
+  picks_won: number;
+  hours: number;
+  share_of_football: number;
+  football_share: number;
+  last_day: number;
+  score: number;
+};
+
+export type TraderComboLeg = {
+  question: string;
+  slug: string | null;
+  event_slug: string | null;
+  outcome: string;
+  /** OPEN, RESOLVED_WIN or RESOLVED_LOSS. */
+  status: string;
+  price: number;
+  end_date: string | null;
+  ours: boolean;
+  our_event_slug: string | null;
+  our_event_kind: string | null;
+};
+
+export type TraderComboOpen = {
+  /** "yes" built the parlay; "no" took the other side of it. */
+  side: "yes" | "no";
+  cost: number;
+  price: number;
+  pays: number;
+  opened_at: string | null;
+  legs_total: number;
+  legs_pending: number;
+  legs: TraderComboLeg[];
+};
+
+/** Polymarket Combos (parlays): one position that pays only if every leg hits. */
+export type TraderCombo = {
+  n: number;
+  staked: number;
+  pnl: number;
+  roi: number;
+  z: number;
+  z_eff: number;
+  win_rate: number;
+  buyer_share: number;
+  legs: number;
+  avg_price: number;
+  median_stake: number;
+  football_share: number;
+  football_n: number;
+  football_pnl: number;
+  last_at: number;
+  recent30: number;
+  truncated: boolean;
+  score: number;
+  open: TraderComboOpen[];
+};
+
 export type Trader = {
   wallet: string;
   name: string | null;
@@ -1250,6 +1319,10 @@ export type Trader = {
   /** Cumulative profit by day: `t` are day numbers (unix time / 86400), `v` dollars. */
   curve?: { t: number[]; v: number[] };
   holding: TraderHolding[];
+  basket?: TraderBasket | null;
+  /** Open positions on football matches, soonest first. */
+  basket_open?: TraderHolding[];
+  combo?: TraderCombo | null;
 };
 
 export type TraderList = {
