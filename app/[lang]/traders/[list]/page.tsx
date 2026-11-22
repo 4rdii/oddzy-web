@@ -4,7 +4,8 @@ import { SiteChrome } from "@/components/site/Chrome";
 import { TradersPb } from "@/components/pb/TradersPb";
 import { getTraders } from "@/lib/api";
 import { getDict } from "@/lib/dict";
-import { isLocale, LOCALES } from "@/lib/i18n";
+import { brandFor, isLocale, LOCALES } from "@/lib/i18n";
+import { tradersJsonLd, tradersMetadata } from "@/components/pb/tradersSeo";
 
 /** One list of the trader library: a category, "in form", or bots. See ../page.tsx. */
 export const revalidate = 21600;
@@ -22,23 +23,22 @@ type Params = { params: Promise<{ lang: string; list: string }> };
 export async function generateMetadata(props: Params): Promise<Metadata> {
   const { lang, list } = await props.params;
   if (!isLocale(lang) || !LISTS.includes(list)) return {};
-  const t = getDict(lang).traders;
-  const cat = (t.lists as Record<string, string>)[list] ?? list;
-  const named = (t.listTitles as Record<string, string>)[list];
-  return {
-    title: named ? t.metaTitleNamed.replace("{title}", named) : t.metaTitleList.replace("{cat}", cat),
-    description: t.metaDescription,
-    alternates: { canonical: `/traders/${list}` },
-  };
+  return tradersMetadata(getDict(lang).traders, list);
 }
 
 export default async function TradersListPage(props: Params) {
   const { lang, list } = await props.params;
   if (!isLocale(lang) || !LISTS.includes(list)) notFound();
   const data = await getTraders(list, revalidate);
+  const dict = getDict(lang);
+  const brand = brandFor(lang);
   return (
     <SiteChrome lang={lang} pb>
-      <TradersPb data={data} list={list} lang={lang} t={getDict(lang).traders} />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(tradersJsonLd(dict.traders, list, data, brand.siteUrl, brand.name)).replace(/</g, "\\u003c") }}
+      />
+      <TradersPb data={data} list={list} lang={lang} t={dict.traders} />
     </SiteChrome>
   );
 }

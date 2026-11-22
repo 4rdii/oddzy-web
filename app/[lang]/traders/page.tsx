@@ -4,7 +4,8 @@ import { SiteChrome } from "@/components/site/Chrome";
 import { TradersPb } from "@/components/pb/TradersPb";
 import { getTraders } from "@/lib/api";
 import { getDict } from "@/lib/dict";
-import { isLocale } from "@/lib/i18n";
+import { brandFor, isLocale } from "@/lib/i18n";
+import { tradersJsonLd, tradersMetadata } from "@/components/pb/tradersSeo";
 
 /**
  * Trader library, the overall list. Both brands: «کتابخانهٔ تریدرها» on
@@ -24,17 +25,22 @@ type Params = { params: Promise<{ lang: string }> };
 export async function generateMetadata(props: Params): Promise<Metadata> {
   const { lang } = await props.params;
   if (!isLocale(lang)) return {};
-  const t = getDict(lang).traders;
-  return { title: t.metaTitle, description: t.metaDescription, alternates: { canonical: "/traders" } };
+  return tradersMetadata(getDict(lang).traders, "all");
 }
 
 export default async function TradersPage(props: Params) {
   const { lang } = await props.params;
   if (!isLocale(lang)) notFound();
   const data = await getTraders("all", revalidate);
+  const dict = getDict(lang);
+  const brand = brandFor(lang);
   return (
     <SiteChrome lang={lang} pb>
-      <TradersPb data={data} list="all" lang={lang} t={getDict(lang).traders} />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(tradersJsonLd(dict.traders, "all", data, brand.siteUrl, brand.name)).replace(/</g, "\\u003c") }}
+      />
+      <TradersPb data={data} list="all" lang={lang} t={dict.traders} />
     </SiteChrome>
   );
 }

@@ -849,7 +849,21 @@ export const en = {
       other: "Other",
       bots: "Bots & market makers",
     },
-    listTitles: { baskets: "Football basket bettors", combos: "Combo players" },
+    listTitles: {
+      baskets: "Football basket bettors",
+      combos: "Combo players",
+      hot: "Traders in form",
+      geopolitics: "Geopolitics traders",
+      middle_east: "Iran and Middle East traders",
+      bots: "Bots and market makers",
+    },
+    metaDescList:
+      "The best {cat} traders on Polymarket, ranked by skill rather than raw profit: track record, consistency, how easy they are to copy, and what they hold now.",
+    promoKicker: "New · Trader library",
+    promoTitle: "Who on Polymarket is actually good?",
+    promoBody: "{n} wallets analysed and ranked by skill, not raw profit. See their record, what they bet on, and what they hold right now.",
+    promoCta: "Open the trader library",
+    promoScore: "Score",
     metaTitleNamed: "{title} on Polymarket",
     listIntro: {
       baskets:

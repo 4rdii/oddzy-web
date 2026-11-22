@@ -57,6 +57,7 @@ export function OdHome({
   movers,
   desks,
   finder,
+  traders,
 }: {
   /** Server render time: relative times agree between server and client. */
   renderedAt: number;
@@ -70,6 +71,8 @@ export function OdHome({
   movers: MiniMarket[];
   desks: DeskCard[];
   finder: FinderRow[];
+  /** Trader-library banner (null when the library has not loaded). */
+  traders?: { kicker: string; title: string; body: string; cta: string; top: { name: string; score: number; sub: string }[] } | null;
 }) {
   const [metric, setMetric] = useState<"vol" | "risk">("vol");
   const [region, setRegion] = useState("all");
@@ -443,6 +446,56 @@ export function OdHome({
           </div>
         </aside>
       </section>
+
+      {traders && (
+        <Link
+          href="/traders"
+          aria-label={traders.cta}
+          style={{
+            display: "flex",
+            flexWrap: "wrap",
+            alignItems: "center",
+            gap: "18px 28px",
+            marginTop: 28,
+            padding: "clamp(18px,2.4vw,26px)",
+            borderRadius: 18,
+            border: "1px solid var(--od-line)",
+            background: "var(--od-panel)",
+            color: "inherit",
+          }}
+        >
+          <div style={{ flex: "1 1 320px", display: "grid", gap: 8, minWidth: 0 }}>
+            <span className="kicker">{traders.kicker}</span>
+            <h2 className="serif" style={{ margin: 0, fontWeight: 500, fontSize: "clamp(22px,2.2vw,30px)", lineHeight: 1.12, letterSpacing: "-.01em", textWrap: "pretty" }}>
+              {traders.title}
+            </h2>
+            <p style={{ margin: 0, fontSize: 14.5, lineHeight: 1.5, color: "var(--od-ink2)", maxWidth: "58ch" }}>{traders.body}</p>
+            <span style={{ fontSize: 14, fontWeight: 700, color: "var(--od-brand)" }}>{traders.cta} →</span>
+          </div>
+          <div style={{ flex: "1 1 280px", display: "grid", gap: 8, minWidth: 0 }}>
+            {traders.top.map((w, i) => (
+              <div
+                key={w.name + i}
+                style={{ display: "flex", alignItems: "center", gap: 12, padding: "9px 12px", borderRadius: 12, border: "1px solid var(--od-line)", background: "var(--od-panel2)", fontSize: 13 }}
+              >
+                <span className="mono" style={{ width: 14, color: "var(--od-ink3)", fontSize: 12 }}>
+                  {i + 1}
+                </span>
+                <div style={{ flex: 1, minWidth: 0, display: "grid" }}>
+                  <span style={{ fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{w.name}</span>
+                  <span style={{ fontSize: 12, color: "var(--od-ink3)" }}>{w.sub}</span>
+                </div>
+                <span
+                  className="mono"
+                  style={{ width: 34, height: 34, borderRadius: "50%", border: "2px solid var(--od-brand)", color: "var(--od-brand)", fontWeight: 700, fontSize: 12, display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}
+                >
+                  {w.score}
+                </span>
+              </div>
+            ))}
+          </div>
+        </Link>
+      )}
 
       <section id="wire" className="od-lower">
         <div style={{ minWidth: 0 }}>

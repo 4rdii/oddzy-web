@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { SiteChrome } from "@/components/site/Chrome";
-import { getBasket, getBaskets, getEvents, getMarkets, getWhalesToday, type Market } from "@/lib/api";
-import { HomePb, type HomeCat, type HomeHero, type HomeWhale } from "@/components/pb/HomePb";
+import { getBasket, getBaskets, getEvents, getMarkets, getTradersTeaser, getWhalesToday, type Market } from "@/lib/api";
+import { HomePb, type HomeCat, type HomeHero, type HomeTraders, type HomeWhale } from "@/components/pb/HomePb";
 import { HOME_FAQ } from "@/components/pb/homeFaq";
 import { fixtureCard } from "@/components/pb/fixtures";
 import { betLabel, enSideNames, sideNames, tierOf, whaleName } from "@/components/pb/whale";
@@ -80,6 +80,9 @@ async function PolybaazHome() {
     ["crypto", "کریپتو", "var(--home)"],
   ];
   const empty = { markets: [] as Market[] };
+  // The trader library changes once a day; an hour's cache is plenty, and a
+  // longer window than the page's own never makes the page regenerate sooner.
+  const teaserP = getTradersTeaser(3600);
   const [events, whales, all, baskets, ...byCat] = await Promise.all([
     getEvents({ matchesOnly: true, mainOnly: true, includeClosing: true, limit: 150, revalidate: 300 }).catch(() => ({ events: [] })),
     getWhalesToday(300),
@@ -184,10 +187,27 @@ async function PolybaazHome() {
     },
   ];
 
+  const teaser = await teaserP;
+  const tt = getDict("fa").traders;
+  const homeTraders: HomeTraders | null = teaser
+    ? {
+        kicker: tt.promoKicker,
+        title: tt.promoTitle,
+        body: tt.promoBody.replace("{n}", fa(teaser.analysed.toLocaleString("en-US"))),
+        cta: tt.promoCta,
+        scoreLabel: tt.promoScore,
+        top: teaser.top.map((x) => ({
+          name: x.name ?? `${x.wallet.slice(0, 6)}…${x.wallet.slice(-4)}`,
+          score: x.score,
+          sub: `${tt.roi} ${x.roi >= 0 ? "+" : "−"}${fa(Math.abs(Math.round(x.roi * 100)))}٪${x.main_cat ? ` · ${(tt.lists as Record<string, string>)[x.main_cat] ?? ""}` : ""}`,
+        })),
+      }
+    : null;
+
   return (
     <SiteChrome lang="fa">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-      <HomePb hero={hero} ticks={ticks} cats={cats} whales={homeWhales} basket={basket} />
+      <HomePb hero={hero} ticks={ticks} cats={cats} whales={homeWhales} basket={basket} traders={homeTraders} />
     </SiteChrome>
   );
 }

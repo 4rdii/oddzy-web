@@ -28,7 +28,7 @@ const BASE = process.env.ODDZY_API_BASE ?? "https://app.oddzy.xyz/api";
  * the API, which is cheap. Bump it when a deploy needs fresh upstream data.
  * The API ignores the parameter.
  */
-const CACHE_EPOCH = "2026-11-21a";
+const CACHE_EPOCH = "2026-11-22a";
 const TOKEN = process.env.ODDZY_API_TOKEN ?? "";
 
 export type Market = {
@@ -1336,6 +1336,26 @@ export type TraderList = {
   counts: Record<string, number>;
   traders: Trader[];
 };
+
+export type TradersTeaser = {
+  analysed: number;
+  top: { wallet: string; name: string | null; image: string | null; score: number; roi: number; main_cat: string | null }[];
+};
+
+/** The three top-ranked traders and the size of the library, for the home-page banner. */
+export async function getTradersTeaser(revalidate: number): Promise<TradersTeaser | null> {
+  try {
+    const d = await get<TraderList>(`/traders?list=all&limit=3`, revalidate);
+    if (!d.traders.length) return null;
+    return {
+      analysed: d.analysed ?? 0,
+      top: d.traders.map((t) => ({ wallet: t.wallet, name: t.name, image: t.image, score: t.score, roi: t.stats.roi, main_cat: t.main_cat })),
+    };
+  } catch (e) {
+    console.error("getTradersTeaser", e);
+    return null;
+  }
+}
 
 /**
  * One list of the trader library, full records included so the page can open a

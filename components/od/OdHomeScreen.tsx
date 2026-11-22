@@ -1,5 +1,6 @@
 import { SiteChrome } from "@/components/site/Chrome";
-import { getDesk } from "@/lib/api";
+import { getDesk, getTradersTeaser } from "@/lib/api";
+import { getDict } from "@/lib/dict";
 import { finderRows, globeCountries, indexDesk, mini, newsItems, osintPins, pickLead } from "@/lib/desk";
 import { nowMs } from "@/lib/pb";
 import { fmtV, marketUrl, topicUrl } from "@/lib/od";
@@ -13,7 +14,9 @@ import { OdHome, type DeskCard } from "./OdHome";
  * `revalidate` is the page's ISR window; the /desk fetch must not be shorter.
  */
 export async function OdHomeScreen({ revalidate }: { revalidate: number }) {
-  const desk = await getDesk(revalidate);
+  // The trader library changes once a day: an hour's cache, never shorter than the page's own window.
+  const [desk, teaser] = await Promise.all([getDesk(revalidate), getTradersTeaser(Math.max(revalidate, 3600))]);
+  const tt = getDict("en").traders;
   const now = nowMs();
   if (!desk) {
     return (
@@ -71,6 +74,21 @@ export async function OdHomeScreen({ revalidate }: { revalidate: number }) {
         movers={movers}
         desks={desks}
         finder={finderRows(ix)}
+        traders={
+          teaser
+            ? {
+                kicker: tt.promoKicker,
+                title: tt.promoTitle,
+                body: tt.promoBody.replace("{n}", teaser.analysed.toLocaleString("en-US")),
+                cta: tt.promoCta,
+                top: teaser.top.map((x) => ({
+                  name: x.name ?? `${x.wallet.slice(0, 6)}…${x.wallet.slice(-4)}`,
+                  score: Math.round(x.score),
+                  sub: `${tt.roi} ${x.roi >= 0 ? "+" : "−"}${Math.abs(Math.round(x.roi * 100))}%${x.main_cat ? ` · ${(tt.lists as Record<string, string>)[x.main_cat] ?? ""}` : ""}`,
+                })),
+              }
+            : null
+        }
       />
     </SiteChrome>
   );

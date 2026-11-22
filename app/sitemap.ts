@@ -123,7 +123,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // Trader library: the overall list and the category lists that reliably
     // have people in them. Rebuilt nightly, so the pages change daily.
     { url: `${siteUrl}/traders`, priority: 0.8 },
-    ...["hot", "sports", "baskets", "combos", "esports", "crypto", "politics", "geopolitics", "economy"].map((l) => ({ url: `${siteUrl}/traders/${l}`, priority: 0.6 })),
+    ...["hot", "sports", "baskets", "combos", "esports", "crypto", "politics", "geopolitics", "middle_east", "economy", "tech", "culture", "mentions", "weather"].map((l) => ({ url: `${siteUrl}/traders/${l}`, priority: 0.6 })),
     // No baskets HUB here, deliberately. /basket (the old editorial index)
     // now 308s to /baskets, and /baskets is noindex — it needs the auth SDK
     // for Follow, and the standing rule is that the SDK never loads on a
