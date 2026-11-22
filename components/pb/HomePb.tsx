@@ -321,6 +321,42 @@ function HomeInner({ hero, ticks, cats, whales, basket, traders }: { hero: HomeH
           </section>
         )}
 
+        {traders && (
+          <Link
+            href="/traders"
+            className="pb-card-link"
+            style={{ display: "flex", flexWrap: "wrap", gap: 18, alignItems: "center", background: "var(--card)", border: "1px solid var(--goldline)", borderRadius: 22, padding: 20, color: "var(--text)" }}
+          >
+            <div style={{ flex: "1 1 300px", display: "flex", flexDirection: "column", gap: 6 }}>
+              <span style={{ alignSelf: "flex-start", fontSize: 11, fontWeight: 800, color: "var(--goldink)", background: "var(--gold)", borderRadius: 6, padding: "1px 8px" }}>{traders.kicker}</span>
+              <span style={{ fontSize: 20, fontWeight: 900, lineHeight: 1.5 }}>{traders.title}</span>
+              <span style={{ fontSize: 13.5, color: "var(--text2)", lineHeight: 1.8 }}>{traders.body}</span>
+              <span style={{ marginTop: 4, fontSize: 14, fontWeight: 800, color: "var(--gold)" }}>{traders.cta} ←</span>
+            </div>
+            {traders.top.length > 0 && (
+              <div style={{ flex: "1 1 280px", display: "flex", flexDirection: "column", gap: 8 }}>
+                {traders.top.map((w, i) => (
+                  <div key={w.name + i} style={{ display: "flex", alignItems: "center", gap: 10, background: "var(--bg2)", border: "1px solid var(--line)", borderRadius: 12, padding: "9px 12px", fontSize: 13 }}>
+                    <span style={{ width: 16, fontSize: 12, fontWeight: 800, color: "var(--faint)", textAlign: "center" }}>{fa(i + 1)}</span>
+                    <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column" }}>
+                      <span dir="ltr" style={{ fontWeight: 800, textAlign: "right", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        {w.name}
+                      </span>
+                      <span style={{ fontSize: 12, color: "var(--muted)" }}>{w.sub}</span>
+                    </div>
+                    <span
+                      title={traders.scoreLabel}
+                      style={{ width: 34, height: 34, borderRadius: "50%", border: "2.5px solid var(--up)", color: "var(--up)", fontWeight: 900, fontSize: 12, display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}
+                    >
+                      {fa(Math.round(w.score))}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </Link>
+        )}
+
         <Link
           href="/big-games"
           style={{
@@ -388,42 +424,6 @@ function HomeInner({ hero, ticks, cats, whales, basket, traders }: { hero: HomeH
             </div>
           )}
         </Link>
-
-        {traders && (
-          <Link
-            href="/traders"
-            className="pb-card-link"
-            style={{ display: "flex", flexWrap: "wrap", gap: 18, alignItems: "center", background: "var(--card)", border: "1px solid var(--goldline)", borderRadius: 22, padding: 20, color: "var(--text)" }}
-          >
-            <div style={{ flex: "1 1 300px", display: "flex", flexDirection: "column", gap: 6 }}>
-              <span style={{ alignSelf: "flex-start", fontSize: 11, fontWeight: 800, color: "var(--goldink)", background: "var(--gold)", borderRadius: 6, padding: "1px 8px" }}>{traders.kicker}</span>
-              <span style={{ fontSize: 20, fontWeight: 900, lineHeight: 1.5 }}>{traders.title}</span>
-              <span style={{ fontSize: 13.5, color: "var(--text2)", lineHeight: 1.8 }}>{traders.body}</span>
-              <span style={{ marginTop: 4, fontSize: 14, fontWeight: 800, color: "var(--gold)" }}>{traders.cta} ←</span>
-            </div>
-            {traders.top.length > 0 && (
-              <div style={{ flex: "1 1 280px", display: "flex", flexDirection: "column", gap: 8 }}>
-                {traders.top.map((w, i) => (
-                  <div key={w.name + i} style={{ display: "flex", alignItems: "center", gap: 10, background: "var(--bg2)", border: "1px solid var(--line)", borderRadius: 12, padding: "9px 12px", fontSize: 13 }}>
-                    <span style={{ width: 16, fontSize: 12, fontWeight: 800, color: "var(--faint)", textAlign: "center" }}>{fa(i + 1)}</span>
-                    <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column" }}>
-                      <span dir="ltr" style={{ fontWeight: 800, textAlign: "right", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                        {w.name}
-                      </span>
-                      <span style={{ fontSize: 12, color: "var(--muted)" }}>{w.sub}</span>
-                    </div>
-                    <span
-                      title={traders.scoreLabel}
-                      style={{ width: 34, height: 34, borderRadius: "50%", border: "2.5px solid var(--up)", color: "var(--up)", fontWeight: 900, fontSize: 12, display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}
-                    >
-                      {fa(Math.round(w.score))}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </Link>
-        )}
 
         <section style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 12 }}>
           <UpDownTile />
