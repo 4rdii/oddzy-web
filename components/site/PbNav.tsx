@@ -57,6 +57,7 @@ export const PB_GROUPS: Group[] = [
     items: [
       { href: "/baskets", label: "سبدها", desc: "چند پیش‌بینی در یک خرید", icon: "🧺" },
       { href: "/traders", label: "کتابخانهٔ تریدرها", desc: "بهترین تریدرها بر پایهٔ مهارت، نه سود خام", icon: "🧠" },
+      { href: "/learn", label: "آموزش و تحلیل", desc: "مقاله‌ها و راهنماهای بازارهای پیش‌بینی", icon: "📚" },
       { href: "/how-it-works", label: "آموزش کار با پلی‌باز", desc: "از واریز تا برداشت", icon: "📘" },
       { href: "/faq", label: "سؤال‌های رایج", desc: "جواب‌های کوتاه", icon: "❓" },
     ],
@@ -66,7 +67,7 @@ export const PB_GROUPS: Group[] = [
 /** Which group a path belongs to. */
 function groupOf(path: string): Group["key"] | null {
   if (/^\/(world|updown)(\/|$)/.test(path)) return "pol";
-  if (/^\/(baskets|creator|how-it-works|faq|learn)(\/|$)/.test(path)) return "tools";
+  if (/^\/(baskets|creator|traders|how-it-works|faq|learn)(\/|$)/.test(path)) return "tools";
   if (/^\/(big-games|live|match)(\/|$)/.test(path)) return "sport";
   const t = /^\/topic\/([^/]+)/.exec(path);
   if (t) {
