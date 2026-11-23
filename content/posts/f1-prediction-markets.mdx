@@ -1,0 +1,104 @@
+---
+title: "How do F1 prediction markets settle a disqualification?"
+description: "An F1 race on Oddzy is a winner market plus pole, podium, fastest lap and head-to-head markets. How each one settles a penalty, a retirement and a cancelled race."
+tag: GUIDE
+topics: ["f1-races", "f1-props", "f1"]
+readingMinutes: 5
+publishedAt: "2026-11-20"
+lead: "A Grand Prix on Oddzy is a winner market for every driver plus pole, podium, fastest lap, head-to-head and safety car markets. Each one names the document it settles on, and a disqualification that arrives after that document is published does not count."
+keywords:
+  - "F1 prediction markets"
+  - "Formula 1 prediction market"
+  - "F1 disqualification rules"
+  - "Polymarket F1"
+  - "Las Vegas Grand Prix"
+takeaways:
+  - "An F1 race winner or podium market settles on the FIA’s published Final Classification, and a disqualification or change made after it is published does not alter the result."
+  - "A pole position market pays the driver who set the fastest qualifying time, even if a grid penalty means that driver does not start the race first."
+  - "A head-to-head market gives a retired driver credit for laps completed, and resolves 50-50 if both drivers stop on the same lap."
+  - "A cancelled race settles differently by market type: winner, pole and fastest lap markets resolve to Other, while podium, head-to-head and safety car markets resolve 50-50."
+  - "As of 20 November 2026 on Oddzy, the 23 Las Vegas Grand Prix winner markets traded $7,317 in 24 hours combined, so most F1 order books are thin."
+faq:
+  - q: "Does a sprint race count towards an F1 Grand Prix market?"
+    a: "No. The markets name one session. The constructor score market for the 2026 Las Vegas Grand Prix says results from other sessions, such as sprints, do not count, and the market on whether the Abu Dhabi Grand Prix takes place says practice, qualifying and sprint sessions are not considered. A fastest lap market only counts laps set in the race itself."
+  - q: "Does a virtual safety car count in an F1 safety car market?"
+    a: "No. The safety car market for the 2026 Las Vegas Grand Prix resolves Yes only if the physical safety car enters the track at some point during the race. A Virtual Safety Car period, where drivers slow to a set pace without a car leading them, does not count. As of 20 November 2026 on Oddzy the market showed 56 cents and cost 70 cents to buy."
+  - q: "Can I trade an F1 market while the race is running?"
+    a: "Yes. The Las Vegas Grand Prix is scheduled for 21 November 2026 and its winner markets list a close time of 29 November, so the order book stays open through the race and prices move with every pit stop and incident. Liquidity is thin, and the side that looks beaten can empty out, so a price you see mid-race is not always a price you can trade."
+  - q: "Why does an F1 market show 50 cents when the cheapest share costs 99?"
+    a: "Because nobody has posted a real order yet. The card shows the midpoint between the best bid and the best offer, and on an empty book that midpoint means nothing. As of 20 November 2026 on Oddzy, the Leclerc against Verstappen head-to-head for Las Vegas showed 50 cents, had never traded, and offered both sides at 99 cents."
+  - q: "When do F1 championship position markets resolve?"
+    a: "They resolve as soon as the official results of the final scheduled race of the season are known. A driver who is mathematically eliminated from a position resolves No early, before the season ends. If the season is permanently cancelled or not completed by 28 February 2027, the 2026 markets resolve to Other. Ties are broken by Formula 1’s own tiebreak procedure."
+  - q: "What happens to a fastest lap market if the race is stopped early?"
+    a: "It still settles on the fastest lap credited in the FIA’s Final Classification, as long as at least one racing lap was completed. If no driver completes a lap, for example because a red flag ends the race at once, the market resolves to Other and no named driver is paid. Laps from practice or qualifying never count."
+---
+
+F1 prediction markets turn a Grand Prix into a set of yes-or-no questions you can trade. Will Max Verstappen win in Las Vegas. Will Lando Norris finish on the podium. Each share pays $1 if the answer is yes and $0 if not, so the price in cents is the probability the market puts on it.
+
+Formula 1 has a problem most sports do not. The order in which cars cross the line is not always the result. Time penalties are added afterwards, and a car can be disqualified in scrutineering hours later. The markets handle this by naming one document and ignoring what happens after it.
+
+## What is an F1 prediction market?
+
+It is one question about one session of a race weekend, with its own order book. A driver’s winner market, podium market and pole market are separate markets with separate traders and separate rules. As of 20 November 2026 on Oddzy there were 712 active Formula 1 markets: 70 race winner markets, 599 race props and 43 season markets.
+
+The Las Vegas Grand Prix is scheduled for 21 November 2026. At 07:12 UTC on 20 November the winner markets looked like this:
+
+| Las Vegas GP winner | Card price | Cheapest to buy | 24h volume |
+|---|---|---|---|
+| Max Verstappen | 39¢ | 40¢ | $408 |
+| George Russell | 17¢ | 18¢ | $2,005 |
+| Kimi Antonelli | 16¢ | 18¢ | $3,966 |
+| Lando Norris | 14¢ | 15¢ | $344 |
+| Lewis Hamilton | 5¢ | 6¢ | $99 |
+| Charles Leclerc | 4.5¢ | 5¢ | $89 |
+
+All 23 driver markets together traded $7,317 in 24 hours. The pole markets traded $1,704, the podium markets $205 and the safety car market $186. For scale, the busiest market on Oddzy that day, on the Fed’s December decision, traded $1,306,265. F1 books are thin, and the props are thinner: Antonelli to finish on the podium showed 53¢ on the card and cost 64¢ to buy.
+
+## Does a disqualification after the race change the result?
+
+Only if it arrives before the FIA publishes the Final Classification. Winner, podium and head-to-head markets resolve on that document, which the rules describe as typically released 30–60 minutes after the race and including any time penalties applied. The rules then say that disqualifications or changes made after its publication will not affect resolution. The podium ceremony does not count either.
+
+Last year’s Las Vegas race shows why the timing matters. On 22 November 2025 Lando Norris finished second and Oscar Piastri fourth. Just over three hours after the finish, both McLarens were disqualified for excessive plank wear, as Formula 1 reported at the time.
+
+| Driver | Initial classification | After the disqualifications |
+|---|---|---|
+| Max Verstappen | 1st | 1st |
+| Lando Norris | 2nd | Disqualified |
+| George Russell | 3rd | 2nd |
+| Oscar Piastri | 4th | Disqualified |
+| Kimi Antonelli | 5th, after a 5-second penalty | 3rd |
+
+The winner market is the same in both columns. The podium markets are not: the first column pays Norris and the second pays Antonelli. Which column a market uses depends on when the FIA publishes the Final Classification on the night, not on the 30–60 minute estimate in the rules. You cannot know that when you buy. If a car is under investigation after the flag, treat the market as undecided until it resolves, and [read the resolution rules before the price](/learn/read-the-resolution-rules-first).
+
+## Does a grid penalty change a pole position market?
+
+No. A pole market pays the driver Formula 1 recognises as having set the fastest time in qualifying, regardless of any later penalty, disqualification or change to the starting grid. A driver who qualifies fastest and then drops five places for an engine change still resolves Yes. The question is who was fastest on the day, not who starts first.
+
+## How do head-to-head, fastest lap and safety car markets settle?
+
+Each has one clause that decides the awkward cases.
+
+| Market | Settles on | The clause to know |
+|---|---|---|
+| Head-to-head | Which driver finishes ahead in the Final Classification | A driver who retires is ranked by laps completed; the same lap count resolves 50-50 |
+| Fastest lap | The driver credited with the fastest lap of the race | Practice and qualifying laps never count |
+| Safety car | Whether the safety car is deployed during the race | A Virtual Safety Car does not count |
+| Constructor score | The team that scores the most points in the Grand Prix | A tie goes to the team whose name comes first alphabetically |
+
+The head-to-head rule means a crash on lap 40 beats a crash on lap 12, even though neither driver is classified. If both stop on the same lap, each share pays 50¢, whichever car stopped first.
+
+## What happens if a Grand Prix is cancelled or postponed?
+
+It depends on the market type, and the rules disagree with each other. The Las Vegas markets give the race until 28 November 2026 to be run.
+
+| Market | Cancelled, or run after the cut-off |
+|---|---|
+| Winner, pole, fastest lap | Resolves to “Other”, so no named driver is paid |
+| Safety car | Resolves 50-50 |
+| Podium, head-to-head | Stays open through a postponement; 50-50 only if permanently cancelled |
+
+A winner share bought at 40¢ is worth nothing if the race is called off, while a podium share bought at 80¢ pays 50¢. This is not a remote case this season. As of 20 November 2026 on Oddzy, the market on whether the Abu Dhabi Grand Prix takes place showed 72.5¢. It has traded $13,451 in total, more than any single Las Vegas winner market. The Abu Dhabi winner markets resolve to “Other” if the race is cancelled or moved past 13 December.
+
+## Before you take a position
+
+Check the book, not the card. Many F1 props have never traded, and on those the card price is a midpoint between nothing and 99¢; [why an order fills at a worse price than the one you saw](/learn/why-did-my-order-fill-at-a-worse-price) explains the gap. A thin book also makes it expensive to [sell before the market resolves](/learn/can-you-sell-before-a-market-resolves). Size the stake so a late stewards’ decision cannot hurt you; [how to size a position](/learn/how-to-size-a-position) covers that. The current race boards are on [the Formula 1 topic page](/topic/f1).
