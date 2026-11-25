@@ -10,6 +10,7 @@ import {
   optionalAuthHeaders,
   type CommunityBasket,
 } from "./BasketCard";
+import { ReturnChart, type ReturnChartLabels, type ReturnDay } from "./ReturnChart";
 
 /**
  * A creator's public profile — header, three stat cards, the cumulative
@@ -279,10 +280,27 @@ export function CreatorProfile({ creatorId }: { creatorId: string }) {
         )}
       </div>
 
-      {/* Cumulative return chart — only once there are two real months to
-          draw a line between. A one-point or empty chart is decoration. */}
+      {/* Running-profit chart — only once two baskets have settled. A
+          one-point or empty chart is decoration. */}
       {perf && perf.perBasket.length >= 2 && (
-        <ReturnChart perBasket={perf.perBasket} baskets={baskets} title={p.cumulativeReturn} meta={p.chartMeta} locale={locale} />
+        <ReturnChartCard
+          perBasket={perf.perBasket}
+          baskets={baskets}
+          title={p.cumulativeReturn}
+          meta={p.chartMeta}
+          locale={locale}
+          labels={{
+            range30: p.chartRange30,
+            range90: p.chartRange90,
+            rangeAll: p.chartRangeAll,
+            rangeLabel: p.chartRangeLabel,
+            thatDay: p.chartThatDay,
+            noBasket: p.chartNoBasket,
+            baskets: p.chartBaskets,
+            inPeriod: p.chartInPeriod,
+            hitOf: p.hitOf,
+          }}
+        />
       )}
 
       {/* Active baskets */}
@@ -520,100 +538,64 @@ function rollingReturn(nights: Array<[string, number[]]>): { pnl: number; capita
 /**
  * Profit to date for someone who put $100 into every one of the creator's
  * baskets, night by night — winnings are NOT reinvested, each basket is a fresh
- * $100. One point per day from the first settled basket to today (flat on
- * nights with none), starting at $0, so the line reads "how much would I be up
+ * $100. One point per day from the day before the first settled basket (at $0)
+ * to today, flat on nights with none, so the line reads "how much would I be up
  * by this day". Each basket's result is the backend's per-$1 score
  * (pnlUsdc / stakeUsdc) at publish-time prices, the same basis as the cards.
  *
- * Replaces a monthly running sum (two points over two months, starting at the
- * first month's total) that drew a near-flat line.
+ * Every point carries the baskets settled that day, so the chart can say what
+ * happened on the day the reader points at. The API returns results for more
+ * baskets than it lists, so a basket's title and hit count may be missing; its
+ * result never is.
  */
-function ReturnChart({
+function ReturnChartCard({
   perBasket,
   baskets,
   title,
   meta,
   locale,
+  labels,
 }: {
   perBasket: Perf["perBasket"];
   baskets: CommunityBasket[];
   title: string;
   meta: string;
-  locale: string;
+  locale: "en" | "fa";
+  labels: ReturnChartLabels;
 }) {
   const dayKey = (d: Date) => new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Tehran" }).format(d);
-  const settled = settledNights(perBasket, baskets);
-  const byNight = new Map(settled);
-  const nights = settled.map(([n]) => n);
+  const info = new Map(baskets.map((b) => [b.slug, b]));
+  const byNight = new Map<string, ReturnDay["items"]>();
+  for (const pb of perBasket) {
+    if (!(pb.stakeUsdc > 0)) continue;
+    const b = info.get(pb.slug);
+    const night = gamesDay(pb.slug, b?.publishedAt);
+    if (!night) continue;
+    const list = byNight.get(night) ?? [];
+    list.push({
+      slug: pb.slug,
+      pnl: (pb.pnlUsdc / pb.stakeUsdc) * CHART_STAKE_PER_BASKET,
+      title: b ? localized(locale, b.titleEn, b.titleFa) || null : null,
+      won: b?.wonLegs ?? null,
+      settled: b?.settledLegs ?? null,
+    });
+    byNight.set(night, list);
+  }
+  const nights = [...byNight.keys()].sort();
   if (nights.length === 0) return null;
-  const roll = rollingReturn(settled);
+  const roll = rollingReturn(settledNights(perBasket, baskets));
 
-  const points: Array<{ day: string; v: number }> = [];
+  const start = new Date(`${nights[0]}T12:00:00Z`);
+  const days: ReturnDay[] = [{ day: dayKey(new Date(start.getTime() - 86_400_000)), v: 0, items: [] }];
   let pnl = 0;
   const today = dayKey(new Date());
-  for (let d = new Date(`${nights[0]}T12:00:00Z`); dayKey(d) <= today; d = new Date(d.getTime() + 86_400_000)) {
-    for (const r of byNight.get(dayKey(d)) ?? []) pnl += r * CHART_STAKE_PER_BASKET;
-    points.push({ day: dayKey(d), v: pnl });
-    if (points.length > 400) break;
+  for (let d = start; dayKey(d) <= today; d = new Date(d.getTime() + 86_400_000)) {
+    const items = byNight.get(dayKey(d)) ?? [];
+    for (const it of items) pnl += it.pnl;
+    days.push({ day: dayKey(d), v: pnl, items });
+    if (days.length > 400) break;
   }
 
-  const last = points[points.length - 1]!.v;
-  const lo = Math.min(0, ...points.map((pt) => pt.v));
-  const hi = Math.max(0, ...points.map((pt) => pt.v));
-  const pad = Math.max((hi - lo) * 0.1, 5);
-  const yMin = Math.max(0, lo - pad);
-  const yMax = hi + pad;
-  const W = 640;
-  const H = 200;
-  const y = (v: number) => 170 - ((v - yMin) / (yMax - yMin)) * 140;
-  const x = (i: number) => (points.length > 1 ? (i * W) / (points.length - 1) : 0);
-  const line = "M" + points.map((pt, i) => `${x(i).toFixed(1)},${y(pt.v).toFixed(1)}`).join(" L");
-  const base = y(0);
-  const area = `${line} L${W},${base.toFixed(1)} L0,${base.toFixed(1)} Z`;
-  const up = last >= 0;
-  const color = up ? "var(--bk-gold)" : "var(--down)";
-  const fmtDay = (k: string) =>
-    new Intl.DateTimeFormat(locale === "fa" ? "fa-IR" : "en-US", { day: "numeric", month: "short", timeZone: "UTC" }).format(
-      new Date(`${k}T12:00:00Z`),
-    );
-  const usd = (v: number) => `${v > 0 ? "+" : v < 0 ? "−" : ""}$${Math.abs(Math.round(v)).toLocaleString("en-US")}`;
-  const ticks = [0, Math.floor((points.length - 1) / 2), points.length - 1].filter((v, i, a) => a.indexOf(v) === i);
-
-  return (
-    <div className="flex flex-col gap-3.5 rounded-2xl border border-[var(--line)] bg-[var(--card)] px-5 py-[18px]">
-      <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <div className="text-[14px] font-extrabold text-[var(--ink)]">{title}</div>
-        <div className="ltr-num text-[20px] font-extrabold" style={{ color }}>
-          {usd(last)}
-          {/* Against the capital actually needed (see rollingReturn): $100 unless the creator dug a hole. */}
-          {roll && (
-            <span className="ms-1.5 text-[12px] font-bold">
-              ({roll.pct >= 0 ? "+" : ""}
-              {Math.round(roll.pct)}% <span className="text-[var(--faint)]">/ ${Math.round(roll.capital)}</span>)
-            </span>
-          )}
-        </div>
-      </div>
-      <div className="text-[11px] text-[var(--faint)]">{meta.replace("{date}", fmtDay(points[0]!.day))}</div>
-      <svg viewBox={`0 0 ${W} ${H}`} className="h-auto w-full overflow-visible" style={{ direction: "ltr" }}>
-        <line x1={0} y1={base} x2={W} y2={base} stroke="var(--line)" strokeWidth={1} strokeDasharray="4 5" />
-        <text x={W - 4} y={base - 5} textAnchor="end" fontSize={10} fill="var(--faint)">
-          $0
-        </text>
-        {hi > 0 && y(hi) < base - 18 && (
-          <text x={W - 4} y={y(hi) - 6} textAnchor="end" fontSize={10} fill="var(--faint)">
-            {usd(hi)}
-          </text>
-        )}
-        <path d={area} fill={up ? "var(--bk-goldtint)" : "color-mix(in srgb, var(--down) 12%, transparent)"} />
-        <path d={line} fill="none" stroke={color} strokeWidth={2.5} strokeLinejoin="round" strokeLinecap="round" />
-        <circle cx={x(points.length - 1)} cy={y(last)} r={4} fill={color} />
-      </svg>
-      <div dir="ltr" className="flex justify-between text-[11px] text-[var(--faint)]">
-        {ticks.map((i) => (
-          <span key={i}>{fmtDay(points[i]!.day)}</span>
-        ))}
-      </div>
-    </div>
-  );
+  const since = new Intl.DateTimeFormat(locale === "fa" ? "fa-IR" : "en-US", { day: "numeric", month: "short", timeZone: "UTC" }).format(start);
+  return <ReturnChart days={days} title={title} meta={meta.replace("{date}", since)} roll={roll} locale={locale} labels={labels} />;
 }
