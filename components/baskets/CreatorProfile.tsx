@@ -177,11 +177,21 @@ export function CreatorProfile({ creatorId }: { creatorId: string }) {
   const active = baskets.filter((b) => b.status !== "archived");
   const past = baskets.filter((b) => b.status === "archived");
 
-  // Win rate from the baskets' own settled legs — the same numbers the
-  // track-record rows below print, so the card can never disagree with them.
-  const settledLegs = baskets.reduce((n, b) => n + (b.settledLegs ?? 0), 0);
-  const wonLegs = baskets.reduce((n, b) => n + (b.wonLegs ?? 0), 0);
+  // Win rate over the creator's WHOLE record. The API lists only the newest 60
+  // baskets but scores all of them, and sends the full settled-prediction
+  // count alongside. Summing the listed baskets instead made this card cover
+  // a shorter period than the return card and the chart beside it (66% of 315
+  // against a real 69% of 417 on the daily desk), and drift a little every day
+  // as the oldest basket fell off the list. The listed sum is only the
+  // fallback for a profile the API sends no full count for.
+  const listedSettled = baskets.reduce((n, b) => n + (b.settledLegs ?? 0), 0);
+  const listedWon = baskets.reduce((n, b) => n + (b.wonLegs ?? 0), 0);
+  const fullRecord = creator.settledLegs != null && creator.wonLegs != null && creator.settledLegs >= listedSettled;
+  const settledLegs = fullRecord ? creator.settledLegs! : listedSettled;
+  const wonLegs = fullRecord ? creator.wonLegs! : listedWon;
   const winRate = settledLegs > 0 ? wonLegs / settledLegs : null;
+  // Every basket ever published: the listed ones plus the older scored ones.
+  const publishedTotal = new Set([...baskets.map((b) => b.slug), ...(perf?.perBasket ?? []).map((r) => r.slug)]).size;
 
   // Same basis as the chart: profit on the capital a $100-per-basket follower needed.
   const returnPct = perf ? (rollingReturn(settledNights(perf.perBasket, baskets))?.pct ?? null) : null;
@@ -261,7 +271,7 @@ export function CreatorProfile({ creatorId }: { creatorId: string }) {
           label={p.basketReturn}
           value={returnPct != null ? signedPct(returnPct) : "—"}
           color={returnPct == null ? "var(--mute)" : returnPct >= 0 ? "var(--bk-green)" : "var(--down)"}
-          sub={p.publishedCount.replace("{n}", String(baskets.length))}
+          sub={p.publishedCount.replace("{n}", String(publishedTotal))}
         />
         {!isHouse && perf?.feesUsdc != null ? (
           <StatCard
