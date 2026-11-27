@@ -1,0 +1,98 @@
+---
+title: "Does Polymarket copy trading actually work?"
+description: "Polymarket has no built-in copy trading. How third-party tools mirror a wallet, why the copier pays more, and what to check before you follow anyone."
+tag: GUIDE
+topics: ["sports", "politics"]
+readingMinutes: 5
+publishedAt: "2026-11-27"
+lead: "Copy trading on Polymarket sounds simple: find a wallet that wins, repeat its trades. It can be done, but you always arrive second, the fastest wallets cannot be followed at all, and a high win rate is often the least informative number on the profile."
+keywords:
+  - "polymarket copy trading"
+  - "copy trade polymarket"
+  - "polymarket copy trading bot"
+  - "follow polymarket wallets"
+  - "Polymarket"
+takeaways:
+  - "Polymarket has no built-in copy trading; third-party tools read a wallet’s public on-chain trades and place matching orders from an account you let them trade."
+  - "A copier buys after the trader and usually at a worse price, and on a prediction market the price you pay is the win rate you need just to break even."
+  - "A win rate above 90% usually means buying near-certain outcomes: at 92¢ a share, each win pays 8¢ and a single loss wipes out more than eleven wins."
+  - "As of 27 November 2026, the Oddzy trader library lists 396 bots and market makers against 237 ranked traders, and a market maker’s profit cannot be copied by mirroring its buys."
+  - "Oddzy does not offer automatic copy trading; its trader library is for judging a wallet before you decide to place a trade yourself."
+faq:
+  - q: "Is copy trading on Polymarket profitable?"
+    a: "There is no reliable public figure, and most claims about copy-trading returns come from the companies selling the tools. It can only pay when the trader’s edge is larger than the price you lose by arriving after them, on trades you can realistically get filled on. A wallet that wins by a few cents a share usually leaves a copier nothing."
+  - q: "Can I see a Polymarket trader’s trades without a copy-trading tool?"
+    a: "Yes. Polymarket trades settle on the Polygon blockchain, so every wallet’s positions and trade history are public. Each trader has a Polymarket profile, and the Oddzy trader library shows each ranked trader’s open positions above $50 with the price they paid next to the price now."
+  - q: "What happens to a copied trade if the trader sells early?"
+    a: "It depends on the tool. Some mirror exits as well as entries, and some copy only buys, which leaves you holding the position until the market resolves. When exits are copied, your sell also lands after theirs and usually fills lower, so the lag costs you twice: once going in and once coming out."
+  - q: "Is it safe to give a copy-trading bot access to my wallet?"
+    a: "Only if you understand exactly what access it gets. A tool that can sign trades for a wallet can usually do more than copy, so check whether it holds the key, how much it can spend, and how to revoke it. No legitimate tool needs your seed phrase, and funds sent from a compromised wallet cannot be recovered."
+  - q: "Should I copy several Polymarket traders at once?"
+    a: "Spreading across wallets reduces how much one trader’s bad run can hurt you, but only if they trade different things. Several weather or sports specialists often buy the same favourites, so the risk is not as spread as it looks. Every wallet you add also adds positions, so set a cap on your total exposure, not just on each trade."
+---
+
+Polymarket copy trading means automatically repeating another wallet’s trades in your own account. Polymarket has no built-in feature for it; third-party tools read a wallet’s trades from the public blockchain and place matching orders for you.
+
+Whether it pays depends on three things most tools do not show you: the price you get after the trader has moved it, how fast the trader trades, and what their win rate is actually made of.
+
+## How does copy trading on Polymarket work?
+
+A copy-trading tool watches a wallet you choose and, when that wallet buys, places a buy in the same market from your account. This is possible because every Polymarket trade settles on the Polygon blockchain, so every wallet’s activity is public. Most tools scale the copy to your balance — a fixed amount or a percentage per trade, with a cap.
+
+To do that, the tool needs permission to trade for you. Depending on the tool, that is a separate wallet it controls or signing rights over yours. Before you connect anything, know which it is, and what else it can do with your balance.
+
+## Why does the copier get a worse price?
+
+Because you buy after the trader, and their order is often what moved the price. They take the best offers on the order book; your order arrives seconds or minutes later and fills at whatever is left, usually higher. [Why an order fills worse than the card](/learn/why-did-my-order-fill-at-a-worse-price) explains the mechanics.
+
+The cost is larger than it looks, because on a prediction market the price you pay is the share of the time you must win just to break even. Take ATL777, first in the Oddzy trader library as of 27 November 2026, whose average entry is 56¢:
+
+| | Trader | Copier, 3¢ later |
+| --- | --- | --- |
+| Entry price | 56¢ | 59¢ |
+| Profit per share if it wins | 44¢ | 41¢ |
+| Loss per share if it loses | 56¢ | 59¢ |
+| Win rate needed to break even | 56% | 59% |
+
+Three cents of lag cuts the profit on every win by about 7% and means you must win three more bets in every hundred to stand still. The trader’s edge has to be bigger than your lag, or copying them loses money even while they make it.
+
+## Which traders cannot be followed at all?
+
+Wallets that trade too often, or in markets that close too fast. A wallet trading hundreds of times a day, or living in 5- and 15-minute markets, has moved on before a copy lands. As of 27 November 2026, the top wallet on the Oddzy [bots and market makers list](/traders/bots), RN1, averages 8,607 trades a day.
+
+Pace matters even among ordinary traders. ATL777 is graded easy to copy, yet averages 36 trades a day at a median of $41 — a tool can keep up with that, a person checking a phone cannot. Size cuts the other way too: a wallet betting a few dollars gets prices that may not exist for a larger order.
+
+## Why are so many top wallets really market makers?
+
+Because a market maker’s profit looks like a great trader’s on a leaderboard. A market maker is a wallet that posts offers on both sides of a market and earns the spread and fee rebates rather than a view on the outcome. As of 27 November 2026, the Oddzy trader library sets aside 396 wallets as bots and market makers — more than the 237 it ranks as traders.
+
+BreakTheBank, on that list, put $203.1 million to work over the past 12 months for $4.9 million of profit: a 2.4% return, winning 50.4% of events. The profit is real. But copying its buys without its sells, its rebates or its speed copies half of a strategy whose edge lives in the other half.
+
+## Why is a 90% win rate usually a warning sign?
+
+Because the easiest way to win 90% of the time is to buy outcomes already priced near 90¢. A share bought at 92¢ is expected to win about 92% of the time, so winning proves little, and each win pays 8¢ while each loss costs 92¢. Before fees:
+
+| Entry price | Profit per winning share | Loss per losing share | Wins needed to cover one loss |
+| --- | --- | --- | --- |
+| 50¢ | 50¢ | 50¢ | 1 |
+| 80¢ | 20¢ | 80¢ | 4 |
+| 92¢ | 8¢ | 92¢ | 11.5 |
+| 97¢ | 3¢ | 97¢ | 32.3 |
+
+HighTempTation, second in the library as of 27 November 2026, won 99.7% of 3,702 weather events at an average entry of 92¢, for an 8.1% return. The skill is real — the results beat the prices by a wide margin — but a copier who pays 94¢ instead of 92¢ gives up a quarter of the profit on every win. [Buying 99¢ shares](/learn/buying-99-cent-shares) covers why that margin is thinner than it looks.
+
+## What should you check before following a wallet?
+
+Check whether the record would survive you copying it. On any trader profile, look at:
+
+- **Resolved events.** Eighteen large bets can be luck; hundreds are harder to fake.
+- **Return against average entry**, not win rate. A 20% return at 55¢ says more than a 99% win rate at 95¢.
+- **Trades per day and market length.** Hundreds a day, or 5-minute markets, cannot be followed.
+- **Both sides held, or profit from rebates.** That is a market maker.
+- **Median bet against your own size**, and whether the wallet is still trading.
+
+Then remember what the record is. The library’s wallets are drawn from Polymarket’s own leaderboards, so it is a study of winners, not of what a typical trader makes, and a past year guarantees nothing about the next. Size anything you copy as [your own position](/learn/how-to-size-a-position), because the loss is yours.
+
+## Does Oddzy offer copy trading?
+
+No. As of 27 November 2026, Oddzy does not offer automatic copy trading, and nothing on Oddzy places trades in your account on someone else’s behalf. What it has is the [trader library](/traders): wallets ranked on skill rather than profit, each with a copy grade that says what makes it harder to follow, and what it holds now next to the price it paid. [Who ranks at the top, and why](/learn/best-polymarket-traders-to-follow), walks through the current leaders. If a holding persuades you, you place the trade yourself, at today’s price.
